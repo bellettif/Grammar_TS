@@ -35,6 +35,7 @@ class Rule:
                     self.barcode.extend(grammar[x].barcode)
                 else:
                     self.barcode.extend(grammar[x].compute_barcode(grammar))
+        self.barcode = ['>'] + self.barcode + ['<']
         self.barcode_computed = True
         return self.barcode
         

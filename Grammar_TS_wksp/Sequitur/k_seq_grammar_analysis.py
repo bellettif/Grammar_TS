@@ -45,7 +45,7 @@ def plot_rules(dict_of_rules, title, target_file):
     flat_rules = sorted(dict_of_rules.values(), key = (lambda x : -x['pop_count']))
     pop_counts = [[x['lhs'], x['pop_count']] for x in flat_rules]
     pops = [x[1] for x in pop_counts]
-    labels = [x[0] for x in pop_counts]
+    labels = [filter(lambda i : (i != '<') and (i != '>'), x[0]) for x in pop_counts]
     plt.bar(np.arange(len(pops)), pops, align = 'center', color = 'lightblue')
     plt.xticks(np.arange(len(pops)), labels, rotation = 70, fontsize = 4)
     plt.ylabel('Popularity of rule')
@@ -84,6 +84,7 @@ def plot_multiple_rules(dict_of_grammar, colors,
                 align = 'center',
                 color = colors[name])
         bottom_counts += pop_counts
+    all_labels = [filter(lambda i : (i != '>') and (i != '<'), x) for x in all_labels]
     plt.xticks(np.arange(len(all_labels)), all_labels, rotation = 70, fontsize = 4)
     plt.ylabel('Popularity of rule')
     plt.title('Rule popularity in %s' % data_set_name)

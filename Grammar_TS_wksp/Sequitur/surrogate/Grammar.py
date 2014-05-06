@@ -30,15 +30,11 @@ class Grammar:
     def rand_seq(self, n_symbols, freqs):
         freqs = np.asarray(freqs)
         freqs /= np.sum(freqs)
-        print freqs
-        print self.all_symbols
-        print np.random.choice(self.all_symbols, freqs)
         reduced_form = [np.random.choice(self.all_symbols, p = freqs)
                         for i in xrange(n_symbols)]
         freqs = zip(self.all_symbols, freqs)
         expanded_form = []
         for x in reduced_form:
-            print x
             if x not in self.rule_dict:
                 expanded_form.append(x)
             else:
@@ -48,7 +44,6 @@ class Grammar:
     def rand_seq_non_term(self, n_symbols, freqs):
         freqs = np.asarray(freqs)
         freqs /= np.sum(freqs)
-        print freqs
         reduced_form = [np.random.choice(self.non_terminals, p = freqs)
                         for i in xrange(n_symbols)]
         freqs = zip(self.non_terminals, freqs)
@@ -58,5 +53,6 @@ class Grammar:
                 expanded_form.append(x)
             else:
                 expanded_form.extend(self.rule_dict[x].barcode)
+                
         return freqs, reduced_form, expanded_form
         

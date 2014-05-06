@@ -26,6 +26,20 @@ cdef extern from "k_seq.cpp":
 					int * ref_count_array,
 					int * pop_count_array)
 
+def compute_barcode(rule, grammar):
+	barcode = []
+	for x in rule['rhs']:
+		if x not in grammar:
+			barcode.append(x)
+		else:
+			if grammar[x]['barcode_computed']:
+				barcode.extend(grammar[x]['barcode'])
+			else:
+				barcode.extend(compute_barcode(grammar[x], grammar))
+	rule['barcode'] = ['>'] + barcode + ['<']
+	rule['barcode_computed'] = True
+	return barcode
+
 # Be careful, 0 is always a reserved root symbol (this can changed)
 def k_seq_compress(np.ndarray symbols,
 				   max_occurences,
@@ -64,23 +78,27 @@ def k_seq_compress(np.ndarray symbols,
 	grammar[str(0)] = {'rhs': map(str, c_input_string[:input_string_length]),
 				  	   'lhs' : '0',
 				  	   'barcode' : '0',
-				  	   #'barcode' : ''.join(map(str, symbols)),
 				  	   'refs' : 0,
 				  	   'pop_count' : 0}
 	for i in xrange(n_lhs):
 		barcode = ''.join(map(str, c_barcode_array[i, :c_barcode_lengths[i]]))
 		grammar[str(c_lhs_array[i])] = {'lhs' : str(c_lhs_array[i]),
-							'barcode' : barcode,
-							'rhs' : map(str,c_rhs_array[i, :c_rhs_lengths[i]]),
-			   			    'refs' : c_ref_count_array[i],
-					   		'pop_count' : c_pop_count_array[i]}
+										'barcode' : '???',
+										'barcode_computed' : False,
+										'rhs' : map(str,c_rhs_array[i, :c_rhs_lengths[i]]),
+			   			    			'refs' : c_ref_count_array[i],
+				   					   	'pop_count' : c_pop_count_array[i]}
+	for dictio in grammar.values():
+		compute_barcode(dictio, grammar)
+	print 'Computed barcodes'
 	new_grammar = {}
 	for lhs, local_dict in grammar.iteritems():
-		barcode = local_dict['barcode']
 		rhs = local_dict['rhs']
-		new_rhs = [grammar[x]['barcode'] if x in grammar else x for x in rhs]
+		new_rhs = [''.join(grammar[x]['barcode']) if x in grammar else x for x in rhs]
+		barcode = ''.join(local_dict['barcode'])
 		new_grammar[barcode] = {'lhs' : barcode,
 								'rhs' : new_rhs,
 								'refs' : local_dict['refs'],
 								'pop_count' : local_dict['pop_count']}
+		
 	return new_grammar

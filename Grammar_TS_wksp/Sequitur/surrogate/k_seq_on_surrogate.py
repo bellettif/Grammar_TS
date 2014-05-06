@@ -5,6 +5,7 @@ Created on 5 mai 2014
 '''
 
 import numpy as np
+import string
 
 from Rule import *
 from Grammar import *
@@ -19,6 +20,8 @@ grammar = {'-2' : Rule('-2', ['-1', '3']),
            '-4' : gen_power_rule('-4', '8', '9', 3)}
 
 my_grammar = Grammar(grammar)
+for rule in my_grammar.rule_dict.values():
+    print rule.barcode
 
 non_terminal_weights = np.random.power(5, len(my_grammar.non_terminals))
 terminal_weights = np.random.power(5, len(my_grammar.terminals))
@@ -31,6 +34,8 @@ freqs, reduced_form, expended_form =  my_grammar.rand_seq(1000, all_weights)
 print freqs
 print reduced_form
 print ''.join(expended_form)
+
+expended_form = filter(lambda x : (x != '>') and (x != '<'), expended_form)
 
 expended_form = map(int, expended_form)
 
