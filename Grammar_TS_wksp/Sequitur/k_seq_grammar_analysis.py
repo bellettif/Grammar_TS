@@ -91,16 +91,18 @@ def plot_multiple_rules(dict_of_grammar, colors,
     plt.legend(dict_of_grammar.keys())
     plt.savefig(target_file, dpi = 300)
     plt.close()
-'''
+
 achu_grammars = build_grammar_dict(target_folder, 'achu')
 oldo_grammars = build_grammar_dict(target_folder, 'oldo')
 
-achu_rules = reduce_rules(achu_grammars)
-oldo_rules = reduce_rules(oldo_grammars)
-     
-plot_rules(achu_rules, 'achuSeq reduced', 'Achu_grammars_reduced.png')
-plot_rules(oldo_rules, 'oldoSeq reduced', 'Oldo_grammars_reduced.png')
+print [x.keys() for x in achu_grammars.values()]
 
-plot_multiple_rules(achu_grammars, data_colors.achu_colors, 'achuSeq set', 'Achu_grammars.png')
-plot_multiple_rules(oldo_grammars, data_colors.oldo_colors, 'oldoSeq set', 'Oldo_grammars.png')
-'''
+#achu_rules = reduce_rules(achu_grammars)
+#oldo_rules = reduce_rules(oldo_grammars)
+     
+#plot_rules(achu_rules, 'achuSeq reduced', 'Achu_grammars_reduced.png')
+#plot_rules(oldo_rules, 'oldoSeq reduced', 'Oldo_grammars_reduced.png')
+
+#plot_multiple_rules(achu_grammars, data_colors.achu_colors, 'achuSeq set', 'Achu_grammars.png')
+#plot_multiple_rules(oldo_grammars, data_colors.oldo_colors, 'oldoSeq set', 'Oldo_grammars.png')
+
