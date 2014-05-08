@@ -18,9 +18,6 @@ class Markov_model:
         sums = np.sum(self.A, axis = 1)
         for i, sum in enumerate(sums):
             self.A[i] /= sum
-        #map(lambda x : x / np.sum(x), self.A)
-        self.B = B
-        map(lambda x : x / np.sum(x), self.B)
         self.generators = [Obs_generator(alphabet, weights) for weights in B]
         self.states = range(len(self.generators))
         self.current_state = np.random.choice(self.states, p = self.initial)
@@ -33,5 +30,13 @@ class Markov_model:
         self.current_state = np.random.choice(self.states, p = self.A[self.current_state])
         return self.current_state
             
-        
+    def generate_data(self, n_points):
+        result = []
+        for i in xrange(n_points):
+            current_state = self.current_state
+            obs = self.gen_obs()
+            self.transition()
+            result.append({'state' : current_state,
+                           'obs' : obs})
+        return result
         
