@@ -21,19 +21,21 @@ my_markov_model = Markov_model(initial,
                                B,
                                alphabet)
 
-datas = [my_markov_model.generate_data(100) for i in xrange(100)]
+data = my_markov_model.generate_data(100)
       
 proba_cpter = Proba_computer(initial,
                              A,
                              B,
                              alphabet)
-observations = [[x['obs'] for x in y] for y in datas]
+
+states = np.asarray([x['state'] for x in data])
+observations = [x['obs'] for x in data]
 
 initial = proba_cpter.initial
 A = proba_cpter.A
 B = proba_cpter.B
 
-new_initial, new_A, new_B = proba_cpter.estimate_new_model_multi(observations)
+new_initial, new_A, new_B = proba_cpter.estimate_new_model(observations)
 
 print 'Initial'
 print 'Model:'

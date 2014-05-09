@@ -44,13 +44,20 @@ class Proba_computer:
         return alphas
     
     def compute_backward_probas(self, data):
+        alphas = np.zeros((self.n_states, len(data)))
+        alphas[:,0] = self.initial * self.compute_b(data[0])
+        alphas[:,0] /= np.sum(alphas[:,0])
+        for t, datum in enumerate(data):
+            if t == 0: continue
+            alphas[:,t] = np.dot(alphas[:,t-1].T, self.A) * self.compute_b(datum)
+            alphas[:,t] /= np.sum(alphas[:,t])
         betas = np.zeros((self.n_states, len(data)))
         betas[:,-1] = np.ones(self.n_states)
-        betas[:,-1] /= np.sum(betas[:,-1])
+        betas[:,-1] /= np.sum(alphas[:,-1])
         for t, datum in enumerate(data[::-1]):
             if t == (len(data) - 1): break
             betas[:,-(t+2)] = np.dot(self.A, betas[:,-(t+1)] * self.compute_b(datum))
-            betas[:,-(t+2)] /= np.sum(betas[:,-(t+2)])
+            betas[:,-(t+2)] /= np.sum(alphas[:,-(t+2)])
         return betas
     
     def compute_probas(self, data):
@@ -95,7 +102,6 @@ class Proba_computer:
         epsilons = self.compute_epsilons(data)
         new_initial = gammas[:,0]
         new_A = np.sum(epsilons, axis = 2)
-        print gammas.shape
         for i in range(self.n_states):
             new_A[i,:] /= np.sum(gammas[i,:-1])
         emission_mask = np.zeros((self.n_letters, len(data)))
@@ -105,6 +111,21 @@ class Proba_computer:
         for i in range(self.n_states):
             for j in range(self.n_letters):
                 new_B[i, j] = np.sum(gammas[i,:] * emission_mask[j,:]) / np.sum(gammas[i,:])
+        return new_initial, new_A, new_B
+    
+    def estimate_new_model_multi(self, list_of_datas):
+        probas = [np.sum(self.compute_forward_probas(line)[:,-1]) for line in list_of_datas]
+        models = [self.estimate_new_model(line) for line in list_of_datas]
+        new_initials = np.zeros((self.n_states, len(models)))
+        new_As = np.zeros((self.n_states, self.n_states, len(models)))
+        new_Bs = np.zeros((self.n_states, self.n_letters, len(models)))
+        for i in xrange(len(models)):
+            new_initials[:,i] = models[i][0] * probas[i]
+            new_As[:,:,i] = models[i][1] * probas[i]
+            new_Bs[:,:,i] = models[i][2] * probas[i]
+        new_initial = np.mean(new_initials, axis = 1)
+        new_A = np.mean(new_As, axis = 2)
+        new_B = np.mean(new_Bs, axis = 2)
         return new_initial, new_A, new_B
     
     def update_parameter(self, new_initial, new_A, new_B):
