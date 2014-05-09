@@ -21,7 +21,7 @@ my_markov_model = Markov_model(initial,
                                B,
                                alphabet)
 
-data = my_markov_model.generate_data(20)
+data = my_markov_model.generate_data(6)
       
 my_proba_computer = Proba_computer(initial,
                                  A,
@@ -33,11 +33,25 @@ observations = [x['obs'] for x in data]
 
 gammas = my_proba_computer.compute_probas(observations)
 
-plt.subplot(411)
-plt.imshow(gammas, cmap = cm.gray)
-plt.clim()
+epsilons = my_proba_computer.compute_epsilons(observations)
 
-deltas, psys, qs = my_proba_computer.viterbi(observations)
+print epsilons
+
+gammas_eps = np.zeros((epsilons.shape[0], epsilons.shape[2]))
+
+for t in xrange(gammas_eps.shape[1]):
+    gammas_eps[:, t] = np.sum(epsilons[:, :, t], axis = 1)
+    
+print gammas_eps
+
+print gammas
+
+
+'''plt.subplot(411)
+plt.imshow(gammas, cmap = cm.gray)
+plt.clim()'''
+
+'''deltas, psys, qs = my_proba_computer.viterbi(observations)
 
 print deltas
 print psys
@@ -60,7 +74,7 @@ for i, state in enumerate(states):
 plt.plot(-states, linestyle = '--', color = 'r')
 plt.ylim((ymin - 1, ymax + 1))
 plt.show()
-
+'''
 
 
 

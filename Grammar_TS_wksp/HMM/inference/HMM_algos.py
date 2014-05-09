@@ -65,7 +65,6 @@ class Proba_computer:
         deltas[:,0] = self.initial * self.compute_b(data[0])
         deltas[:,0] /= np.sum(deltas[:,0])
         psys[:,0] = np.zeros(self.n_states)
-        print deltas[:,0]
         for t, datum in enumerate(data):
             if t == 0: continue
             temp = np.dot(np.diag(deltas[:, t-1]), self.A)
@@ -79,5 +78,39 @@ class Proba_computer:
             if t == (len(data) - 1): break
             qs[-(t+2)] = psys[qs[-(t+1)], -(t+1)]
         return deltas, psys, qs
+        
+    def compute_epsilons(self, data):
+        alphas = self.compute_forward_probas(data)
+        betas = self.compute_backward_probas(data)
+        epsilons = np.zeros((self.n_states, self.n_states, len(data) - 1))
+        for t in xrange(len(data) - 1):
+            epsilons[:, :, t] = np.dot(np.diag(alphas[:,t]),
+                                       np.dot(self.A,
+                          np.diag(betas[:, t + 1] * self.compute_b(data[t + 1]))))
+            epsilons[:, :, t] /= np.sum(epsilons[:, :, t])
+        return epsilons
+    
+    def estimate_new_model(self, data):
+        gammas = self.compute_probas(data)
+        epsilons = self.compute_epsilons(data)
+        new_initial = gammas[:,0]
+        new_A = np.sum(epsilons, axis = 2)
+        print gammas.shape
+        for i in range(self.n_states):
+            new_A[i,:] /= np.sum(gammas[i,:-1])
+        emission_mask = np.zeros((self.n_letters, len(data)))
+        for t, datum in enumerate(data):
+            emission_mask[self.reversed_alphabet[datum], t] = 1
+        new_B = np.zeros((self.n_states, self.n_letters))
+        for i in range(self.n_states):
+            for j in range(self.n_letters):
+                new_B[i, j] = np.sum(gammas[i,:] * emission_mask[j,:]) / np.sum(gammas[i,:])
+        return new_initial, new_A, new_B
+    
+    def update_parameter(self, new_initial, new_A, new_B):
+        self.initial = new_initial
+        self.A = new_A
+        self.B = new_B
+        
         
         
