@@ -59,6 +59,25 @@ class Proba_computer:
             gammas[:,i] /= np.sum(gammas[:,i])
         return gammas
         
-        
+    def viterbi(self, data):
+        deltas = np.zeros((self.n_states, len(data)))
+        psys = np.zeros((self.n_states, len(data)))
+        deltas[:,0] = self.initial * self.compute_b(data[0])
+        deltas[:,0] /= np.sum(deltas[:,0])
+        psys[:,0] = np.zeros(self.n_states)
+        print deltas[:,0]
+        for t, datum in enumerate(data):
+            if t == 0: continue
+            temp = np.dot(np.diag(deltas[:, t-1]), self.A)
+            delta = np.max(temp, axis = 0) * self.compute_b(datum)
+            deltas[:,t] = delta  
+            deltas[:,t] /= np.sum(deltas[:,t])
+            psys[:,t] = np.argmax(temp, axis = 0)
+        qs = np.zeros(len(data))
+        qs[-1] = np.argmax(deltas[:,-1])
+        for t in xrange(len(data)):
+            if t == (len(data) - 1): break
+            qs[-(t+2)] = psys[qs[-(t+1)], -(t+1)]
+        return deltas, psys, qs
         
         
