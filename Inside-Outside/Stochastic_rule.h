@@ -18,6 +18,7 @@ typedef std::vector<T>                      T_vect;
 typedef std::mt19937                        RNG;
 typedef std::discrete_distribution<>        choice_distrib;
 typedef std::pair<T, pair_i_i>              derivation_result;
+
 private:
     const int                           _rule_name;
 
@@ -100,6 +101,26 @@ public:
             result.first = _term_s[_term_choice(_rng)];
             return result;
         }
+    }
+
+    int get_name() const{
+        return _rule_name;
+    }
+
+    const double_vect & get_non_term_w() const{
+        return _non_term_w;
+    }
+
+    const pair_i_i_vect & get_non_term_s() const{
+        return _non_term_s;
+    }
+
+    const double_vect & get_term_w() const{
+        return _term_w;
+    }
+
+    const T_vect & get_term_s() const{
+        return _term_s;
     }
 
 };
