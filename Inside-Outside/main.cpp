@@ -7,24 +7,26 @@
 #include "inside_proba.h"
 #include "stochastic_rule.h"
 
-typedef std::string                             T;
+typedef int                                     T;
 typedef std::vector<T>                          T_vect;
 typedef std::unordered_map<int, double>         int_double_hashmap;
 typedef Stochastic_rule<T>                      SRule_T;
 typedef std::vector<double>                     double_vect;
+typedef std::pair<int, int>                     pair_i_i;
 typedef std::vector<std::pair<int, int>>        pair_i_i_vect;
 typedef std::mt19937                            RNG;
+typedef std::pair<T, pair_i_i>                  derivation_result;
 
 int main(){
 
-    RNG                     my_rng;
+    RNG                     my_rng(1);
     std::pair<int, int>     pair_1 (1, 1);
     std::pair<int, int>     pair_2 (1, 2);
     std::pair<int, int>     pair_3 (3, 4);
     double_vect             non_term_w ({0.3, 0.4, 0.5});
     pair_i_i_vect           non_term_s ({pair_1, pair_2, pair_3});
 
-    T_vect                  term_s ({"bertrand", "jeannette", "henri"});
+    T_vect                  term_s ({-1, -2, -3});
     double_vect             term_w ({0.6, 0.1, 0.1});
 
     SRule_T                 my_rule(0,
@@ -35,6 +37,17 @@ int main(){
                                     my_rng);
 
     my_rule.print();
+    bool terminal_emission;
+    derivation_result derived = my_rule.derive(terminal_emission);
+
+    if(terminal_emission){
+        std::cout << "Terminal emision" << std::endl;
+        std::cout << derived.first << std::endl;
+    }else{
+        std::cout << "Non terminal derivation" << std::endl;
+        std::cout << derived.second.first << " "
+                  << derived.second.second << std::endl;
+    }
 
     /*
     std::string file_path = "/Users/francois/Grammar_TS/Sequitur/data/achuSeq_8.csv";

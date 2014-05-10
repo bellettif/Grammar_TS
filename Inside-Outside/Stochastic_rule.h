@@ -12,11 +12,12 @@ template<typename T>
 class Stochastic_rule{
 
 typedef std::vector<double>                 double_vect;
+typedef std::pair<int, int>                 pair_i_i;
 typedef std::vector<std::pair<int, int>>    pair_i_i_vect;
 typedef std::vector<T>                      T_vect;
 typedef std::mt19937                        RNG;
 typedef std::discrete_distribution<>        choice_distrib;
-
+typedef std::pair<T, pair_i_i>              derivation_result;
 private:
     const int                           _rule_name;
 
@@ -30,7 +31,7 @@ private:
 
     RNG &                               _rng;
 
-    choice_distrib                      _term_non_term_choice;
+    choice_distrib                      _non_term_term_choice;
     choice_distrib                      _non_term_choice;
     choice_distrib                      _term_choice;
 
@@ -59,12 +60,12 @@ public:
             _term_totw += x;
         }
         double total_weight = _non_term_totw + _term_totw;
+        _non_term_term_choice = choice_distrib({_non_term_totw, _term_totw});
         _non_term_totw /= total_weight;
         _term_totw /= total_weight;
         for(int i = 0; i < _non_term_w.size(); ++i){
             _non_term_w[i] /= total_weight;
         }
-
         for(int i = 0; i < _term_w.size(); ++i){
             _term_w[i] /= total_weight;
         }
@@ -85,6 +86,21 @@ public:
         }std::cout << std::endl;
     }
 
+    derivation_result derive(bool & terminal_emission) {
+        int term_or_non_term = _non_term_term_choice(_rng);
+        derivation_result result;
+        if(term_or_non_term == 0){
+            terminal_emission = false;
+            pair_i_i temp = _non_term_s[_non_term_choice(_rng)];
+            result.second.first = temp.first;
+            result.second.second = temp.second;
+            return result;
+        }else{
+            terminal_emission = true;
+            result.first = _term_s[_term_choice(_rng)];
+            return result;
+        }
+    }
 
 };
 
