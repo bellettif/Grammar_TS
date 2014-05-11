@@ -42,9 +42,9 @@ public:
     Stochastic_rule(const int &              rule_name,
                     const double_vect &      non_term_w,
                     const pair_i_i_vect &    non_term_s,
-                    const double_vect &      term_w,
-                    const T_vect &           term_s,
-                    RNG &                    rng):
+                    RNG &                    rng,
+                    const double_vect &      term_w = double_vect(),
+                    const T_vect &           term_s = T_vect()):
         _rule_name(rule_name),
         _non_term_w(non_term_w),
         _non_term_s(non_term_s),

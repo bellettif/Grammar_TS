@@ -5,10 +5,9 @@
 #include <chrono>
 
 #include "file_reader.h"
-#include "inside_proba.h"
+#include "in_out_proba.h"
 #include "stochastic_rule.h"
 #include "scfg.h"
-#include "inside_proba.h"
 
 namespace std {
     std::string to_string(std::string x){
@@ -26,7 +25,7 @@ typedef std::pair<int, int>                     pair_i_i;
 typedef std::vector<std::pair<int, int>>        pair_i_i_vect;
 typedef std::mt19937                            RNG;
 typedef std::pair<T, pair_i_i>                  derivation_result;
-typedef Inside_proba<T>                         inside_T;
+typedef In_out_proba<T>                         inside_T;
 
 int main(){
 
@@ -47,9 +46,9 @@ int main(){
     SRule_T                 A_rule(1,
                                     A_non_term_w,
                                     A_non_term_s,
+                                    my_rng,
                                     A_term_w,
-                                    A_term_s,
-                                    my_rng);
+                                    A_term_s);
 
     std::pair<int, int>     B_pair_1 (3, 1);
     std::pair<int, int>     B_pair_2 (2, 1);
@@ -61,9 +60,9 @@ int main(){
     SRule_T                 B_rule(2,
                                    B_non_term_w,
                                    B_non_term_s,
+                                   my_rng,
                                    B_term_w,
-                                   B_term_s,
-                                   my_rng);
+                                   B_term_s);
 
     std::pair<int, int>     C_pair_1 (3, 3);
     std::pair<int, int>     C_pair_2 (2, 2);
@@ -77,36 +76,54 @@ int main(){
     SRule_T                 C_rule(3,
                                    C_non_term_w,
                                    C_non_term_s,
+                                   my_rng,
                                    C_term_w,
-                                   C_term_s,
+                                   C_term_s);
+
+    std::pair<int, int>     S_pair_1 (1, 3);
+    std::pair<int, int>     S_pair_2 (2, 3);
+    double_vect             S_non_term_w ({0.5, 0.5});
+    pair_i_i_vect           S_non_term_s ({S_pair_1,
+                                           S_pair_2});
+
+    SRule_T                 S_rule(4,
+                                   S_non_term_w,
+                                   S_non_term_s,
                                    my_rng);
 
-
-    std::vector<SRule_T>    rules ({A_rule, B_rule, C_rule});
+    std::vector<SRule_T>    rules ({A_rule,
+                                    B_rule,
+                                    C_rule,
+                                    S_rule});
 
     A_rule.print();
     B_rule.print();
     C_rule.print();
+    S_rule.print();
 
-    SGrammar_T              grammar(rules);
 
-    std::cout << "Asking for complete derivation" << std::endl;
+    SGrammar_T              grammar(rules, 4);
 
-    std::list<T>  complete_derivation_result = grammar.generate_sequence({1, 1, 2, 3});
+    //grammar.print_symbols();
 
-    for(auto x : complete_derivation_result){
+    std::list<T> result = S_rule.complete_derivation(grammar);
+
+    for(auto x : result){
         std::cout << x << " ";
     }std::cout << std::endl;
 
-    T_vect input (complete_derivation_result.begin(),
-                  complete_derivation_result.end());
+    T_vect input (result.begin(),
+                  result.end());
 
     std::cout << "Length of input " << input.size() << std::endl;
 
-    inside_T insideCmpter(grammar, input);
+    inside_T probaCmpter(grammar, input);
 
-    insideCmpter.compute_inside_probas();
+    probaCmpter.compute_inside_probas();
+    probaCmpter.compute_outside_probas();
 
-    insideCmpter.print_E();
+    probaCmpter.print_inside();
+
+
 
 }

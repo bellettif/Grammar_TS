@@ -29,6 +29,7 @@ typedef std::pair<T, pair_i_i>                              derivation_result;
 
 private:
     int_rule_hashmap                    _grammar;
+    int                                 _root_symbol;
     int                                 _n_non_terms;
     int                                 _n_terms;
     int_T_map                           _index_to_term;
@@ -42,7 +43,10 @@ private:
 
 
 public:
-    SCFG(const std::vector<rule_T> & rules){
+    SCFG(const std::vector<rule_T> & rules,
+         const int & root_symbol) :
+        _root_symbol(root_symbol)
+    {
         _n_non_terms = 0;
         _n_terms = 0;
 
@@ -208,6 +212,10 @@ public:
 
     const int_int_map & get_index_to_non_term() const{
         return _index_to_non_term;
+    }
+
+    const int & get_root_symbol() const{
+        return _root_symbol;
     }
 
 
