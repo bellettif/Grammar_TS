@@ -101,7 +101,6 @@ int main(){
     C_rule.print();
     S_rule.print();
 
-
     SGrammar_T              grammar(rules, 4);
 
     //grammar.print_symbols();

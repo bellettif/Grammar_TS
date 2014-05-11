@@ -111,19 +111,19 @@ public:
             int s;
             int t;
             for(int i = 0; i < _N; ++i){
-                for(int s = 0; s < _length - current_length; ++s){
+                for(s = 0; s < _length - current_length; ++s){
                     t = s + current_length;
                     for(int r = 0; r < s; ++r){
                         for(int j = 0; j < _N; ++j){
                             for(int k = 0; k < _N; ++k){
-                                _F[i][s][t] += _F[i][r][t] * _A[j][k][i] * _E[k][r][s-1];
+                                _F[i][s][t] += _F[j][r][t] * _A[j][k][i] * _E[k][r][s-1];
                             }
                         }
                     }
-                    for(int r = t; r < _length; ++ r){
+                    for(int r = t + 1; r < _length; ++ r){
                         for(int j = 0; j < _N; ++j){
                             for(int k = 0; k < _N; ++k){
-                                _F[i][s][r] += _F[j][r][t] * _A[j][i][k] * _E[k][t][r];
+                                _F[i][s][t] += _F[j][s][r] * _A[j][i][k] * _E[k][t+1][r];
                             }
                         }
                     }
@@ -149,6 +149,17 @@ public:
                         std::cout << "0.00000000 ";
                     }else{
                         std::cout << _E[i][s][t] << " ";
+                    }
+                }std::cout << std::endl;
+            }
+            std::cout << "F matrix for non term "
+                      << _index_to_non_term.at(i) << std::endl;
+            for(int s = 0; s < _length; ++s){
+                for(int t = 0; t < _length; ++t){
+                    if(_F[i][s][t] == 0){
+                        std::cout << "0.00000000 ";
+                    }else{
+                        std::cout << _F[i][s][t] << " ";
                     }
                 }std::cout << std::endl;
             }
