@@ -24,7 +24,8 @@ typedef std::unordered_set<int>                             int_set;
 typedef std::unordered_map<int, int>                        int_int_map;
 typedef std::unordered_map<int, T>                          int_T_map;
 typedef std::unordered_map<T, int>                          T_int_map;
-
+typedef std::vector<T>                                      T_vect;
+typedef std::pair<T, pair_i_i>                              derivation_result;
 
 private:
     int_rule_hashmap                    _grammar;
@@ -45,11 +46,12 @@ public:
         _n_non_terms = 0;
         _n_terms = 0;
 
-        std::cout << "Coucou" << std::endl;
+        //std::cout << "Coucou" << std::endl;
 
         // First run to setup indices
         for(const rule_T & rule : rules){
             if(_all_non_terms.count(rule.get_name()) == 0){
+                _grammar.emplace(rule.get_name(), rule);
                 _index_to_non_term.emplace(_n_non_terms,
                                            rule.get_name());
                 _non_term_to_index.emplace(rule.get_name(),
@@ -69,7 +71,7 @@ public:
             }
         }
 
-        std::cout << "Coucou 2" << std::endl;
+        //std::cout << "Coucou 2" << std::endl;
 
         const int N = _n_non_terms;
         const int M = _n_terms;
@@ -118,6 +120,10 @@ public:
 
     }
 
+    rule_T & get_rule(int i){
+        return _grammar.at(i);
+    }
+
     void print_symbols() const{
         std::cout << "Non terminal symbols: " << std::endl;
         for(auto x : _all_non_terms){
@@ -158,6 +164,50 @@ public:
                 std::cout << _B[i][k] << " ";
             }std::cout << std::endl;
         }
+    }
+
+    double*** get_A() const{
+        return _A;
+    }
+
+    int get_n_non_terms() const{
+        return _n_non_terms;
+    }
+
+    double** get_B() const{
+        return _B;
+    }
+
+    int get_n_terms() const{
+        return _n_terms;
+    }
+
+    std::list<T> generate_sequence(const std::vector<int> & S){
+        std::list<T> result;
+        std::list<T> temp;
+        for(int i = S.size() - 1; i > -1; --i){
+            temp = _grammar.at(S[i]).complete_derivation(*this);
+            result.insert(result.begin(),
+                          temp.begin(),
+                          temp.end());
+        }
+        return result;
+    }
+
+    const T_int_map & get_term_to_index() const{
+        return _term_to_index;
+    }
+
+    const int_T_map & get_index_to_term() const{
+        return _index_to_term;
+    }
+
+    const int_int_map & get_non_term_to_index() const{
+        return _non_term_to_index;
+    }
+
+    const int_int_map & get_index_to_non_term() const{
+        return _index_to_non_term;
     }
 
 

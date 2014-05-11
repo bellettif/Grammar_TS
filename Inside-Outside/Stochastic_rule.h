@@ -2,11 +2,12 @@
 #define STOCHASTIC_RULE_H
 
 #include <vector>
+#include <list>
 #include <random>
 #include <array>
 
 template<typename T>
-class Stochastic_grammar;
+class SCFG;
 
 template<typename T>
 class Stochastic_rule{
@@ -87,7 +88,7 @@ public:
         }std::cout << std::endl;
     }
 
-    derivation_result derive(bool & terminal_emission) {
+    derivation_result derive(bool & terminal_emission){
         int term_or_non_term = _non_term_term_choice(_rng);
         derivation_result result;
         if(term_or_non_term == 0){
@@ -99,6 +100,26 @@ public:
         }else{
             terminal_emission = true;
             result.first = _term_s[_term_choice(_rng)];
+            return result;
+        }
+    }
+
+    std::list<T> complete_derivation(SCFG<T> & grammar){
+        std::list<T> result;
+        bool is_terminal;
+        derivation_result temp = derive(is_terminal);
+        if(is_terminal){
+            result.push_back(temp.first);
+            return result;
+        }else{
+            std::list<T> temp_left = grammar.get_rule(temp.second.second).complete_derivation(grammar);
+            result.insert(result.begin(),
+                          temp_left.begin(),
+                          temp_left.end());
+            std::list<T> temp_right = grammar.get_rule(temp.second.first).complete_derivation(grammar);
+            result.insert(result.begin(),
+                          temp_right.begin(),
+                          temp_right.end());
             return result;
         }
     }
