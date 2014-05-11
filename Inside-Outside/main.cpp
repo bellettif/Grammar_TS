@@ -8,6 +8,7 @@
 #include "in_out_proba.h"
 #include "stochastic_rule.h"
 #include "scfg.h"
+#include "parse_tree.h"
 
 namespace std {
     std::string to_string(std::string x){
@@ -103,8 +104,6 @@ int main(){
 
     SGrammar_T              grammar(rules, 4);
 
-    //grammar.print_symbols();
-
     std::list<T> result = S_rule.complete_derivation(grammar);
 
     for(auto x : result){
@@ -121,8 +120,13 @@ int main(){
     probaCmpter.compute_inside_probas();
     probaCmpter.compute_outside_probas();
 
-    probaCmpter.print_inside();
+    probaCmpter.print_probas();
 
+    std::cout << std::endl;
 
+    double parse_proba;
+    Parse_tree<T> parse_tree = probaCmpter.run_CYK(parse_proba);
+
+    std::cout << parse_proba << std::endl;
 
 }

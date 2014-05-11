@@ -24,6 +24,7 @@ HEADERS += \
     file_reader.h \
     scfg.h \
     stochastic_rule.h \
-    in_out_proba.h
+    in_out_proba.h \
+    parse_tree.h
 
 OTHER_FILES += \

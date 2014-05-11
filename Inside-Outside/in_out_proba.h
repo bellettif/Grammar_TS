@@ -2,17 +2,38 @@
 #define INSIDE_PROBA_H
 
 #include <vector>
+#include <tuple>
+#include <queue>
 
 #include "scfg.h"
+#include "parse_tree.h"
 
 template<typename T>
 class In_out_proba{
 
-typedef std::vector<T>                          T_vect;
-typedef std::unordered_map<int, int>            int_int_map;
-typedef std::unordered_map<int, T>              int_T_map;
-typedef std::unordered_map<T, int>              T_int_map;
-typedef SCFG<T>                                 SGrammar_T;
+typedef std::vector<T>                                  T_vect;
+typedef std::unordered_map<int, int>                    int_int_map;
+typedef std::unordered_map<int, T>                      int_T_map;
+typedef std::unordered_map<T, int>                      T_int_map;
+typedef SCFG<T>                                         SGrammar_T;
+typedef std::pair<int, int>                             non_term_der;
+
+typedef std::unordered_map<int, double>                 int_double_hashmap;
+typedef std::unordered_map<int,
+                int_double_hashmap>                     int_int_double_hashmap;
+typedef std::unordered_map<int,
+                int_int_double_hashmap>                 int_int_int_double_hashmap;
+
+
+typedef std::tuple<int, int, int>                       trip;
+typedef std::tuple<int, int, int, Parse_tree<T>*>       stack_quad;
+typedef std::queue<stack_quad>                          stack_quad_queue;
+typedef std::unordered_map<int, trip>                   int_trip_hashmap;
+typedef std::unordered_map<int,
+                int_trip_hashmap>                       int_int_trip_hashmap;
+typedef std::unordered_map<int,
+                int_int_trip_hashmap>                   int_int_int_trip_hashmap;
+
 
 private:
     double***               _A;
@@ -139,7 +160,7 @@ public:
         _outside_computed = true;
     }
 
-    void print_inside(){
+    void print_probas(){
         for(int i = 0; i < _N; ++i){
             std::cout << "E matrix for non term "
                       << _index_to_non_term.at(i) << std::endl;
@@ -166,6 +187,110 @@ public:
         }
     }
 
+    Parse_tree<T> run_CYK(double & parse_proba){
+        int_int_int_double_hashmap      gammas;
+        int_int_int_trip_hashmap        taus;
+        int                             i;
+        int                             j;
+        int                             k;
+        int                             s;
+        int                             t;
+        int                             r;
+        trip                            current_arg_max;
+        double                          current_max;
+        double                          current_value;
+        for(int l = 0; l < _length; ++l){
+            if(l == 0){
+                for(i = 0; i < _N; ++i){
+                    for(s = 0; s < _length; ++s){
+                        gammas[i][s][s] = std::log(_B[i][_term_to_index.at(_input[s])]);
+                        taus[i][s][s] = trip(i, i, -1);
+                    }
+                }
+            }else{
+                for(i = 0; i < _N; ++i){
+                    for(s = 0; s < _length; ++s){
+                        t = s + l;
+                        current_arg_max = trip(0, 0, s);
+                        current_max = gammas[0][s][s] + gammas[0][s+1][t]
+                                + std::log(_A[i][0][0]);
+                        for(j = 0; j < _N; ++j){
+                            for(k = 0; k < _N; ++k){
+                                for(r = s; r < t; ++r){
+                                    current_value = gammas[j][s][r] + gammas[k][r+1][t]
+                                            + std::log(_A[i][j][k]);
+                                    if(current_value > current_max){
+                                        current_arg_max = trip(j, k, r);
+                                        current_max = current_value;
+                                    }
+                                }
+                            }
+                        }
+                        gammas[i][s][t] = current_max;
+                        taus[i][s][t] = current_arg_max;
+                    }
+                }
+            }
+        }
+        for(i = 0; i < _N; ++i){
+            std::cout << "E matrix for non term "
+                      << _index_to_non_term.at(i) << std::endl;
+            double temp_result;
+            for(s = 0; s < _length; ++s){
+                for(t = 0; t < _length; ++t){
+                    if(gammas[i][s][t] == 0){
+                        std::cout << "0.00000000 ";
+                    }else{
+                        temp_result = std::exp(gammas[i][s][t]);
+                        if(temp_result == 0){
+                            std::cout << "0.00000000 ";
+                        }else{
+                            std::cout << std::exp(gammas[i][s][t]) << " ";
+                        }
+                    }
+                }std::cout << std::endl;
+            }
+        }
+        std::cout << _root_index << std::endl;
+        parse_proba = std::exp(gammas[_root_index][0][_length - 1]);
+
+        trip                current_trip;
+        stack_quad          current_quad;
+        Parse_tree<T>       result(_root_symbol);
+        stack_quad_queue    stack;
+        stack.push(stack_quad(_root_index, 0, _length - 1, &result));
+        int left_symbol_index;
+        int right_symbol_index;
+        int parent_index;
+        int left_index;
+        int right_index;
+        int cut;
+        Parse_tree<T>*      current_parent;
+        Parse_tree<T>*      current_left;
+        Parse_tree<T>*      current_right;
+        while(! stack.empty()){
+            current_quad = stack.front();
+            stack.pop();
+            parent_index = std::get<0>(current_quad);
+            left_index = std::get<1>(current_quad);
+            right_index = std::get<2>(current_quad);
+            current_parent = std::get<3>(current_quad);
+            current_trip = taus[parent_index][left_index][right_index];
+            left_symbol_index = std::get<0>(current_trip);
+            right_symbol_index = std::get<1>(current_trip);
+            cut = std::get<2>(current_trip);
+            if(cut == -1){
+                current_parent->set_terminal(_input[cut]);
+            }else{
+                current_left = new Parse_tree<T>(_index_to_non_term.at(left_symbol_index));
+                current_right = new Parse_tree<T>(_index_to_non_term.at(right_symbol_index));
+                current_parent->set_non_terminal(current_left, current_right);
+                stack.push(stack_quad(left_symbol_index, cut + 1, right_index, current_right));
+                stack.push(stack_quad(right_symbol_index, left_index, cut, current_left));
+            }
+        }
+        return result;
+    }
 
 
 
