@@ -9,6 +9,7 @@
 #include "stochastic_rule.h"
 #include "scfg.h"
 #include "parse_tree.h"
+#include "model_estimator.h"
 
 namespace std {
     std::string to_string(std::string x){
@@ -18,6 +19,7 @@ namespace std {
 
 typedef std::string                             T;
 typedef std::vector<T>                          T_vect;
+typedef std::vector<T_vect>                     T_vect_vect;
 typedef std::unordered_map<int, double>         int_double_hashmap;
 typedef Stochastic_rule<T>                      SRule_T;
 typedef SCFG<T>                                 SGrammar_T;
@@ -27,6 +29,7 @@ typedef std::vector<std::pair<int, int>>        pair_i_i_vect;
 typedef std::mt19937                            RNG;
 typedef std::pair<T, pair_i_i>                  derivation_result;
 typedef In_out_proba<T>                         inside_T;
+typedef Model_estimator<T>                      model_estim_T;
 
 int main(){
 
@@ -121,6 +124,8 @@ int main(){
 
     probaCmpter.compute_all_probas();
 
+    probaCmpter.check_integrity();
+
     probaCmpter.print_probas();
 
     std::cout << std::endl;
@@ -128,7 +133,25 @@ int main(){
     double parse_proba;
     Parse_tree<T> parse_tree = probaCmpter.run_CYK(parse_proba);
 
-    std::cout << std::endl;
+    std::cout << parse_proba << std::endl;
     parse_tree.print_all_tree();
+
+    T_vect_vect inputs;
+    std::list<T> temp;
+    for(int i = 0; i < 1000; ++i){
+        temp = S_rule.complete_derivation(grammar);
+        if(temp.size() < 10){
+            inputs.push_back(T_vect(temp.begin(),
+                                    temp.end()));
+        }
+    }
+
+    model_estim_T model_estimator(grammar, inputs);
+
+    model_estimator.estimate_from_inputs();
+
+    model_estimator.print_estimates();
+
+    std::cout << "Done" << std::endl;
 
 }

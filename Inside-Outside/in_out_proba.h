@@ -55,24 +55,6 @@ private:
 
 public:
 
-    void get_inside_outside(double*** & E,
-                            double*** & F,
-                            int & N,
-                            int & M,
-                            int & length){
-        if(!_inside_computed){
-            compute_inside_probas();
-        }
-        if(!_outside_computed){
-            compute_outside_probas();
-        }
-        E = _E;
-        F = _F;
-        N = _N;
-        M = _M;
-        length = _length;
-    }
-
     In_out_proba(const SGrammar_T & grammar,
                  const T_vect & input):
         _A(grammar.get_A()),
@@ -123,6 +105,7 @@ public:
         _term_to_index(term_to_index),
         _index_to_term(index_to_term),
         _non_term_to_index(non_term_to_index),
+        _index_to_non_term(index_to_non_term),
         _input(input),
         _length(input.size()),
         _root_symbol(root_symbol),
@@ -152,19 +135,37 @@ public:
 
     ~In_out_proba(){
         for(int i = 0; i < _N; ++i){
-            for(int j = 0;j < _N; ++j){
+            for(int j = 0;j < _length; ++j){
                 delete[] _E[i][j];
             }
             delete[] _E[i];
         }
         delete[] _E;
         for(int i = 0; i < _N; ++i){
-            for(int j = 0;j < _N; ++j){
+            for(int j = 0;j < _length; ++j){
                 delete[] _F[i][j];
             }
             delete[] _F[i];
         }
         delete[] _F;
+    }
+
+    void get_inside_outside(double*** & E,
+                            double*** & F,
+                            int & N,
+                            int & M,
+                            int & length){
+        if(!_inside_computed){
+            compute_inside_probas();
+        }
+        if(!_outside_computed){
+            compute_outside_probas();
+        }
+        E = _E;
+        F = _F;
+        N = _N;
+        M = _M;
+        length = _length;
     }
 
     void compute_inside_level(int current_length){
@@ -175,7 +176,6 @@ public:
                 }
             }
         }else{
-            int s;
             int t;
             for(int i = 0; i < _N; ++i){
                 for(int s = 0; s < _length - current_length; ++s){
@@ -407,7 +407,24 @@ public:
         return result;
     }
 
-
+    void check_integrity(){
+        double temp_sum;
+        int i;
+        int s;
+        int t;
+        std::cout << "Inside outside sums: " << std::endl;
+        for(s = 0; s < _length; ++s){
+            for(t = s; t < _length; ++t){
+                temp_sum = 0;
+                for(i = 0; i < _N; ++i){
+                    temp_sum += _E[i][s][t] * _F[i][s][t];
+                }
+                std::cout << "\tSum for s = " << s
+                          << " and t = " << t << " : "
+                          << temp_sum << std::endl;
+            }
+        }
+    }
 
 };
 
