@@ -33,6 +33,8 @@ int main(){
     auto duration =  std::chrono::system_clock::now().time_since_epoch();
     auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
 
+    int first_option = 1100;
+    int second_option = 11198;
     RNG                     my_rng(1100);
 
     std::pair<int, int>     A_pair_1 (1, 1);
@@ -83,7 +85,7 @@ int main(){
 
     std::pair<int, int>     S_pair_1 (1, 3);
     std::pair<int, int>     S_pair_2 (2, 3);
-    double_vect             S_non_term_w ({0.5, 0.5});
+    double_vect             S_non_term_w ({0.6, 0.5});
     pair_i_i_vect           S_non_term_s ({S_pair_1,
                                            S_pair_2});
 
@@ -127,6 +129,7 @@ int main(){
     double parse_proba;
     Parse_tree<T> parse_tree = probaCmpter.run_CYK(parse_proba);
 
-    std::cout << parse_proba << std::endl;
+    std::cout << std::endl;
+    parse_tree.print_all_tree();
 
 }

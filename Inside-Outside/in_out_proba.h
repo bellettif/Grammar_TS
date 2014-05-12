@@ -173,6 +173,7 @@ public:
                     }
                 }std::cout << std::endl;
             }
+            /*
             std::cout << "F matrix for non term "
                       << _index_to_non_term.at(i) << std::endl;
             for(int s = 0; s < _length; ++s){
@@ -184,6 +185,7 @@ public:
                     }
                 }std::cout << std::endl;
             }
+            */
         }
     }
 
@@ -209,7 +211,7 @@ public:
                 }
             }else{
                 for(i = 0; i < _N; ++i){
-                    for(s = 0; s < _length; ++s){
+                    for(s = 0; s < _length - l; ++s){
                         t = s + l;
                         current_arg_max = trip(0, 0, s);
                         current_max = gammas[0][s][s] + gammas[0][s+1][t]
@@ -251,7 +253,6 @@ public:
                 }std::cout << std::endl;
             }
         }
-        std::cout << _root_index << std::endl;
         parse_proba = std::exp(gammas[_root_index][0][_length - 1]);
 
         trip                current_trip;
@@ -280,13 +281,13 @@ public:
             right_symbol_index = std::get<1>(current_trip);
             cut = std::get<2>(current_trip);
             if(cut == -1){
-                current_parent->set_terminal(_input[cut]);
+                current_parent->set_terminal(_input[left_index]);
             }else{
                 current_left = new Parse_tree<T>(_index_to_non_term.at(left_symbol_index));
                 current_right = new Parse_tree<T>(_index_to_non_term.at(right_symbol_index));
                 current_parent->set_non_terminal(current_left, current_right);
-                stack.push(stack_quad(left_symbol_index, cut + 1, right_index, current_right));
-                stack.push(stack_quad(right_symbol_index, left_index, cut, current_left));
+                stack.push(stack_quad(right_symbol_index, cut + 1, right_index, current_right));
+                stack.push(stack_quad(left_symbol_index, left_index, cut, current_left));
             }
         }
         return result;

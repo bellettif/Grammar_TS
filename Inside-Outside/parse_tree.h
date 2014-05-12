@@ -1,7 +1,10 @@
 #ifndef PARSE_TREE_H
 #define PARSE_TREE_H
 
+#include <list>
+
 #include "stochastic_rule.h"
+
 
 template<typename T>
 class Parse_tree{
@@ -56,7 +59,68 @@ public:
         _right_rule_name = _right_child->_lhs;
     }
 
+    std::string to_string(){
+        std::string result;
+        if(_isterm){
+            result += _term;
+        }else{
+            result += _left_child + " " + _right_child;
+        }
+        return result;
+    }
+
+    void print_all_tree(){
+        std::list<Parse_tree<T> *>  current;
+        std::list<Parse_tree<T> *>  next;
+        current.push_back(this);
+        std::cout << _lhs << std::endl;
+        while(!current.empty()){
+            for(Parse_tree<T>* x : current){
+                std::cout << *x << " | ";
+                if(!(x->is_term())){
+                    next.push_back(x->get_left_child());
+                    next.push_back(x->get_right_child());
+                }
+            }std::cout << std::endl;
+            current.swap(next);
+            next.clear();
+        }
+    }
+
+    bool is_term() const{
+        return _isterm;
+    }
+
+    T get_term() const{
+        return _term;
+    }
+
+    int get_left_symbol() const{
+        return _left_child->_lhs;
+    }
+
+    Parse_tree<T>* get_left_child() const{
+        return _left_child;
+    }
+
+    int get_right_symbol() const{
+        return _right_child->_lhs;
+    }
+
+    Parse_tree<T>* get_right_child() const{
+        return _right_child;
+    }
+
 };
+
+template<typename T>
+std::ostream& operator<<(std::ostream& out, const Parse_tree<T>& p){
+    if(p.is_term()){
+        return out << p.get_term();
+    }else{
+        return out << p.get_left_symbol() << " " << p.get_right_symbol();
+    }
+}
 
 
 #endif // PARSE_TREE_H
