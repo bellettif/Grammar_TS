@@ -74,9 +74,15 @@ public:
         std::list<Parse_tree<T> *>  next;
         current.push_back(this);
         std::cout << _lhs << std::endl;
+        int counter;
         while(!current.empty()){
+            counter = 1;
             for(Parse_tree<T>* x : current){
-                std::cout << *x << " | ";
+                if(counter++ < current.size()){
+                    std::cout << *x << " | ";
+                }else{
+                    std::cout << *x;
+                }
                 if(!(x->is_term())){
                     next.push_back(x->get_left_child());
                     next.push_back(x->get_right_child());

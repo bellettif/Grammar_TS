@@ -119,8 +119,7 @@ int main(){
 
     inside_T probaCmpter(grammar, input);
 
-    probaCmpter.compute_inside_probas();
-    probaCmpter.compute_outside_probas();
+    probaCmpter.compute_all_probas();
 
     probaCmpter.print_probas();
 

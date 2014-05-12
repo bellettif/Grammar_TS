@@ -51,9 +51,28 @@ private:
     int                     _root_symbol;
     int                     _root_index;
     bool                    _inside_computed        = false;
-    bool                    _outside_computed       = true;
+    bool                    _outside_computed       = false;
 
 public:
+
+    void get_inside_outside(double*** & E,
+                            double*** & F,
+                            int & N,
+                            int & M,
+                            int & length){
+        if(!_inside_computed){
+            compute_inside_probas();
+        }
+        if(!_outside_computed){
+            compute_outside_probas();
+        }
+        E = _E;
+        F = _F;
+        N = _N;
+        M = _M;
+        length = _length;
+    }
+
     In_out_proba(const SGrammar_T & grammar,
                  const T_vect & input):
         _A(grammar.get_A()),
@@ -67,7 +86,8 @@ public:
         _input(input),
         _length(input.size()),
         _root_symbol(grammar.get_root_symbol()),
-        _root_index(grammar.get_non_term_to_index().at(_root_symbol)){
+        _root_index(grammar.get_non_term_to_index().at(_root_symbol))
+    {
         _E = new double**[_N];
         for(int i = 0; i < _N; ++i){
             _E[i] = new double*[_length];
@@ -88,6 +108,63 @@ public:
                 }
             }
         }
+    }
+
+    In_out_proba(double*** A, double** B,
+                 int N, int M,
+                 const T_int_map & term_to_index,
+                 const int_T_map & index_to_term,
+                 const int_int_map & non_term_to_index,
+                 const int_int_map & index_to_non_term,
+                 int root_symbol,
+                 int root_index,
+                 const T_vect & input):
+        _A(A), _B(B), _N(N), _M(M),
+        _term_to_index(term_to_index),
+        _index_to_term(index_to_term),
+        _non_term_to_index(non_term_to_index),
+        _input(input),
+        _length(input.size()),
+        _root_symbol(root_symbol),
+        _root_index(root_index)
+    {
+        _E = new double**[_N];
+        for(int i = 0; i < _N; ++i){
+            _E[i] = new double*[_length];
+            for(int j = 0; j < _length; ++j){
+                _E[i][j] = new double[_length];
+                for(int k = 0; k < _length; ++k){
+                    _E[i][j][k] = 0;
+                }
+            }
+        }
+        _F = new double**[_N];
+        for(int i = 0; i < _N; ++i){
+            _F[i] = new double*[_length];
+            for(int j = 0; j  < _length; ++j){
+                _F[i][j] = new double[_length];
+                for(int k = 0; k < _length; ++k){
+                    _F[i][j][k];
+                }
+            }
+        }
+    }
+
+    ~In_out_proba(){
+        for(int i = 0; i < _N; ++i){
+            for(int j = 0;j < _N; ++j){
+                delete[] _E[i][j];
+            }
+            delete[] _E[i];
+        }
+        delete[] _E;
+        for(int i = 0; i < _N; ++i){
+            for(int j = 0;j < _N; ++j){
+                delete[] _F[i][j];
+            }
+            delete[] _F[i];
+        }
+        delete[] _F;
     }
 
     void compute_inside_level(int current_length){
@@ -160,6 +237,15 @@ public:
         _outside_computed = true;
     }
 
+    void compute_all_probas(){
+        if(!_inside_computed){
+            compute_inside_probas();
+        }
+        if(!_outside_computed){
+            compute_outside_probas();
+        }
+    }
+
     void print_probas(){
         for(int i = 0; i < _N; ++i){
             std::cout << "E matrix for non term "
@@ -173,7 +259,6 @@ public:
                     }
                 }std::cout << std::endl;
             }
-            /*
             std::cout << "F matrix for non term "
                       << _index_to_non_term.at(i) << std::endl;
             for(int s = 0; s < _length; ++s){
@@ -185,8 +270,56 @@ public:
                     }
                 }std::cout << std::endl;
             }
-            */
         }
+    }
+
+
+    double run_CYK(){
+        int_int_int_double_hashmap      gammas;
+        int_int_int_trip_hashmap        taus;
+        int                             i;
+        int                             j;
+        int                             k;
+        int                             s;
+        int                             t;
+        int                             r;
+        trip                            current_arg_max;
+        double                          current_max;
+        double                          current_value;
+        for(int l = 0; l < _length; ++l){
+            if(l == 0){
+                for(i = 0; i < _N; ++i){
+                    for(s = 0; s < _length; ++s){
+                        gammas[i][s][s] = std::log(_B[i][_term_to_index.at(_input[s])]);
+                        taus[i][s][s] = trip(i, i, -1);
+                    }
+                }
+            }else{
+                for(i = 0; i < _N; ++i){
+                    for(s = 0; s < _length - l; ++s){
+                        t = s + l;
+                        current_arg_max = trip(0, 0, s);
+                        current_max = gammas[0][s][s] + gammas[0][s+1][t]
+                                + std::log(_A[i][0][0]);
+                        for(j = 0; j < _N; ++j){
+                            for(k = 0; k < _N; ++k){
+                                for(r = s; r < t; ++r){
+                                    current_value = gammas[j][s][r] + gammas[k][r+1][t]
+                                            + std::log(_A[i][j][k]);
+                                    if(current_value > current_max){
+                                        current_arg_max = trip(j, k, r);
+                                        current_max = current_value;
+                                    }
+                                }
+                            }
+                        }
+                        gammas[i][s][t] = current_max;
+                        taus[i][s][t] = current_arg_max;
+                    }
+                }
+            }
+        }
+        return std::exp(gammas[_root_index][0][_length - 1]);
     }
 
     Parse_tree<T> run_CYK(double & parse_proba){
@@ -232,25 +365,6 @@ public:
                         taus[i][s][t] = current_arg_max;
                     }
                 }
-            }
-        }
-        for(i = 0; i < _N; ++i){
-            std::cout << "E matrix for non term "
-                      << _index_to_non_term.at(i) << std::endl;
-            double temp_result;
-            for(s = 0; s < _length; ++s){
-                for(t = 0; t < _length; ++t){
-                    if(gammas[i][s][t] == 0){
-                        std::cout << "0.00000000 ";
-                    }else{
-                        temp_result = std::exp(gammas[i][s][t]);
-                        if(temp_result == 0){
-                            std::cout << "0.00000000 ";
-                        }else{
-                            std::cout << std::exp(gammas[i][s][t]) << " ";
-                        }
-                    }
-                }std::cout << std::endl;
             }
         }
         parse_proba = std::exp(gammas[_root_index][0][_length - 1]);

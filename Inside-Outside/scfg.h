@@ -121,7 +121,20 @@ public:
                 _B[i][k] = new_weights[l++];
             }
         }
+    }
 
+    ~SCFG(){
+        for(int i = 0; i < _n_non_terms; ++i){
+            for(int j = 0; j < _n_non_terms; ++j){
+                delete[] _A[i][j];
+            }
+            delete[] _A[i];
+        }
+        delete[] _A;
+        for(int i = 0; i < _n_non_terms; ++i){
+            delete[] _B[i];
+        }
+        delete[] _B;
     }
 
     rule_T & get_rule(int i){
