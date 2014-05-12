@@ -29,7 +29,7 @@ private:
     int                     _root_symbol;
     int                     _root_index;
 
-    in_out_T*               _in_out_cpter;
+    std::vector<in_out_T*>  _in_out_cpters;
 
     T_vect_vect             _inputs;
     double***               _A_estim;
@@ -49,8 +49,7 @@ public:
         _index_to_non_term(init_grammar.get_index_to_non_term()),
         _root_symbol(init_grammar.get_root_symbol()),
         _root_index(init_grammar.get_non_term_to_index().at(_root_symbol)),
-        _inputs(inputs),
-        _in_out_cpter(0)
+        _inputs(inputs)
     {
         _A_estim = new double**[_N];
         for(int i = 0; i < _N; ++i){
@@ -86,86 +85,104 @@ public:
     }
 
     double estimate_from_inputs(){
-        double*** E;
-        double*** F;
+        std::cout << "N inputs: " << _inputs.size() << std::endl;
+        int n_inputs = _inputs.size();
+        std::vector<double> weights(n_inputs);
+        _in_out_cpters = std::vector<in_out_T*>(n_inputs);
+        double *** E;
+        double *** F;
         int N;
         int M;
         int length;
-        double proba;
-        for(auto current_input : _inputs){
-            for(auto x : current_input){
-                std::cout << x << " ";
-            }std::cout << std::endl;
-            _in_out_cpter = new in_out_T(_A, _B, _N, _M,
+        for(int current_it = 0; current_it < _inputs.size() ; ++current_it){
+            std::cout << "Doing sample " << current_it << std::endl;
+            _in_out_cpters[current_it] = new in_out_T(_A, _B, _N, _M,
                                              _term_to_index,
                                              _index_to_term,
                                              _non_term_to_index,
                                              _index_to_non_term,
                                              _root_symbol,
                                              _root_index,
-                                             current_input);
-            _in_out_cpter->get_inside_outside(E, F, N, M, length);
-            proba = E[_root_index][0][length-1];
-            if(proba == 0){
-                continue;
-            }else{
-                // Estim A
-                for(int i = 0; i < N; ++i){
-                    for(int j = 0; j < N; ++j){
-                        for(int k = 0; k < N; ++k){
-                            for(int s = 0; s < length; ++s){
-                                for(int t = s + 1; t < length; ++t){
-                                    for(int r = s; r < t; ++r){
-                                        _A_estim[i][j][k] +=
-                                            1 / proba * _A[i][j][k] * E[j][s][r] * E[k][r+1][t] * F[i][s][t];
-                                    }
+                                             _inputs[current_it]);
+            _in_out_cpters[current_it]->get_inside_outside(E, F, N, M, length);
+            weights[current_it] = 1.0 / E[_root_index][0][length-1];
+        }
+        double weight_avg = weights[0];
+        int current_it = 1;
+        for(current_it = 1; current_it < weights.size(); ++current_it){
+            weight_avg = weight_avg * ((double) current_it) / ((double) current_it + 1.0)
+                    + 1.0 / ((double) current_it + 1.0) * weights[current_it];
+        }
+        for(int current_it = 0; current_it < weights.size(); ++current_it){
+            weights[current_it] /= weight_avg;
+        }
+        double den;
+        double temp;
+        double num;
+        int current_term_index;
+        // Estimation of A
+        for(int i = 0; i < _N; ++i){
+            den = 0;
+            for(int current_it = 0; current_it < _inputs.size(); ++current_it){
+                _in_out_cpters[current_it]->get_inside_outside(E, F, N, M, length);
+                temp = 0;
+                for(int s = 0; s < length; ++s){
+                    for(int t = s; t < length; ++t){
+                        temp += E[i][s][t] * F[i][s][t];
+                    }
+                }
+                den += temp * weights[current_it];
+            }
+            for(int j = 0; j < _N; ++j){
+                for(int k = 0; k < _N; ++k){
+                    num = 0;
+                    for(int current_it = 0; current_it < _inputs.size(); ++current_it){
+                        _in_out_cpters[current_it]->get_inside_outside(E, F, N, M, length);
+                        temp = 0;
+                        for(int s = 0; s < length - 1; ++s){
+                            for(int t = s + 1; t < length; ++t){
+                                for(int r = s; r < t; ++r){
+                                    temp += _A[i][j][k] * E[j][s][r] * E[k][r+1][t] * F[i][s][t];
                                 }
                             }
                         }
+                        num += temp * weights[current_it];
+                    }
+                    _A_estim[i][j][k] = num / den;
+                }
+            }
+        }
+        // Estimation of B
+        for(int i = 0; i < _N; ++i){
+            den = 0;
+            for(int current_it = 0; current_it < _inputs.size(); ++current_it){
+                _in_out_cpters[current_it]->get_inside_outside(E, F, N, M, length);
+                temp = 0;
+                for(int s = 0; s < length; ++s){
+                    for(int t = s; t < length; ++t){
+                        temp += E[i][s][t] * F[i][s][t];
                     }
                 }
-                // Estim B
-                T current_obs;
-                int current_obs_index;
-                for(int i = 0; i < N; ++i){
-                    for(int s = 0; s < length; ++s){
-                        current_obs = current_input[s];
-                        current_obs_index = _term_to_index.at(current_obs);
-                        _B_estim[i][current_obs_index] +=
-                                1 / proba * E[i][s][s]
-                                    * F[i][s][s];
+                den += temp * weights[current_it];
+            }
+            for(int m = 0; m < _M; ++m){
+                num = 0;
+                for(int current_it = 0; current_it < _inputs.size(); ++current_it){
+                    _in_out_cpters[current_it]->get_inside_outside(E, F, N, M, length);
+                    for(int t = 0; t < length; ++t){
+                        current_term_index = _term_to_index.at(_inputs[current_it][t]);
+                        if(current_term_index == m){
+                            _B_estim[i][m] += E[i][t][t] * F[i][t][t] * weights[current_it] / den;
+                        }
                     }
                 }
             }
-            delete _in_out_cpter;
         }
-        // Normalization of A
-        double current_sum;
-        for(int i = 0; i < _N; ++i){
-            current_sum = 0;
-            for(int j = 0; j < _N; ++j){
-                for(int k = 0; k < _N; ++k){
-                    current_sum += _A_estim[i][j][k];
-                }
-            }
-            if(current_sum == 0) continue;
-            for(int j = 0; j < _N; ++j){
-                for(int k = 0; k < _N; ++k){
-                    _A_estim[i][j][k] /= current_sum;
-                }
-            }
+        std::cout << "Almost done" << std::endl;
+        for(int current_it = 0; current_it < n_inputs; ++current_it){
+            delete _in_out_cpters[current_it];
         }
-        // Normalization of B
-        for(int i = 0; i < _N; ++i){
-            current_sum = 0;
-            for(int m = 0; m < _M; ++m){
-                current_sum += _B_estim[i][m];
-            }
-            if(current_sum == 0) continue;
-            for(int m = 0; m < _M; ++m){
-                _B_estim[i][m] /= current_sum;
-            }
-        }
+        std::cout << "Done" << std::endl;
     }
 
     void print_estimates(){

@@ -26,6 +26,7 @@ HEADERS += \
     stochastic_rule.h \
     in_out_proba.h \
     parse_tree.h \
-    model_estimator.h
+    model_estimator.h \
+    bare_estimator.h
 
 OTHER_FILES += \

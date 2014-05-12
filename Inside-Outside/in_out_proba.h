@@ -218,7 +218,7 @@ public:
                             }
                         }
                     }
-                    for(int r = t + 1; r < _length; ++ r){
+                    for(int r = t + 1; r < _length; ++r){
                         for(int j = 0; j < _N; ++j){
                             for(int k = 0; k < _N; ++k){
                                 _F[i][s][t] += _F[j][s][r] * _A[j][i][k] * _E[k][t+1][r];
@@ -414,15 +414,50 @@ public:
         int t;
         std::cout << "Inside outside sums: " << std::endl;
         for(s = 0; s < _length; ++s){
+            for(int q = 0; q < s; ++q){
+                std::cout << "0.00000000 ";
+            }
             for(t = s; t < _length; ++t){
                 temp_sum = 0;
                 for(i = 0; i < _N; ++i){
                     temp_sum += _E[i][s][t] * _F[i][s][t];
                 }
-                std::cout << "\tSum for s = " << s
-                          << " and t = " << t << " : "
-                          << temp_sum << std::endl;
+                if(temp_sum == 0){
+                    std::cout << "0.00000000 ";
+                }else{
+                    std::cout << temp_sum << " ";
+                }
             }
+            std::cout << std::endl;
+        }
+    }
+
+    void print_A_and_B(){
+        std::cout << "Actual A matrix" << std::endl;
+        for(int i = 0; i < _N; ++i){
+            std::cout << "A matrix of index " << i << std::endl;
+            for(int j = 0; j < _N; ++j){
+                std::cout << "\t";
+                for(int k = 0; k < _N; ++k){
+                    if(_A[i][j][k] == 0){
+                        std::cout << "0.00000000 ";
+                    }else{
+                        std::cout << _A[i][j][k] << " ";
+                    }
+                }std::cout << std::endl;
+            }
+        }
+        std::cout << "Actual B matrix" << std::endl;
+        for(int i = 0; i < _N; ++i){
+            std::cout << "B matrix of index " << i << std::endl;
+            std::cout << "\t";
+            for(int j = 0; j < _M; ++j){
+                if(_B[i][j] == 0){
+                    std::cout << "0.00000000 ";
+                }else{
+                    std::cout << _B[i][j] << " ";
+                }
+            }std::cout << std::endl;
         }
     }
 

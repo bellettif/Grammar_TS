@@ -231,6 +231,10 @@ public:
         return _root_symbol;
     }
 
+    const int & get_root_index() const{
+        return _non_term_to_index.at(_root_symbol);
+    }
+
 
 };
 
