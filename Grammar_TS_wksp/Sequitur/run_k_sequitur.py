@@ -26,6 +26,7 @@ def build_grammar(file_path, k = 10, q = 10):
         csv_reader = csv.reader(input_file)
         for line in csv_reader:
             sequence = line
+            sequence = filter(lambda x : x != '1', sequence)
             break
     sequence = np.asarray(sequence, dtype = np.int32)
     grammar = sequitur.k_seq_compress(sequence, k, q)

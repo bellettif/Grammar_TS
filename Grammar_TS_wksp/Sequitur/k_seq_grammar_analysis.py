@@ -97,12 +97,12 @@ oldo_grammars = build_grammar_dict(target_folder, 'oldo')
 
 print [x.keys() for x in achu_grammars.values()]
 
-#achu_rules = reduce_rules(achu_grammars)
-#oldo_rules = reduce_rules(oldo_grammars)
+achu_rules = reduce_rules(achu_grammars)
+oldo_rules = reduce_rules(oldo_grammars)
      
-#plot_rules(achu_rules, 'achuSeq reduced', 'Achu_grammars_reduced.png')
-#plot_rules(oldo_rules, 'oldoSeq reduced', 'Oldo_grammars_reduced.png')
+plot_rules(achu_rules, 'achuSeq reduced', 'Achu_grammars_reduced.png')
+plot_rules(oldo_rules, 'oldoSeq reduced', 'Oldo_grammars_reduced.png')
 
-#plot_multiple_rules(achu_grammars, data_colors.achu_colors, 'achuSeq set', 'Achu_grammars.png')
-#plot_multiple_rules(oldo_grammars, data_colors.oldo_colors, 'oldoSeq set', 'Oldo_grammars.png')
+plot_multiple_rules(achu_grammars, data_colors.achu_colors, 'achuSeq set', 'Achu_grammars.png')
+plot_multiple_rules(oldo_grammars, data_colors.oldo_colors, 'oldoSeq set', 'Oldo_grammars.png')
 

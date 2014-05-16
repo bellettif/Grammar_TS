@@ -87,16 +87,19 @@ public:
     double estimate_from_inputs(){
         std::cout << "N inputs: " << _inputs.size() << std::endl;
         int n_inputs = _inputs.size();
-        std::vector<double> weights(n_inputs);
-        _in_out_cpters = std::vector<in_out_T*>(n_inputs);
+        std::vector<double> weights;
+        _in_out_cpters = std::vector<in_out_T*>();
         double *** E;
         double *** F;
         int N;
         int M;
         int length;
+        double proba;
+        in_out_T * current_cpter;
+        std::vector<int> input_indices;
         for(int current_it = 0; current_it < _inputs.size() ; ++current_it){
             std::cout << "Doing sample " << current_it << std::endl;
-            _in_out_cpters[current_it] = new in_out_T(_A, _B, _N, _M,
+            current_cpter = new in_out_T(_A, _B, _N, _M,
                                              _term_to_index,
                                              _index_to_term,
                                              _non_term_to_index,
@@ -104,8 +107,15 @@ public:
                                              _root_symbol,
                                              _root_index,
                                              _inputs[current_it]);
-            _in_out_cpters[current_it]->get_inside_outside(E, F, N, M, length);
-            weights[current_it] = 1.0 / E[_root_index][0][length-1];
+            current_cpter->get_inside_outside(E, F, N, M, length);
+            proba = E[_root_index][0][length-1];
+            if(proba < 1e-8){
+                std::cout << "Skipping " << current_it << std::endl;
+                continue;
+            }
+            weights.push_back(1.0 / proba);
+            _in_out_cpters.push_back(current_cpter);
+            input_indices.push_back(current_it);
         }
         double weight_avg = weights[0];
         int current_it = 1;
@@ -116,14 +126,19 @@ public:
         for(int current_it = 0; current_it < weights.size(); ++current_it){
             weights[current_it] /= weight_avg;
         }
+        std::cout << "Weights: ";
+        for(auto x : weights){
+            std::cout << x << " ";
+        }std::cout << std::endl;
         double den;
         double temp;
         double num;
         int current_term_index;
         // Estimation of A
+        std::cout << "Estimating A" << std::endl;
         for(int i = 0; i < _N; ++i){
             den = 0;
-            for(int current_it = 0; current_it < _inputs.size(); ++current_it){
+            for(int current_it = 0; current_it < _in_out_cpters.size(); ++current_it){
                 _in_out_cpters[current_it]->get_inside_outside(E, F, N, M, length);
                 temp = 0;
                 for(int s = 0; s < length; ++s){
@@ -136,7 +151,7 @@ public:
             for(int j = 0; j < _N; ++j){
                 for(int k = 0; k < _N; ++k){
                     num = 0;
-                    for(int current_it = 0; current_it < _inputs.size(); ++current_it){
+                    for(int current_it = 0; current_it < _in_out_cpters.size(); ++current_it){
                         _in_out_cpters[current_it]->get_inside_outside(E, F, N, M, length);
                         temp = 0;
                         for(int s = 0; s < length - 1; ++s){
@@ -152,10 +167,11 @@ public:
                 }
             }
         }
+        std::cout << "Estimating B" << std::endl;
         // Estimation of B
         for(int i = 0; i < _N; ++i){
             den = 0;
-            for(int current_it = 0; current_it < _inputs.size(); ++current_it){
+            for(int current_it = 0; current_it < _in_out_cpters.size(); ++current_it){
                 _in_out_cpters[current_it]->get_inside_outside(E, F, N, M, length);
                 temp = 0;
                 for(int s = 0; s < length; ++s){
@@ -167,10 +183,10 @@ public:
             }
             for(int m = 0; m < _M; ++m){
                 num = 0;
-                for(int current_it = 0; current_it < _inputs.size(); ++current_it){
+                for(int current_it = 0; current_it < _in_out_cpters.size(); ++current_it){
                     _in_out_cpters[current_it]->get_inside_outside(E, F, N, M, length);
                     for(int t = 0; t < length; ++t){
-                        current_term_index = _term_to_index.at(_inputs[current_it][t]);
+                        current_term_index = _term_to_index.at(_inputs[input_indices[current_it]][t]);
                         if(current_term_index == m){
                             _B_estim[i][m] += E[i][t][t] * F[i][t][t] * weights[current_it] / den;
                         }
@@ -179,7 +195,7 @@ public:
             }
         }
         std::cout << "Almost done" << std::endl;
-        for(int current_it = 0; current_it < n_inputs; ++current_it){
+        for(int current_it = 0; current_it < _in_out_cpters.size(); ++current_it){
             delete _in_out_cpters[current_it];
         }
         std::cout << "Done" << std::endl;
