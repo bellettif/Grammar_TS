@@ -86,7 +86,7 @@ public:
             for(int j = 0; j  < _length; ++j){
                 _F[i][j] = new double[_length];
                 for(int k = 0; k < _length; ++k){
-                    _F[i][j][k];
+                    _F[i][j][k] = 0;
                 }
             }
         }
@@ -127,7 +127,7 @@ public:
             for(int j = 0; j  < _length; ++j){
                 _F[i][j] = new double[_length];
                 for(int k = 0; k < _length; ++k){
-                    _F[i][j][k];
+                    _F[i][j][k] = 0;
                 }
             }
         }

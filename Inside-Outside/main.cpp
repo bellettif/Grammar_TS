@@ -131,7 +131,7 @@ int main(){
 
     T_vect_vect inputs;
     T_list temp;
-    for(int i = 0; i < 30; ++i){
+    for(int i = 0; i < 100000; ++i){
         temp = S_rule.complete_derivation(grammar);
         inputs.emplace_back(T_vect(temp.begin(),
                                    temp.end()));

@@ -109,14 +109,19 @@ public:
                                              _inputs[current_it]);
             current_cpter->get_inside_outside(E, F, N, M, length);
             proba = E[_root_index][0][length-1];
+            std::cout << proba << std::endl;
+            /*
             if(proba < 1e-8){
                 std::cout << "Skipping " << current_it << std::endl;
+                delete current_cpter;
                 continue;
             }
+            */
             weights.push_back(1.0 / proba);
             _in_out_cpters.push_back(current_cpter);
             input_indices.push_back(current_it);
         }
+        /*
         double weight_avg = weights[0];
         int current_it = 1;
         for(current_it = 1; current_it < weights.size(); ++current_it){
@@ -130,6 +135,7 @@ public:
         for(auto x : weights){
             std::cout << x << " ";
         }std::cout << std::endl;
+        */
         double den;
         double temp;
         double num;
