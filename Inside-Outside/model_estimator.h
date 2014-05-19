@@ -37,11 +37,13 @@ private:
 
 public:
     Model_estimator(const SGrammar_T & init_grammar,
+                    double*** initial_A_guess,
+                    double** initial_B_guess,
                     const T_vect_vect & inputs):
         _init_grammar(init_grammar),
-        _A(init_grammar.get_A()),
+        _A(initial_A_guess),
         _N(init_grammar.get_n_non_terms()),
-        _B(init_grammar.get_B()),
+        _B(initial_B_guess),
         _M(init_grammar.get_n_terms()),
         _term_to_index(init_grammar.get_term_to_index()),
         _index_to_term(init_grammar.get_index_to_term()),
@@ -85,7 +87,6 @@ public:
     }
 
     double estimate_from_inputs(){
-        std::cout << "N inputs: " << _inputs.size() << std::endl;
         int n_inputs = _inputs.size();
         std::vector<double> weights;
         _in_out_cpters = std::vector<in_out_T*>();
@@ -98,7 +99,6 @@ public:
         in_out_T * current_cpter;
         std::vector<int> input_indices;
         for(int current_it = 0; current_it < _inputs.size() ; ++current_it){
-            std::cout << "Doing sample " << current_it << std::endl;
             current_cpter = new in_out_T(_A, _B, _N, _M,
                                              _term_to_index,
                                              _index_to_term,
@@ -109,39 +109,15 @@ public:
                                              _inputs[current_it]);
             current_cpter->get_inside_outside(E, F, N, M, length);
             proba = E[_root_index][0][length-1];
-            std::cout << proba << std::endl;
-            /*
-            if(proba < 1e-8){
-                std::cout << "Skipping " << current_it << std::endl;
-                delete current_cpter;
-                continue;
-            }
-            */
             weights.push_back(1.0 / proba);
             _in_out_cpters.push_back(current_cpter);
             input_indices.push_back(current_it);
         }
-        /*
-        double weight_avg = weights[0];
-        int current_it = 1;
-        for(current_it = 1; current_it < weights.size(); ++current_it){
-            weight_avg = weight_avg * ((double) current_it) / ((double) current_it + 1.0)
-                    + 1.0 / ((double) current_it + 1.0) * weights[current_it];
-        }
-        for(int current_it = 0; current_it < weights.size(); ++current_it){
-            weights[current_it] /= weight_avg;
-        }
-        std::cout << "Weights: ";
-        for(auto x : weights){
-            std::cout << x << " ";
-        }std::cout << std::endl;
-        */
         double den;
         double temp;
         double num;
         int current_term_index;
         // Estimation of A
-        std::cout << "Estimating A" << std::endl;
         for(int i = 0; i < _N; ++i){
             den = 0;
             for(int current_it = 0; current_it < _in_out_cpters.size(); ++current_it){
@@ -173,7 +149,6 @@ public:
                 }
             }
         }
-        std::cout << "Estimating B" << std::endl;
         // Estimation of B
         for(int i = 0; i < _N; ++i){
             den = 0;
@@ -200,14 +175,13 @@ public:
                 }
             }
         }
-        std::cout << "Almost done" << std::endl;
         for(int current_it = 0; current_it < _in_out_cpters.size(); ++current_it){
             delete _in_out_cpters[current_it];
         }
-        std::cout << "Done" << std::endl;
     }
 
     void print_estimates(){
+        /*
         std::cout << "Actual A matrix" << std::endl;
         for(int i = 0; i < _N; ++i){
             std::cout << "A matrix of index " << i << std::endl;
@@ -222,6 +196,7 @@ public:
                 }std::cout << std::endl;
             }
         }
+        */
         std::cout << "Estimated A matrix" << std::endl;
         for(int i = 0; i < _N; ++i){
             std::cout << "Estimated A matrix of index " << i << std::endl;
@@ -236,6 +211,7 @@ public:
                 }std::cout << std::endl;
             }
         }
+        /*
         std::cout << "Actual B matrix" << std::endl;
         for(int i = 0; i < _N; ++i){
             std::cout << "B matrix of index " << i << std::endl;
@@ -248,6 +224,7 @@ public:
                 }
             }std::cout << std::endl;
         }
+        */
         std::cout << "Estimated B matrix" << std::endl;
         for(int i = 0; i < _N; ++i){
             std::cout << "Estimated B matrix of index " << i << std::endl;
@@ -259,6 +236,52 @@ public:
                     std::cout << _B_estim[i][j] << " ";
                 }
             }std::cout << std::endl;
+        }
+    }
+
+    double*** get_A_estim(){
+        return _A_estim;
+    }
+
+    double*** get_B_estim(){
+        return _B_estim;
+    }
+
+    double*** get_A(){
+        return _A;
+    }
+
+    double*** get_B(){
+        return _B;
+    }
+
+    void set_A(double*** A){
+        _A = A;
+    }
+
+    void set_B(double*** B){
+        _B = B;
+    }
+
+    void swap_A_model_estim(){
+        _A = _A_estim;
+        _B = _B_estim;
+        _A_estim = new double**[_N];
+        for(int i = 0; i < _N; ++i){
+            _A_estim[i] = new double*[_N];
+            for(int j = 0; j < _N; ++j){
+                _A_estim[i][j] = new double[_N];
+                for(int k = 0; k < _N; ++k){
+                    _A_estim[i][j][k] = 0;
+                }
+            }
+        }
+        _B_estim = new double*[_N];
+        for(int i = 0; i < _N; ++i){
+            _B_estim[i] = new double[_M];
+            for(int k = 0; k < _M; ++k){
+                _B_estim[i][k] = 0;
+            }
         }
     }
 

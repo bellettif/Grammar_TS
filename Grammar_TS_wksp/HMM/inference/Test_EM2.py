@@ -31,30 +31,55 @@ proba_cpter = Proba_computer(initial,
 states = np.asarray([x['state'] for x in data])
 observations = [x['obs'] for x in data]
 
-initial = proba_cpter.initial
-A = proba_cpter.A
-B = proba_cpter.B
+actual_initial = proba_cpter.initial
+actual_A = proba_cpter.A
+actual_B = proba_cpter.B
 
-new_initial, new_A, new_B = proba_cpter.estimate_new_model(observations)
+for i in xrange(100):
+    initial = proba_cpter.initial
+    A = proba_cpter.A
+    B = proba_cpter.B
+    new_initial, new_A, new_B = proba_cpter.estimate_new_model(observations)
+    print 'Initial'
+    print 'Model:'
+    print initial
+    print 'Estimated'
+    print new_initial
+    print '\n'
+    print 'A'
+    print 'Model:'
+    print A
+    print 'Estimated'
+    print new_A
+    print '\n'
+    print 'Model:'
+    print B
+    print 'Estimated'
+    print new_B
+    proba_cpter.update_parameter(new_initial, new_A, new_B)
 
+estimated_initial = new_initial
+estimated_A = new_A
+estimated_B = new_B
+
+print '\n'
 print 'Initial'
 print 'Model:'
-print initial
+print actual_initial
 print 'Estimated'
-print new_initial
-
+print estimated_initial
 print '\n'
 print 'A'
 print 'Model:'
-print A
+print actual_A
 print 'Estimated'
-print new_A
-
+print estimated_A
 print '\n'
 print 'Model:'
-print B
+print actual_B
 print 'Estimated'
-print new_B
+print estimated_B
+
 
 '''min_state = np.min(-states)
 max_state = np.max(-states)

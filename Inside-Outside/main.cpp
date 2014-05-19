@@ -41,7 +41,7 @@ int main(){
 
     int first_option = 1100;
     int second_option = 11198;
-    RNG                     my_rng(1100);
+    RNG                     my_rng(millis);
 
     std::pair<int, int>     A_pair_1 (1, 1);
     std::pair<int, int>     A_pair_2 (1, 2);
@@ -60,7 +60,6 @@ int main(){
                                     my_rng,
                                     A_term_w,
                                     A_term_s);
-    //A_rule.print();
 
     std::pair<int, int>     B_pair_1 (2, 2);
     std::pair<int, int>     B_pair_2 (2, 1);
@@ -79,27 +78,6 @@ int main(){
                                    my_rng,
                                    B_term_w,
                                    B_term_s);
-    //B_rule.print();
-
-    /*
-    std::pair<int, int>     C_pair_1 (3, 3);
-    std::pair<int, int>     C_pair_2 (2, 2);
-    std::pair<int, int>     C_pair_3 (2, 1);
-    double_vect             C_non_term_w ({0.3, 0.4, 0.4});
-    pair_i_i_vect           C_non_term_s ({C_pair_1,
-                                           C_pair_2,
-                                           C_pair_3});
-    T_vect                  C_term_s({"Pierre", "Bernadette", "Jeanne"});
-    double_vect             C_term_w({0.1, 3.1, 0.2});
-    SRule_T                 C_rule(3,
-                                   C_non_term_w,
-                                   C_non_term_s,
-                                   my_rng,
-                                   C_term_w,
-                                   C_term_s);
-    */
-
-    //C_rule.print();
 
     std::pair<int, int>     S_pair_1 (1, 1);
     std::pair<int, int>     S_pair_2 (1, 2);
@@ -131,14 +109,71 @@ int main(){
 
     T_vect_vect inputs;
     T_list temp;
-    for(int i = 0; i < 100000; ++i){
+    for(int i = 0; i < 1000; ++i){
         temp = S_rule.complete_derivation(grammar);
         inputs.emplace_back(T_vect(temp.begin(),
                                    temp.end()));
     }
 
+    int N = grammar.get_n_non_terms();
+    int M = grammar.get_n_terms();
+
+    double*** A = grammar.get_A();
+    double** B = grammar.get_B();
+
+    std::uniform_real_distribution<double> perturbation(-0.01, 0.01);
+
+    double current_sum;
+
+    std::cout << "Initial parameters" << std::endl;
+    grammar.print_params();
+
+    for(int i = 0; i < N; ++i){
+        current_sum = 0;
+        for(int j = 0; j < N; ++j){
+            for(int k = 0; k < N; ++k){
+                A[i][j][k] += perturbation(my_rng);
+                if(A[i][j][k] <= 0){
+                    A[i][j][k] = 0;
+                }
+                current_sum += A[i][j][k];
+            }
+        }
+        for(int j = 0; j < N; ++j){
+            for(int k = 0; k < N; ++k){
+                A[i][j][k] /= current_sum;
+            }
+        }
+    }
+
+    for(int i = 0; i < N; ++i){
+        current_sum = 0;
+        for(int k = 0; k < N; ++k){
+            B[i][k] += perturbation(my_rng);
+            if(B[i][k] <= 0){
+                B[i][k] = 0;
+            }
+            current_sum += B[i][k];
+        }
+        for(int k = 0; k < N; ++k){
+            B[i][k] /= current_sum;
+        }
+    }
+
+    std::cout << "Perturbated parameters" << std::endl;
+    grammar.print_params();
+
     model_estim_T model_estimator(grammar,
+                                  grammar.get_A(),
+                                  grammar.get_B(),
                                   inputs);
+
+    for(int j = 0; j < 100; ++j){
+        //std::cout << "Iteration " << j << ". ";
+        model_estimator.estimate_from_inputs();
+        model_estimator.swap_A_model_estim();
+        //std::cout << "Done" << std::endl;
+    }
 
     model_estimator.estimate_from_inputs();
 
