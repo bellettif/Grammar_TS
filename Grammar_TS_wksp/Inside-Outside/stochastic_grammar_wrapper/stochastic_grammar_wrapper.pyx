@@ -72,13 +72,13 @@ def create_c_grammar(list_of_rules,
 	cdef double*** A = grammar.get_A()
 	cdef double** B = grammar.get_B()
 	cdef np.ndarray[DTYPE_t, ndim = 3, mode = 'c'] A_converted = np.zeros((N, N, N), dtype = DTYPE)
-	cdef np.ndarray[DTYPE_t, ndim = 2, mode = 'c'] B_converted = np.zeros((N, N), dtype = DTYPE)
+	cdef np.ndarray[DTYPE_t, ndim = 2, mode = 'c'] B_converted = np.zeros((N, M), dtype = DTYPE)
 	for i in xrange(N):
 		for j in xrange(N):
 			for k in xrange(N):
-				A_converted[i, j, k] = A[i * N * N + j * N + k]
-		for j in xrange(N):
-			B_converted[i, j] = B[i * N + j]
+				A_converted[i, j, k] = A[i][j][k]
+		for j in xrange(M):
+			B_converted[i, j] = B[i][j]
 	del grammar
 	del rng
 	del c_list_of_rules

@@ -33,7 +33,15 @@ rule_1.print_state()
 rule_2.print_state()
 rule_3.print_state()
 
-SCFG_c.create_c_grammar([rule_1, rule_2, rule_3],
+A, B = SCFG_c.create_c_grammar([rule_1, rule_2, rule_3],
                         3)
 
 main_grammar = SCFG([rule_1, rule_2, rule_3], 3)
+
+print A
+
+print '\n'
+
+print B
+
+
