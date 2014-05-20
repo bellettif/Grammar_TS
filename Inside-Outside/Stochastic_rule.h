@@ -5,6 +5,7 @@
 #include <list>
 #include <random>
 #include <array>
+#include <iostream>
 
 template<typename T>
 class SCFG;
@@ -73,7 +74,7 @@ public:
         }
     }
 
-    void print() const{
+    void print_rule() const{
         std::cout << "Characteristics of rule: " << _rule_name << std::endl;
         std::cout << "Non terminal weights: (total = " << _non_term_totw << ")" << std::endl;
         for(int i = 0; i < _non_term_w.size(); ++i){

@@ -23,16 +23,16 @@ typedef std::vector<T>                          T_vect;
 typedef std::list<T>                            T_list;
 typedef std::vector<T_vect>                     T_vect_vect;
 typedef std::unordered_map<int, double>         int_double_hashmap;
-typedef Stochastic_rule<T>                      SRule_T;
-typedef SCFG<T>                                 SGrammar_T;
+typedef Stochastic_rule                         SRule_T;
+typedef SCFG                                    SGrammar_T;
 typedef std::vector<double>                     double_vect;
 typedef std::pair<int, int>                     pair_i_i;
 typedef std::vector<std::pair<int, int>>        pair_i_i_vect;
 typedef std::mt19937                            RNG;
 typedef std::pair<T, pair_i_i>                  derivation_result;
-typedef In_out_proba<T>                         inside_T;
-typedef Model_estimator<T>                      model_estim_T;
-typedef Bare_estimator<T>                       bare_estim_T;
+typedef In_out_proba                            inside_T;
+typedef Model_estimator                         model_estim_T;
+typedef Bare_estimator                          bare_estim_T;
 
 int main(){
 
@@ -136,21 +136,17 @@ int main(){
                 current_sum += A[i][j][k];
             }
         }
-        for(int j = 0; j < N; ++j){
-            for(int k = 0; k < N; ++k){
-                A[i][j][k] /= current_sum;
-            }
-        }
-    }
-
-    for(int i = 0; i < N; ++i){
-        current_sum = 0;
         for(int k = 0; k < N; ++k){
             B[i][k] += perturbation(my_rng);
             if(B[i][k] <= 0){
                 B[i][k] = 0;
             }
             current_sum += B[i][k];
+        }
+        for(int j = 0; j < N; ++j){
+            for(int k = 0; k < N; ++k){
+                A[i][j][k] /= current_sum;
+            }
         }
         for(int k = 0; k < N; ++k){
             B[i][k] /= current_sum;
@@ -163,7 +159,7 @@ int main(){
     model_estim_T model_estimator(grammar,
                                   inputs);
 
-    for(int j = 0; j < 1000; ++j){
+    for(int j = 0; j < 100; ++j){
         model_estimator.estimate_from_inputs();
         model_estimator.swap_A_model_estim();
     }

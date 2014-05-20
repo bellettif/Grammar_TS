@@ -56,10 +56,12 @@ private:
 public:
 
     In_out_proba(const SGrammar_T & grammar,
-                 const T_vect & input):
-        _A(grammar.get_A()),
+                 const T_vect & input,
+                 double *** A = 0,
+                 double ** B = 0):
+        _A(A),
+        _B(B),
         _N(grammar.get_n_non_terms()),
-        _B(grammar.get_B()),
         _M(grammar.get_n_terms()),
         _term_to_index(grammar.get_term_to_index()),
         _index_to_term(grammar.get_index_to_term()),
@@ -70,6 +72,12 @@ public:
         _root_symbol(grammar.get_root_symbol()),
         _root_index(grammar.get_non_term_to_index().at(_root_symbol))
     {
+        if(_A == 0){
+            _A = grammar.get_A();
+        }
+        if(_B == 0){
+            _B = grammar.get_B();
+        }
         _E = new double**[_N];
         for(int i = 0; i < _N; ++i){
             _E[i] = new double*[_length];

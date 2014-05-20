@@ -37,13 +37,13 @@ private:
 
 public:
     Model_estimator(const SGrammar_T & init_grammar,
-                    double*** initial_A_guess,
-                    double** initial_B_guess,
-                    const T_vect_vect & inputs):
+                    const T_vect_vect & inputs,
+                    double*** initial_A_guess = 0,
+                    double** initial_B_guess = 0):
         _init_grammar(init_grammar),
         _A(initial_A_guess),
-        _N(init_grammar.get_n_non_terms()),
         _B(initial_B_guess),
+        _N(init_grammar.get_n_non_terms()),
         _M(init_grammar.get_n_terms()),
         _term_to_index(init_grammar.get_term_to_index()),
         _index_to_term(init_grammar.get_index_to_term()),
@@ -53,6 +53,12 @@ public:
         _root_index(init_grammar.get_non_term_to_index().at(_root_symbol)),
         _inputs(inputs)
     {
+        if(_A == 0){
+            _A = init_grammar.get_A();
+        }
+        if(_B == 0){
+            _B = init_grammar.get_B();
+        }
         _A_estim = new double**[_N];
         for(int i = 0; i < _N; ++i){
             _A_estim[i] = new double*[_N];
