@@ -29,19 +29,34 @@ rule_3 = Sto_rule(3,
                   [],
                   [])
 
-rule_1.print_state()
-rule_2.print_state()
-rule_3.print_state()
-
-A, B = SCFG_c.create_c_grammar([rule_1, rule_2, rule_3],
-                        3)
+#rule_1.print_state()
+#rule_2.print_state()
+#rule_3.print_state()
 
 main_grammar = SCFG([rule_1, rule_2, rule_3], 3)
 
+sentences = SCFG_c.compute_derivations(rule_3,
+                                      main_grammar,
+                                      10)
+
+print sentences
+
+A, B = SCFG_c.compute_A_and_B(main_grammar)
+
+E, F = SCFG_c.compute_inside_outside(main_grammar,
+                            ['Bernadette', 'Mathieu', 'Michel'],
+                            A, B)
+
 print A
-
 print '\n'
-
 print B
+print '\n'
+print E
+print '\n'
+print F
+
+
+
+
 
 

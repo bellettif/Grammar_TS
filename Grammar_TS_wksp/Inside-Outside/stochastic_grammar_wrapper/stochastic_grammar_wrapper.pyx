@@ -13,6 +13,7 @@ ctypedef np.int32_t ITYPE_t
 from libcpp.vector cimport vector
 from libcpp.pair cimport pair
 from libcpp.string cimport string
+from libcpp.list cimport list
 from cython.operator cimport dereference as deref
 
 cdef extern from "<random>" namespace "std":
@@ -42,7 +43,21 @@ cdef extern from "scfg.h":
 		int get_n_terms()
 		double** get_B()
 		
-def create_c_rule(input_sto_rule):
+cdef extern from "in_out_proba.h":
+	cdef cppclass In_out_proba:
+		In_out_proba(const SCFG & grammar,
+					 const vector[string] & input,
+					 double * A,
+					 double * B)
+		void get_inside_outside(double*** & E,
+                            	double*** & F,
+                             	int & N,
+                              	int & M,
+                               	int & length)
+		void check_integrity()
+		void print_A_and_B()
+		
+def print_c_rule(input_sto_rule):
 	cdef mt19937 *rng = new mt19937(time.clock())
 	cdef Stochastic_rule *my_rule = new Stochastic_rule(input_sto_rule.rule_name,
 														input_sto_rule.non_term_w,
@@ -54,19 +69,18 @@ def create_c_rule(input_sto_rule):
 	del my_rule
 	del rng
 	
-def create_c_grammar(list_of_rules,
-					 root_symbol):
+def compute_A_and_B(input_grammar):
 	cdef mt19937 *rng = new mt19937(time.clock())
 	cdef vector[Stochastic_rule] *c_list_of_rules = new vector[Stochastic_rule]()
-	for rule in list_of_rules:
+	for rule in input_grammar.grammar.values():
 		c_list_of_rules.push_back(Stochastic_rule(rule.rule_name,
 												  rule.non_term_w,
 												  rule.non_term_s,
 												  deref(rng),
 												  rule.term_w,
 												  rule.term_s))
-	cdef SCFG *grammar = new SCFG(deref(c_list_of_rules), root_symbol)
-	grammar.print_params()
+	cdef SCFG *grammar = new SCFG(deref(c_list_of_rules),
+								input_grammar.root_symbol)
 	cdef int N = grammar.get_n_non_terms()
 	cdef int M = grammar.get_n_terms()
 	cdef double*** A = grammar.get_A()
@@ -83,5 +97,74 @@ def create_c_grammar(list_of_rules,
 	del rng
 	del c_list_of_rules
 	return A_converted, B_converted
+	
+def compute_inside_outside(input_grammar,
+						   input_sentence,
+						   np.ndarray proposal_A,
+						   np.ndarray proposal_B):
+	cdef mt19937 *rng = new mt19937(time.clock())
+	cdef vector[Stochastic_rule] *c_list_of_rules = new vector[Stochastic_rule]()
+	for rule in input_grammar.grammar.values():
+		c_list_of_rules.push_back(Stochastic_rule(rule.rule_name,
+												  rule.non_term_w,
+												  rule.non_term_s,
+												  deref(rng),
+												  rule.term_w,
+												  rule.term_s))
+	cdef SCFG *grammar = new SCFG(deref(c_list_of_rules),
+								input_grammar.root_symbol)
+	cdef In_out_proba * proba_cmpter = new In_out_proba(deref(grammar),
+				 										input_sentence,
+			 				 							<double *> proposal_A.data,
+				 			 				 			<double *> proposal_B.data)
+	cdef int length = 0
+	cdef int N = 0
+	cdef int M = 0
+	cdef double*** E
+	cdef double*** F
+	proba_cmpter.get_inside_outside(E, F, N, M, length)
+	cdef np.ndarray[DTYPE_t, ndim = 3, mode = 'c'] E_converted = np.zeros((N, length, length),
+																		   dtype = DTYPE)
+	cdef np.ndarray[DTYPE_t, ndim = 3, mode = 'c'] F_converted = np.zeros((N, length, length),
+																		   dtype = DTYPE)
+	for i in xrange(N):
+		for j in xrange(length):
+			for k in xrange(length):
+				E_converted[i, j, k] = E[i][j][k]
+				F_converted[i, j, k] = F[i][j][k]
+	del proba_cmpter
+	del grammar
+	del c_list_of_rules
+	del rng
+	return E_converted, F_converted
+	
+def compute_derivations(target_rule,
+					   input_grammar,
+					   n):
+	cdef mt19937 *rng = new mt19937(time.clock())
+	cdef vector[Stochastic_rule] *c_list_of_rules = new vector[Stochastic_rule]()
+	for rule in input_grammar.grammar.values():
+		c_list_of_rules.push_back(Stochastic_rule(rule.rule_name,
+												  rule.non_term_w,
+												  rule.non_term_s,
+												  deref(rng),
+												  rule.term_w,
+												  rule.term_s))
+	cdef SCFG *grammar = new SCFG(deref(c_list_of_rules),
+								input_grammar.root_symbol)
+	cdef Stochastic_rule *c_target_rule = new Stochastic_rule(target_rule.rule_name,
+															  target_rule.non_term_w,
+															  target_rule.non_term_s,
+															  deref(rng),
+															  target_rule.term_w,
+															  target_rule.term_s)
+	cdef vector[list[string]] *der_results = new vector[list[string]]()
+	for i in xrange(n):
+		der_results.push_back(c_target_rule.complete_derivation(deref(grammar)))
+	del c_target_rule
+	del grammar
+	del c_list_of_rules
+	del rng
+	return deref(der_results)
 	
 	

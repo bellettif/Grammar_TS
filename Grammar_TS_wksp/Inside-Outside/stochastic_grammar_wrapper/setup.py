@@ -14,7 +14,8 @@ from Cython.Distutils import build_ext
 # For numpy array support
 import numpy as np
 
-sourcefiles = ["stochastic_grammar_wrapper.pyx"]
+sourcefiles = ["stochastic_grammar_wrapper.pyx",
+			   "../Inside-Outside_string_lk/stochastic_rule.cpp"]
 main_I = "/usr/local/include"
 main_L = ["-L/usr/local/lib"]
 #boost_include = "/usr/local/Cellar/boost/1.54.0/include"
