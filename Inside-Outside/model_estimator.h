@@ -92,7 +92,7 @@ public:
         delete[] _B_estim;
     }
 
-    double estimate_from_inputs(){
+    void estimate_from_inputs(){
         int n_inputs = _inputs.size();
         std::vector<double> weights;
         _in_out_cpters = std::vector<in_out_T*>();
@@ -269,7 +269,7 @@ public:
         _B = B;
     }
 
-    void swap_A_model_estim(){
+    void swap_model_estim(){
         _A = _A_estim;
         _B = _B_estim;
         _A_estim = new double**[_N];

@@ -161,7 +161,7 @@ int main(){
 
     for(int j = 0; j < 100; ++j){
         model_estimator.estimate_from_inputs();
-        model_estimator.swap_A_model_estim();
+        model_estimator.swap_model_estim();
     }
 
     model_estimator.estimate_from_inputs();

@@ -44,8 +44,13 @@ print sentences
 A, B = SCFG_c.compute_A_and_B(main_grammar)
 
 E, F = SCFG_c.compute_inside_outside(main_grammar,
-                            ['Bernadette', 'Mathieu', 'Michel'],
-                            A, B)
+                                     sentences[5],
+                                     A, B)
+
+A_estim, B_estim = SCFG_c.estimate_model(main_grammar,
+                                         sentences,
+                                         A, B,
+                                         10)
 
 print A
 print '\n'
@@ -54,7 +59,10 @@ print '\n'
 print E
 print '\n'
 print F
-
+print '\n'
+print A_estim
+print '\n'
+print B_estim
 
 
 
