@@ -37,7 +37,7 @@ main_grammar = SCFG([rule_1, rule_2, rule_3], 3)
 
 sentences = SCFG_c.compute_derivations(rule_3,
                                       main_grammar,
-                                      10)
+                                      1000)
 
 print sentences
 
@@ -50,15 +50,11 @@ E, F = SCFG_c.compute_inside_outside(main_grammar,
 A_estim, B_estim = SCFG_c.estimate_model(main_grammar,
                                          sentences,
                                          A, B,
-                                         10)
+                                         100)
 
 print A
 print '\n'
 print B
-print '\n'
-print E
-print '\n'
-print F
 print '\n'
 print A_estim
 print '\n'

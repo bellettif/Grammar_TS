@@ -221,14 +221,8 @@ def estimate_model(input_grammar,
 														   input_sentences,
 														   <double *> initial_A_guess.data,
 														   <double *> initial_B_guess.data)
-	print '\nCheck estimates'
-	estimator.print_estimates()
-	print '----------------\n'
 	for current_it in xrange(n_its - 1):
 		estimator.estimate_from_inputs()
-		print '\nCheck estimates'
-		estimator.print_estimates()
-		print '----------------\n'
 		estimator.swap_model_estim()
 	estimator.estimate_from_inputs()
 	cdef double*** A_estim = estimator.get_A_estim()
