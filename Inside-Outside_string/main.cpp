@@ -118,6 +118,7 @@ int main(){
     double*** A = grammar.get_A();
     double** B = grammar.get_B();
 
+    /*
     std::uniform_real_distribution<double> perturbation(-0.01, 0.01);
 
     double current_sum;
@@ -152,6 +153,7 @@ int main(){
             B[i][k] /= current_sum;
         }
     }
+    */
 
     std::cout << "Perturbated parameters" << std::endl;
     grammar.print_params();

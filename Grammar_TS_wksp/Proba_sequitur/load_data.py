@@ -15,6 +15,7 @@ import csv
 import numpy as np
 from matplotlib import pyplot as plt
 import string
+import re
 
 alphabet = string.ascii_lowercase
 
@@ -31,13 +32,20 @@ data_folder = '../Sequitur/data/'
 list_of_files = os.listdir(data_folder)
 list_of_files = filter(lambda x : '.csv' in x, list_of_files)
 
-file_contents = {} 
+file_contents = {}
+
+def prefilter(seq):
+    seq = re.subn('g', '', ''.join(seq))[0]
+    for target_char in ['a', 'b', 'c', 'd', 'e', 'f']:
+        seq = re.subn(target_char + '+', target_char, ''.join(seq))[0]
+    seq = ' '.join(list(seq))
+    return seq
 
 for x in list_of_files:
     with open(data_folder + x, 'rb') as input_file:
         csv_reader = csv.reader(input_file)
         for line in csv_reader:
-            file_contents[x] = [conversion[y] for y in line]
+            file_contents[x] = prefilter([conversion[y] for y in line])
             break
 
 achu_file_contents = {}
@@ -48,10 +56,3 @@ for key, value in file_contents.iteritems():
         achu_file_contents[key] = value
     if('oldo' in key):
         oldo_file_contents[key] = value
-
-
-"""
-for file_name, file_content in file_contents.iteritems():
-    print file_name
-    print file_content
-"""
