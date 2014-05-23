@@ -8,6 +8,7 @@ import numpy as np
 import re
 from matplotlib import pyplot as plt
 import string
+import cPickle as pickle
 
 import load_data
 
@@ -21,7 +22,7 @@ def reduce_counts(list_of_dicts):
     return reduced_counts
 
 def atom_counts(sequence):
-    symbols = set(sequence)
+    symbols = set(sequence.split(' '))
     symbols = filter(lambda x : x != ' ', symbols)
     counts = {}
     for symbol in symbols:
@@ -92,48 +93,56 @@ def compute_pair_divergence(sequences, candidates, barelk_table):
 
 def substitute(sequences, symbols):
     for symbol in symbols:
-        print symbol
         pattern = re.subn('\-', ' ', symbol)[0]
         pattern = re.subn('_', '.', pattern)[0]
-        print pattern
+        pattern = string.lower(pattern)
         for i, sequence in enumerate(sequences):
             sequences[i] = re.subn(pattern, symbol, sequence)[0]
     return sequences
 
+"""
 target_sequences = load_data.achu_file_contents.values()
 
-target_chars = []
-for sequence in target_sequences:
-    target_chars.extend(sequence)
-target_chars = set(target_chars)
-target_chars = filter(lambda x : x!= ' ', target_chars)
-
-print sum(atom_counts_multi(target_sequences).values())
-
-barelk_table = init_barelk(target_sequences)
-
-print barelk_table
-
-pair_divergence = compute_pair_divergence(target_sequences,
-                                          target_chars,
-                                          barelk_table)
-
-items = pair_divergence.items()
-items.sort(key = (lambda x : -x[1]))
-labels = [x[0] for x in items]
-values = [x[1] for x in items]
-
-best_symbols = labels[:4]
-
-target_sequences = substitute(target_sequences, best_symbols)
+list_of_best_symbols = []
+for i in xrange(5):
+    target_chars = []
+    for sequence in target_sequences:
+        target_chars.extend(sequence.split(' '))
+    target_chars = set(target_chars)
+    print target_chars
+    target_chars = filter(lambda x : x!= ' ', target_chars)
+    barelk_table = init_barelk(target_sequences)
+    pair_divergence = compute_pair_divergence(target_sequences,
+                                              target_chars,
+                                              barelk_table)
+    items = pair_divergence.items()
+    items.sort(key = (lambda x : -x[1]))
+    labels = [x[0] for x in items]
+    values = [x[1] for x in items]
+    best_symbols = labels[:6]
+    best_symbols = [string.upper(x) for x in best_symbols]
+    list_of_best_symbols.append(best_symbols)
+    print best_symbols
+    target_sequences = substitute(target_sequences, best_symbols)
+    plt.bar(range(len(labels)), values, align = 'center', color = 'b')
+    plt.xticks(range(len(labels)), labels, rotation = 'vertical', fontsize = 3)
+    plt.show()
+    for seq in target_sequences:
+        print seq
+    print ''
+    for i, seq in enumerate(target_sequences):
+        new_seq = seq.split(' ')
+        new_seq = filter(lambda x : '-' in x, new_seq)
+        new_seq = ' '.join(new_seq)
+        new_seq = re.sub('\-', '', new_seq)
+        new_seq = string.lower(new_seq)
+        target_sequences[i] = new_seq
+    print target_sequences
+    print len(target_sequences)
+    print '\n-----------------------------\n'
+    
+    
+pickle.dump(list_of_best_symbols, open('best_symbols_achu.pi', 'wb'))
+pickle.dump(target_sequences, open('last_parses_achu.pi', 'wb'))
 
 """
-plt.bar(range(len(labels)), values, align = 'center', color = 'b')
-plt.xticks(range(len(labels)), labels, rotation = 'vertical', fontsize = 6)
-plt.show()
-"""
-
-print best_symbols
-
-for seq in target_sequences:
-    print seq
