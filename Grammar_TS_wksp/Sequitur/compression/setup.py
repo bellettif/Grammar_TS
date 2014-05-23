@@ -30,7 +30,7 @@ setup(
 			include_dirs = [".", 
 							np.get_include(),
 							main_I,
-							"Sequitur_lk"],
+							"../../../Sequitur/"],
 			language = "c++",
 			extra_compile_args= c11_args + ["-O3"],
             extra_link_args=(main_L ) #+ opencv_l_flags + boost_l_flags)

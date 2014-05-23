@@ -12,7 +12,7 @@ import cPickle as pickle
 
 import k_compression.k_sequitur as sequitur
 
-folder_path = "compression/Sequitur_lk/data/"
+folder_path = "../../data/"
 filenames = os.listdir(folder_path)
 filenames = filter(lambda x : '.csv' in x, filenames)
 filenames = [folder_path + x for x in filenames]

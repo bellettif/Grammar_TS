@@ -8,7 +8,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 import csv
 
-file_path = "Sequitur_lk/data/achuSeq_3.csv"
+file_path = "../../data/achuSeq_3.csv"
 
 sequence = []
 with open(file_path, 'rb') as input_file:

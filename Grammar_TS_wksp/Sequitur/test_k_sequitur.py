@@ -11,7 +11,7 @@ import csv
 import k_compression.k_sequitur as sequitur
 
 sequence_name = 'achuSeq_3'
-file_path = "compression/Sequitur_lk/data/%s.csv" % sequence_name
+file_path = "../../data/%s.csv" % sequence_name
 
 sequence = []
 with open(file_path, 'rb') as input_file:
