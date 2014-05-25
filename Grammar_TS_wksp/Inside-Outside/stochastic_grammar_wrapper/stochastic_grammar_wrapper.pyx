@@ -41,8 +41,10 @@ cdef extern from "scfg.h":
 		void print_symbols()
 		void print_params()
 		int get_n_non_terms()
+		vector[int] get_index_to_non_term_vect()
 		double*** get_A()
 		int get_n_terms()
+		vector[string] get_index_to_term_vect()
 		double** get_B()
 		
 cdef extern from "in_out_proba.h":
@@ -57,6 +59,7 @@ cdef extern from "in_out_proba.h":
                               	int & M,
                                	int & length)
 		void check_integrity()
+		double run_CYK()
 		void print_A_and_B()
 		
 cdef extern from "model_estimator.h":
@@ -87,7 +90,7 @@ def print_c_rule(input_sto_rule):
 	del my_rule
 	del rng
 	
-def compute_A_and_B(input_grammar):
+def compute_parameters(input_grammar):
 	now = datetime.now()
 	dt = datetime.now()
 	sec_since_epoch = mktime(dt.timetuple()) + dt.microsecond/1000000.0
@@ -107,6 +110,8 @@ def compute_A_and_B(input_grammar):
 	cdef int M = grammar.get_n_terms()
 	cdef double*** A = grammar.get_A()
 	cdef double** B = grammar.get_B()
+	cdef vector[int] index_to_non_term = grammar.get_index_to_non_term_vect()
+	cdef vector[string] index_to_term = grammar.get_index_to_term_vect()
 	cdef np.ndarray[DTYPE_t, ndim = 3, mode = 'c'] A_converted = np.zeros((N, N, N), dtype = DTYPE)
 	cdef np.ndarray[DTYPE_t, ndim = 2, mode = 'c'] B_converted = np.zeros((N, M), dtype = DTYPE)
 	for i in xrange(N):
@@ -118,7 +123,7 @@ def compute_A_and_B(input_grammar):
 	del grammar
 	del rng
 	del c_list_of_rules
-	return A_converted, B_converted
+	return A_converted, B_converted, index_to_non_term, index_to_term
 	
 def compute_inside_outside(input_grammar,
 						   input_sentence,

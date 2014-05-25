@@ -100,7 +100,6 @@ def substitute(sequences, symbols):
             sequences[i] = re.subn(pattern, symbol, sequence)[0]
     return sequences
 
-"""
 target_sequences = load_data.achu_file_contents.values()
 
 list_of_best_symbols = []
@@ -145,4 +144,3 @@ for i in xrange(5):
 pickle.dump(list_of_best_symbols, open('best_symbols_achu.pi', 'wb'))
 pickle.dump(target_sequences, open('last_parses_achu.pi', 'wb'))
 
-"""

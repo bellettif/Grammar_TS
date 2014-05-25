@@ -27,7 +27,7 @@ conversion = {'1' : 'a',
               '6' : 'f',
               '7' : 'g'}
 
-data_folder = '../Sequitur/data/'
+data_folder = '../../data/'
 
 list_of_files = os.listdir(data_folder)
 list_of_files = filter(lambda x : '.csv' in x, list_of_files)
