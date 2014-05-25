@@ -13,30 +13,14 @@ from surrogate.sto_rule import Sto_rule
 from surrogate.sto_grammar import SCFG
 from learning_rate_analyst import Learning_rate_analyst
 
-rule_1 = Sto_rule(1,
-                  [0.2, 0.3, 0.1, 0.4],
-                  [[1, 1], [1, 2], [2, 1], [2, 2]],
-                  [2.4, 0.1, 0.1],
-                  ['Bernadette', 'Colin', 'Michel'])
+from grammar_examples import *
 
-rule_2 = Sto_rule(2,
-                  [0.2, 0.3, 0.4, 0.1],
-                  [[2, 2], [2, 1], [1, 2], [1, 1]],
-                  [0.1, 2.0],
-                  ['Pierre', 'Mathieu'])
-
-rule_3 = Sto_rule(3,
-                  [0.6, 0.5, 0.4, 0.8],
-                  [[1, 1], [1, 2], [2, 1], [2, 2]],
-                  [],
-                  [])
-
-main_grammar = SCFG([rule_1, rule_2, rule_3], 3)
+main_grammar = palindrom_grammar
 
 lr_analyst = Learning_rate_analyst(main_grammar,
-                                   20)
+                                   100)
 
-log_lks = lr_analyst.compute_learning_rate('perturbated',
+log_lks, A, B = lr_analyst.compute_learning_rate('perturbated',
                                            50,
                                            1.0)
 
@@ -44,9 +28,13 @@ avg_log_lks = np.average(log_lks, axis = 1)
 
 print avg_log_lks
 
+print lr_analyst.compute_squared_diff_model(A, B)
+
 plt.plot(avg_log_lks, color = 'b')
 plt.plot(range(len(avg_log_lks)),
          np.ones(len(avg_log_lks)) * lr_analyst.exact_lk,
          color = 'r')
-plt.show()
+plt.title('Learning rate inside outside')
+plt.savefig('Learning_rate_palindrom.png', dpi = 300)
+plt.close()
 

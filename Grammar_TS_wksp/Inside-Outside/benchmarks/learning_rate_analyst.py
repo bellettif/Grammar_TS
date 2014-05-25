@@ -21,6 +21,8 @@ class Learning_rate_analyst:
         self.n_samples = n_samples
         self.samples = grammar.produce_sentences(self.n_samples)
         self.exact_lk = np.average(self.compute_all_lks('actual'))
+        self.model_A = np.copy(grammar.A)
+        self.model_B = np.copy(grammar.B)
         
     # Proposal_type in ['actual', 'flat', 'perturbated', 'matrix']
     def compute_all_lks(self,
@@ -115,4 +117,16 @@ class Learning_rate_analyst:
                                                   0,
                                                   A, B)
             A, B = self.grammar.estimate_model(self.samples, 1, A, B)
-        return log_lks
+        return log_lks, A, B
+    
+    def compute_squared_diff_model(self,
+                           A,
+                           B):
+        A_shapes = A.shape
+        B_shapes = B.shape
+        first_weight = float(A_shapes[0] * A_shapes[1] * A_shapes[2])
+        second_weight = float(B_shapes[0] * B_shapes[1])
+        total_weight = first_weight + second_weight
+        num = np.average((A - self.model_A) ** 2) * first_weight
+        num += np.average((B - self.model_B) ** 2) * second_weight
+        return num / total_weight
