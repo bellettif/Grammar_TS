@@ -4,7 +4,7 @@ Created on 20 mai 2014
 @author: francois
 '''
 
-import SCFG_c
+import stochastic_grammar_wrapper.SCFG_c
 
 import numpy as np
 from matplotlib import pyplot as plt
@@ -41,8 +41,8 @@ main_grammar.print_parameters()
 A = np.copy(main_grammar.A)
 B = np.copy(main_grammar.B)
 
-A += np.random.normal(0.0, 0.01, (A.shape[0], A.shape[1], A.shape[2]))
-B += np.random.normal(0.0, 0.01, (B.shape[0], B.shape[1]))
+A += np.random.normal(0.0, 0.05, (A.shape[0], A.shape[1], A.shape[2]))
+B += np.random.normal(0.0, 0.05, (B.shape[0], B.shape[1]))
 
 for i in xrange(A.shape[0]):
     total = np.sum(A[i, :, :]) + np.sum(B[i, :])

@@ -63,12 +63,14 @@ class SCFG:
         print self.term_to_index
         print '\n'
         
-    def producte_sentences(self,
+    # Return a list of list of strings
+    def produce_sentences(self,
                            n_samples):
         return SCFG_c.compute_derivations(self.grammar[self.root_symbol],
                                           self,
                                           n_samples)
         
+    # Returns A_estim, B_estim
     def estimate_model(self,
                        sentences,
                        n_iterations,
@@ -80,11 +82,14 @@ class SCFG:
                                      proposal_B,
                                      n_iterations)
         
+    # Returns E_esitm, F_Estim, log_lk
     def compute_inside_outside(self,
                                sentence,
                                proposal_A,
                                proposal_B):
-        return SCFG_c.compute_inside_outside(self,
+        E, F = SCFG_c.compute_inside_outside(self,
                                              sentence,
                                              proposal_A,
                                              proposal_B)
+        log_lk = np.log(E[self.non_term_to_index[self.root_symbol], 0, -1])
+        return E, F, log_lk

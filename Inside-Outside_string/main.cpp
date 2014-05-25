@@ -161,6 +161,46 @@ int main(){
     model_estim_T model_estimator(grammar,
                                   inputs);
 
+    std::vector<std::string> sentence = {"Bernadette",
+                                         "Bernadette",
+                                         "Mathieu",
+                                         "Mathieu",
+                                         "Bernadette",
+                                         "Mathieu",
+                                         "Mathieu"};
+
+    In_out_proba in_out_proba(grammar,
+                              sentence,
+                              A,
+                              B);
+
+    double*** E;
+    double*** F;
+    int M_;
+    int N_;
+    int length;
+
+    in_out_proba.get_inside_outside(E,
+                                    F,
+                                    N_,
+                                    M_,
+                                    length);
+
+    for(int i = 0; i < N_; ++i){
+        std::cout << "Non terminal character " << i << std::endl;
+        for(int s = 0; s < length; ++s){
+            std::cout << "\t";
+            for(int r = 0; r < length; ++r){
+                if(E[i][s][r] == 0){
+                    std::cout << "0.0000000 ";
+                }
+                std::cout << E[i][s][r] << " ";
+            }std::cout << std::endl;
+        }
+    }
+
+    /*
+
     for(int j = 0; j < 100; ++j){
         model_estimator.estimate_from_inputs();
         model_estimator.swap_model_estim();
@@ -169,5 +209,6 @@ int main(){
     model_estimator.estimate_from_inputs();
 
     model_estimator.print_estimates();
+    */
 
 }
