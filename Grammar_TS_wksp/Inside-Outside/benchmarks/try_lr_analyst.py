@@ -18,7 +18,7 @@ from grammar_examples import *
 main_grammar = palindrom_grammar
 
 lr_analyst = Learning_rate_analyst(main_grammar,
-                                   100)
+                                   20)
 
 log_lks, A, B = lr_analyst.compute_learning_rate('perturbated',
                                            50,
@@ -35,6 +35,8 @@ plt.plot(range(len(avg_log_lks)),
          np.ones(len(avg_log_lks)) * lr_analyst.exact_lk,
          color = 'r')
 plt.title('Learning rate inside outside')
-plt.savefig('Learning_rate_palindrom.png', dpi = 300)
+plt.savefig('Learning_rate_palindrom_grammar_perturbated.png', dpi = 300)
+plt.ylabel('Avg Log likelood')
+plt.xlabel('N iterations')
 plt.close()
 
