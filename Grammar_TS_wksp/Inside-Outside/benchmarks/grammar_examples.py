@@ -74,22 +74,22 @@ rule_wildcard = Sto_rule(5,
                          [0.25, 0.25, 0.25, 0.25],
                          ["Try_begin", "Succeed_begin", "Try_end", "Succeed_end"])
 rule_try_begin = Sto_rule(1,
-                          [0.1, 0.1],
+                          [0.01, 0.01],
                           [[1, 5], [5, 1]],
                           [1.0],
                           ["Try_begin"])
 rule_succeed_begin = Sto_rule(2,
-                              [0.1, 0.1],
+                              [0.01, 0.01],
                               [[2, 5], [5, 2]],
                               [1.0],
                               ["Succeed_begin"])
 rule_try_end = Sto_rule(3,
-                        [0.1, 0.1],
+                        [0.01, 0.01],
                         [[3, 5], [5, 3]],
                         [1.0],
                         ["Try_end"])
 rule_succeed_end = Sto_rule(4,
-                            [0.1, 0.1],
+                            [0.01, 0.01],
                             [[4, 5], [5, 4]],
                             [1.0],
                             ["Succeed_end"])
