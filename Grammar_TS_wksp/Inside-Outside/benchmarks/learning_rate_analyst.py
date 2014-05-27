@@ -37,9 +37,11 @@ class Learning_rate_analyst:
                                                                    self.grammar.A,
                                                                    self.grammar.B)
                 log_lks.append(log_lk)
-        elif (proposal_type == 'flat'):
-            A = np.ones(self.grammar.A.shape)
-            B = np.ones(self.grammar.B.shape)
+        elif (proposal_type == 'random'):
+            A = np.ones(self.grammar.A.shape) + np.random.normal(0.0, 1.0, self.grammar.A.shape)
+            A = np.maximum(A, np.zeros(self.grammar.A.shape))
+            B = np.ones(self.grammar.B.shape) + np.random.normal(0.0, 1.0, self.grammar.B.shape)
+            B = np.maximum(B, np.zeros(self.grammar.B.shape))
             for i in xrange(A.shape[0]):
                 total = np.sum(A[i, :, :]) + np.sum(B[i, :])
                 A[i, :, :] /= total
@@ -90,9 +92,11 @@ class Learning_rate_analyst:
         if (init_type == 'actual'):
             A = np.copy(self.grammar.A)
             B = np.copy(self.grammar.B)
-        elif (init_type == 'flat'):
-            A = np.ones(self.grammar.A.shape)
-            B = np.ones(self.grammar.B.shape)
+        elif (init_type == 'random'):
+            A = np.ones(self.grammar.A.shape) + np.random.normal(0.0, 1.0, self.grammar.A.shape)
+            A = np.maximum(A, np.zeros(self.grammar.A.shape))
+            B = np.ones(self.grammar.B.shape) + np.random.normal(0.0, 1.0, self.grammar.B.shape)
+            B = np.maximum(B, np.zeros(self.grammar.B.shape))
             for i in xrange(A.shape[0]):
                 total = np.sum(A[i, :, :]) + np.sum(B[i, :])
                 A[i, :, :] /= total

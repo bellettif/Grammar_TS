@@ -34,6 +34,9 @@ class Proba_sequitur:
         self.terminal_chars = []
         self.next_rule_name = 0
         self.barelk_table = {}
+        self.reconstructed = {}
+        self.reconstructed_length = {}
+        self.reconstructed_ratio = 0
 
     def reduce_counts(self,
                       list_of_dicts):
@@ -207,19 +210,22 @@ class Proba_sequitur:
             for i, seq in enumerate(target_sequences):
                 new_seq = seq.split(' ')
                 new_seq = filter(lambda x : 'Rule' in x, new_seq)
-                #new_seq = filter(lambda x : x in list_of_rules[-1], new_seq)
-                if (self.level > 1):
-                    pass
-                                     #or x in list_of_rules[-2], new_seq)
-                #else:
-                #    new_seq = filter(lambda x : x in list_of_rules[-1], new_seq)
                 new_seq = ' '.join(new_seq)
                 new_seq = re.sub('\-', '', new_seq)
                 new_seq = string.lower(new_seq)
+                if self.level == 1:
+                    self.reconstructed[i] = [x if 'Rule' in x else '*' for x in seq.split(' ')]
+                    self.reconstructed_length[i] = 2 * len(filter(lambda x : 'Rule' in x, seq.split(' ')))
                 if len(new_seq) == 0:
                     self.terminal_parsing[i] = seq
                 else:
                     temp_target_sequences.append(new_seq)
+            if self.level == 1:
+                total_reconstructed_length = sum(self.reconstructed_length.values())
+                total_length = sum([len(x) for x in self.samples])
+                print 'Total reconstructured length = ' + str(total_reconstructed_length)
+                print 'Total length = ' + str(total_length)
+                self.reconstructed_ratio = float(total_reconstructed_length) / float(total_length)
             target_sequences = temp_target_sequences
             """
             print len(target_sequences)
@@ -247,6 +253,8 @@ class Proba_sequitur:
         print rule_ranking
         print 'Rules:'
         print self.rules
+        print 'Reconstructed ratio:'
+        print self.reconstructed_ratio
         print ''
   
     def create_root_rule(self):
@@ -347,6 +355,7 @@ class Proba_sequitur:
         all_rules.extend(self.other_rules.values())
         print set([x.rule_name for x in all_rules])
         self.grammar = SCFG(all_rules, 0)
+                            
         
         
         
