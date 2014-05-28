@@ -103,7 +103,6 @@ class Grammar_folder:
         min_values = np.min(distances, axis = 1)
         col_min = np.argmin(min_values)
         self.to_merge = (row_mins[col_min], col_min)
-        self.to_merge = [3, 4]
         
     def merge(self):
         self.sto_grammar = SCFG(A = self.A, B = self.B,

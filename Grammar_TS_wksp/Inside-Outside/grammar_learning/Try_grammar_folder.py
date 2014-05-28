@@ -13,7 +13,7 @@ from Grammar_folder import Grammar_folder
 from benchmarks.grammar_examples import *
 from benchmarks.learning_rate_analyst import Learning_rate_analyst
 
-selected_grammar = palindrom_grammar
+selected_grammar = action_grammar
 n_samples = 100
 
 sentences = selected_grammar.produce_sentences(n_samples)
@@ -40,13 +40,15 @@ samples = [x.split(' ') for x in sentences]
 
 grammar_folder = Grammar_folder(proba_seq.grammar,
                                 samples,
-                                5)
+                                20)
 
 grammar_folder.iterate()
 
 grammar_folder.to_merge = [3, 5]
 grammar_folder.merge()
-
+grammar_folder.iterate()
+grammar_folder.to_merge = [1, 2]
+grammar_folder.merge()
 grammar_folder.iterate()
 
 all_log_lks = np.vstack(grammar_folder.all_lks)

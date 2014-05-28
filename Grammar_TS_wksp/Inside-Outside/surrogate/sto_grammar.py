@@ -42,6 +42,17 @@ class SCFG:
             self.compute_parameters()
         elif len(to_merge) > 0:
             self.root_symbol = 0
+            first_index = to_merge[0]
+            second_index = to_merge[1]
+            sub_selection = range(A.shape[0])
+            sub_selection = filter(lambda x : x != second_index, sub_selection)
+            old_A = np.copy(A)
+            old_A[first_index, :, :] = 0.5 * old_A[first_index, :, :] + 0.5 * old_A[second_index, :, :]
+            old_A[:, first_index, :] = 0.5 * old_A[:, first_index, :] + 0.5 * old_A[:, second_index, :]
+            old_A[:, :, first_index] = 0.5 * old_A[:, :, first_index] + 0.5 * old_A[:, :, second_index]
+            self.A = old_A[np.ix_(sub_selection, sub_selection, sub_selection)]
+            self.B = np.copy(B[sub_selection])
+            self.B[first_index] = 0.5 * B[first_index] + 0.5 * B[second_index]
             """
             first_index = to_merge[0]
             second_index = to_merge[1]
@@ -61,13 +72,11 @@ class SCFG:
             self.B = np.copy(B[sub_selection])
             self.B[first_index] = 0.5 * B[first_index] + 0.5 * B[second_index]
             """
-            self.A = A
-            self.B = B
             for i in xrange(self.A.shape[0]):
                 total_weight = np.sum(self.A[i]) + np.sum(self.B[i])
                 self.A[i,:,:] /= total_weight
                 self.B[i,:] /= total_weight
-            self.index_to_non_term = range(self.A.shape[0])#range(len(sub_selection))
+            self.index_to_non_term = range(len(sub_selection))
             self.non_term_to_index = {}
             for i, non_term in enumerate(self.index_to_non_term):
                 self.non_term_to_index[non_term] = i

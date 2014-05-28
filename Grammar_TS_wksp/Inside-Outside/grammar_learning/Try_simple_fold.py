@@ -27,11 +27,17 @@ merged_grammar = SCFG(A = A,
 
 print sentence
 
+"""
 print selected_grammar.compute_inside_outside(sentence,
                                               selected_grammar.A,
                                               selected_grammar.B)
+"""
 
+print selected_grammar.A.shape
+print merged_grammar.A.shape
+
+"""
 print merged_grammar.compute_inside_outside(sentence,
                                             merged_grammar.A,
                                             merged_grammar.B)
-
+"""
