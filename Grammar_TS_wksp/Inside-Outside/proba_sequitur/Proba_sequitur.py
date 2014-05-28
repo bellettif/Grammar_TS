@@ -37,6 +37,8 @@ class Proba_sequitur:
         self.reconstructed = {}
         self.reconstructed_length = {}
         self.reconstructed_ratio = 0
+        self.index_to_non_term = []
+        self.non_term_to_index = {}  
 
     def reduce_counts(self,
                       list_of_dicts):
@@ -181,11 +183,6 @@ class Proba_sequitur:
                 best_symbols_index = filter(lambda i : values[i] > 0, range(len(values)))
                 best_symbols = labels[:len(best_symbols_index)]
             list_of_best_symbols.append(best_symbols)
-            """
-            print best_symbols
-            rule_names = []
-            print ''
-            """
             rule_names = []
             for best_symbol in best_symbols:
                 self.rules['rule%d' % self.current_rule_index] = best_symbol
@@ -197,15 +194,6 @@ class Proba_sequitur:
                 if key not in self.counts:
                     self.counts[key] = 0
                 self.counts[key] += value
-            """
-            plt.bar(range(len(labels)), values, align = 'center', color = 'b')
-            plt.xticks(range(len(labels)), labels, rotation = 'vertical', fontsize = 3)
-            plt.show()
-            print ''
-            for seq in target_sequences:
-                print seq + '/'
-            print ''
-            """
             temp_target_sequences = []
             for i, seq in enumerate(target_sequences):
                 new_seq = seq.split(' ')
@@ -256,13 +244,40 @@ class Proba_sequitur:
         print 'Reconstructed ratio:'
         print self.reconstructed_ratio
         print ''
-  
+     
+    def map_rules(self):
+        self.index_to_non_term = {}
+        self.non_term_to_index = {}
+        self.index_to_non_term[0] = 0
+        self.non_term_to_index[0] = 0
+        n = 1
+        for rule_lhs in self.rules:
+            rule_number = n
+            self.index_to_non_term[rule_number] = rule_lhs
+            self.non_term_to_index[rule_lhs] = rule_number
+            n += 1
+        self.preterminal_rules = {}
+        for i, term in enumerate(self.terminal_chars):
+            weights = np.ones(len(self.terminal_chars)) * 0.01
+            weights[i] = 1.0
+            self.preterminal_rules[term] = \
+                Sto_rule(int(n),
+                         [],
+                         [],
+                         weights,
+                         self.terminal_chars)
+            self.index_to_non_term[n] = string.upper(term)
+            self.non_term_to_index[string.upper(term)] = n
+            n += 1
+        list_of_keys = self.index_to_non_term.keys()
+        list_of_keys.sort()
+        temp = []
+        for key in list_of_keys:
+            temp.append(self.index_to_non_term[key])
+        self.index_to_non_term = temp
+        
     def create_root_rule(self):
-        self.root_rule = {}
-        terminal_weights = []
-        for key in self.terminal_chars:
-            terminal_weights.append(self.barelk_table[key])
-        self.terminal_weights = np.asarray(terminal_weights)
+        self.map_rules()
         terminal_parsing_counts = {}
         for value in self.terminal_parsing.values():
             for rule in value.split(' '):
@@ -275,86 +290,53 @@ class Proba_sequitur:
         weight_list = []
         rule_list = []
         for key, value in terminal_parsing_counts.iteritems():
-            weight_list.append(value / total_weight)
             left_rule, right_rule = self.rules[key].split('-')
             if (left_rule in self.rules) and (right_rule in self.rules):
-                left_rule = list(left_rule)[4:]
-                right_rule = list(right_rule)[4:]
-                left_rule = int(''.join(left_rule))
-                right_rule = int(''.join(right_rule))
+                left_rule = self.non_term_to_index[left_rule]
+                right_rule = self.non_term_to_index[right_rule]
                 rule_list.append([left_rule, right_rule])
-        print rule_list
+                weight_list.append(value / total_weight)
+        total_weight = sum(weight_list)
+        for i, w in enumerate(weight_list):
+            weight_list[i] = w / total_weight
         self.root_rule = Sto_rule(0,
                                   weight_list,
                                   rule_list,
-                                  self.terminal_weights * 0.01,
-                                  self.terminal_chars)
-    
-    def create_basic_stochastic_rules(self):
-        self.basic_rules = {}
-        terminal_weights = []
-        for key in self.terminal_chars:
-            terminal_weights.append(self.barelk_table[key])
-        self.terminal_weights = np.asarray(terminal_weights)
-        self.basic_rules = {}
-        for rule, value in self.rules.iteritems():
-            left_rule, right_rule = value.split('-')
-            if (left_rule in self.rules) and (right_rule in self.rules):
-                left_rule = list(left_rule)[4:]
-                right_rule = list(right_rule)[4:]
-                left_rule = int(''.join(left_rule))
-                right_rule = int(''.join(right_rule))
-                rule_number = int(''.join(list(rule)[4:]))
-                self.basic_rules[rule_number] = Sto_rule(rule_number,
-                                                         [1.0],
-                                                         [[left_rule, right_rule]],
-                                                         self.terminal_weights,
-                                                         self.terminal_chars)
-                
-    def complete_rules(self):
-        self.other_rules = {}
-        for key, value in self.basic_rules.iteritems():
-            for non_terms in value.non_term_s:
-                if non_terms[0] not in self.basic_rules:
-                    rule_number = non_terms[0]
-                    self.other_rules[non_terms[0]] = Sto_rule(rule_number,
-                                                              [],
-                                                              [],
-                                                              self.terminal_weights,
-                                                              self.terminal_chars)
-                if non_terms[1] not in self.basic_rules:
-                    rule_number = non_terms[1]
-                    self.other_rules[non_terms[1]] = Sto_rule(rule_number,
-                                                              [],
-                                                              [],
-                                                              self.terminal_weights,
-                                                              self.terminal_chars)
-        for non_terms in self.root_rule.non_term_s:
-            if non_terms[0] not in self.basic_rules:
-                rule_number = non_terms[0]
-                self.other_rules[non_terms[0]] = Sto_rule(rule_number,
-                                                          [],
-                                                          [],
-                                                          self.terminal_weights,
-                                                          self.terminal_chars)
-            if non_terms[1] not in self.basic_rules:
-                rule_number = non_terms[1]
-                self.other_rules[non_terms[1]] = Sto_rule(rule_number,
-                                                          [],
-                                                          [],
-                                                          self.terminal_weights,
-                                                          self.terminal_chars)
-                
-    def create_sto_grammar(self):
-        print self.terminal_chars
-        self.create_root_rule()
-        self.create_basic_stochastic_rules()
-        self.complete_rules()
-        all_rules = [self.root_rule]
-        all_rules.extend(self.basic_rules.values())
-        all_rules.extend(self.other_rules.values())
-        print set([x.rule_name for x in all_rules])
-        self.grammar = SCFG(all_rules, 0)
+                                  [],
+                                  [])
+        
+    def create_grammar(self):
+        list_of_rules = []
+        list_of_rules.append(self.root_rule)
+        for rule_name, rule_content in self.preterminal_rules.iteritems():
+            list_of_rules.append(rule_content)
+        for rule_name, rule_content in self.rules.iteritems():
+            left_rule, right_rule = rule_content.split('-')
+            if left_rule not in self.rules:
+                left_rule = self.non_term_to_index[string.upper(left_rule)]
+            else:
+                left_rule = self.non_term_to_index[left_rule]
+            if right_rule not in self.rules:
+                right_rule = self.non_term_to_index[string.upper(right_rule)]
+            else:
+                right_rule = self.non_term_to_index[right_rule]
+            rule_name = self.non_term_to_index[rule_name]
+            list_of_rules.append(Sto_rule(int(rule_name),
+                                          [1.0],
+                                          [[left_rule, right_rule]],
+                                          [],
+                                          []))
+        """
+        for rule in list_of_rules:
+            print rule.rule_name
+            print rule.non_term_s
+            print rule.non_term_w
+            print rule.term_s
+            print rule.term_w
+            print ''
+        """
+        self.grammar = SCFG(list_of_rules, 0)
+        self.grammar.blurr_A()
                             
         
         

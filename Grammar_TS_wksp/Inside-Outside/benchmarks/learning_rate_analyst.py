@@ -16,10 +16,15 @@ class Learning_rate_analyst:
     
     def __init__(self,
                  grammar,
-                 n_samples):
+                 n_samples,
+                 samples = 0):
         self.grammar = grammar
         self.n_samples = n_samples
-        self.samples = grammar.produce_sentences(self.n_samples)
+        if samples == 0:
+            self.samples = grammar.produce_sentences(self.n_samples)
+        else:
+            self.samples = samples
+            self.n_samples = len(samples)
         self.exact_lk = np.average(self.compute_all_lks('actual'))
         self.model_A = np.copy(grammar.A)
         self.model_B = np.copy(grammar.B)
@@ -88,7 +93,9 @@ class Learning_rate_analyst:
     def compute_learning_rate(self,
                               init_type,
                               n_iterations,
-                              sigma = 0):
+                              sigma = 0,
+                              A = 0,
+                              B = 0):
         if (init_type == 'actual'):
             A = np.copy(self.grammar.A)
             B = np.copy(self.grammar.B)
@@ -112,6 +119,8 @@ class Learning_rate_analyst:
                 total = np.sum(A[i, :, :]) + np.sum(B[i, :])
                 A[i, :, :] /= total
                 B[i, :] /= total
+        elif (init_type == 'proposal'):
+            pass
         else:
             raise Exception('Invalid init type, must be either actual, flat or perturbated')
         log_lks = np.zeros((n_iterations, self.n_samples))
