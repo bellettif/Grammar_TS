@@ -231,14 +231,14 @@ class Proba_sequitur:
     def print_result(self):
         rule_counts = self.counts.items()
         rule_items = self.rules.items()
-        rule_ranking = []
+        self.rule_ranking = []
         for i in xrange(len(rule_counts)):
-            rule_ranking.append([rule_counts[i][0], rule_counts[i][1], rule_items[i][1]])
-        rule_ranking.sort(key = (lambda x : -x[1]))
+            self.rule_ranking.append([rule_counts[i][0], rule_counts[i][1], rule_items[i][1]])
+        self.rule_ranking.sort(key = (lambda x : -x[1]))
         print 'Terminal parsing:'
         print self.terminal_parsing
-        print 'Rules (%d), %d levels:' % (len(rule_ranking), self.level)
-        print rule_ranking
+        print 'Rules (%d), %d levels:' % (len(self.rule_ranking), self.level)
+        print self.rule_ranking
         print 'Rules:'
         print self.rules
         print 'Reconstructed ratio:'
@@ -247,6 +247,7 @@ class Proba_sequitur:
      
     def map_rules(self):
         self.index_to_non_term = {}
+        self.index_to_score = {}
         self.non_term_to_index = {}
         self.index_to_non_term[0] = 0
         self.non_term_to_index[0] = 0
@@ -254,6 +255,7 @@ class Proba_sequitur:
         for rule_lhs in self.rules:
             rule_number = n
             self.index_to_non_term[rule_number] = rule_lhs
+            self.index_to_score[rule_number] = self.counts[rule_lhs]
             self.non_term_to_index[rule_lhs] = rule_number
             n += 1
         self.preterminal_rules = {}
@@ -272,9 +274,13 @@ class Proba_sequitur:
         list_of_keys = self.index_to_non_term.keys()
         list_of_keys.sort()
         temp = []
-        for key in list_of_keys:
+        temp_2 = {}
+        for i, key in enumerate(list_of_keys):
             temp.append(self.index_to_non_term[key])
+            if key in self.index_to_score:
+                temp_2[i] = self.index_to_score[key]
         self.index_to_non_term = temp
+        self.index_to_score = temp_2
         
     def create_root_rule(self):
         self.map_rules()
@@ -326,15 +332,6 @@ class Proba_sequitur:
                                           [[left_rule, right_rule]],
                                           [],
                                           []))
-        """
-        for rule in list_of_rules:
-            print rule.rule_name
-            print rule.non_term_s
-            print rule.non_term_w
-            print rule.term_s
-            print rule.term_w
-            print ''
-        """
         self.grammar = SCFG(list_of_rules, 0)
         self.grammar.blurr_A()
                             

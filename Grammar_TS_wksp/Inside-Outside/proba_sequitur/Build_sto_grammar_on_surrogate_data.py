@@ -33,6 +33,7 @@ proba_seq.create_grammar()
 proba_seq.grammar.blurr_A()
 
 print proba_seq.grammar.index_to_non_term
+print proba_seq.index_to_score
 print proba_seq.grammar.non_term_to_index
 print proba_seq.grammar.index_to_term
 print proba_seq.grammar.term_to_index

@@ -7,18 +7,19 @@ Created on 20 mai 2014
 import stochastic_grammar_wrapper.SCFG_c as SCFG_c
 
 import numpy as np
+from surrogate.sto_rule import Sto_rule
 
 class SCFG:
     
     # List of rules is a list of sto_rules
     # Root symbol is an int
     def __init__(self,
-                 list_of_rules,
-                 root_symbol,
+                 list_of_rules = [],
+                 root_symbol = [],
                  A = np.zeros((0, 0, 0)),
                  B = np.zeros((0, 0)),
-                 list_of_rule_names = [],
-                 index_to_term = []): # Root is always the first rule
+                 to_merge = [],
+                 term_chars = []): # Root is always the first rule
         self.grammar = {}
         self.A = np.copy(A)
         self.B = np.copy(B)
@@ -39,23 +40,60 @@ class SCFG:
             self.non_term_to_index = {}
             self.term_to_index = {}
             self.compute_parameters()
-        else:
-            self.index_to_term = index_to_term
+        elif len(to_merge) > 0:
+            self.root_symbol = 0
+            """
+            first_index = to_merge[0]
+            second_index = to_merge[1]
+            sub_selection = range(A.shape[0])
+            sub_selection = filter(lambda x : x != second_index, sub_selection)
+            n = A.shape[0] - 1
+            old_A = np.copy(A)
+            new_A = A[sub_selection, :, :]
+            new_A[first_index, :, :] = 0.5 * old_A[first_index, :, :] + 0.5 * old_A[second_index, :, :]
+            old_A = old_A[sub_selection, :, :]
+            new_A = new_A[:, sub_selection, :]
+            new_A[:, first_index, :] = 0.5 * old_A[:, first_index, :] + 0.5 * old_A[:, second_index, :]
+            old_A = old_A[:, sub_selection, :]
+            new_A = new_A[:, :, sub_selection]
+            new_A[:, :, first_index] = 0.5 * old_A[:, :, first_index] + 0.5 * old_A[:, :, second_index]
+            self.A = new_A
+            self.B = np.copy(B[sub_selection])
+            self.B[first_index] = 0.5 * B[first_index] + 0.5 * B[second_index]
+            """
+            self.A = A
+            self.B = B
+            for i in xrange(self.A.shape[0]):
+                total_weight = np.sum(self.A[i]) + np.sum(self.B[i])
+                self.A[i,:,:] /= total_weight
+                self.B[i,:] /= total_weight
+            self.index_to_non_term = range(self.A.shape[0])#range(len(sub_selection))
+            self.non_term_to_index = {}
+            for i, non_term in enumerate(self.index_to_non_term):
+                self.non_term_to_index[non_term] = i
+            self.index_to_term = term_chars
             self.term_to_index = {}
-            self.index_to_non_term = []
             for i, term in enumerate(self.index_to_term):
-                self.term_to_index[term]= i
-            self.root_symbol = list_of_rule_names[0]
-            for i, rule_name in enumerate(list_of_rule_names):
-                self.index_to_non_term.append(rule_name)
-                self.non_term_to_index[rule_name]= i
+                self.term_to_index[term] = i
+            self.grammar = {}
+            N = self.A.shape[0]
+            M = self.B.shape[1]
+            for i in xrange(N):
+                self.grammar[i] = Sto_rule(i,
+                                           [A[i,j,k] for j in xrange(N) for k in xrange(N)],
+                                           [[j, k] for j in xrange(N) for k in xrange(N)],
+                                           [B[i, j] for j in xrange(M)],
+                                           term_chars)
                 
     def blurr_A(self):
-        self.A += 0.005 * np.ones(self.A.shape)
+        for i in xrange(self.A.shape[0]):
+            if np.sum(self.A[i,:,:]) == 0:
+                continue
+            self.A[i] += 0.1 * np.ones((self.A.shape[0], self.A.shape[1]))
         self.recompute_grammar()
         self.A, self.B, self.index_to_non_term, self.index_to_term = \
                 SCFG_c.compute_parameters(self)
-        
+                       
     def recompute_grammar(self):
         for i in range(self.A.shape[0]):
             rule_name = self.index_to_non_term[i]

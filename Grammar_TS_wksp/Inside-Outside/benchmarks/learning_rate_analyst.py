@@ -16,7 +16,7 @@ class Learning_rate_analyst:
     
     def __init__(self,
                  grammar,
-                 n_samples,
+                 n_samples = 0,
                  samples = 0):
         self.grammar = grammar
         self.n_samples = n_samples
