@@ -23,15 +23,13 @@ class Proba_sequitur:
 
     def __init__(self,
                  samples,
-                 repetitions,
-                 keep_data):
+                 repetitions):
         self.current_rule_index = 1
         self.samples = samples
         self.terminal_parsing = {}
         self.rules = {}
         self.level = 0
         self.repetitions = repetitions
-        self.keep_data = keep_data
         self.counts = {}
         self.terminal_chars = []
         self.next_rule_name = 0
@@ -40,7 +38,9 @@ class Proba_sequitur:
         self.reconstructed_length = {}
         self.reconstructed_ratio = 0
         self.index_to_non_term = []
-        self.non_term_to_index = {}  
+        self.non_term_to_index = {}
+        self.hashcode_to_rule = {}
+        self.rule_to_hashcode = {}
 
     def reduce_counts(self,
                       list_of_dicts):
@@ -153,33 +153,7 @@ class Proba_sequitur:
                 temp_counts[string.lower(rule_names[k])] += c
         return sequences, temp_counts
 
-    def reconstruct(self, terminal_parse):
-        to_parse = copy.deepcopy(filter(lambda x : 'rule' in x, terminal_parse.split(' ')))
-        to_parse = ' '.join(to_parse)
-        next_to_parse = []
-        reconstructed = []
-        while len(to_parse) > 0:
-            for elt in to_parse.split(' '):
-                if elt not in self.rules:
-                    reconstructed.append(elt)
-                    continue
-                rhs = self.rules[elt]
-                left_member, right_member = rhs.split('-')
-                if left_member in self.rules:
-                    next_to_parse.append(left_member)
-                else:
-                    reconstructed.append(left_member)
-                if right_member in self.rules:
-                    next_to_parse.append(right_member)
-                else:
-                    reconstructed.append(right_member)
-            to_parse = ' '.join(next_to_parse)
-            next_to_parse = []
-        reconstructed = ' '.join(reconstructed)
-        return reconstructed
-
     def infer_grammar(self, degree):
-        print self.samples
         self.level = 0
         self.current_rule_index = 1
         target_sequences = copy.deepcopy(self.samples)
@@ -192,8 +166,6 @@ class Proba_sequitur:
         self.barelk_table = self.init_barelk(target_sequences)
         while len(target_sequences) > 0:
             self.level += 1
-            print self.level
-            print [len(x) for x in target_sequences]
             target_chars = []
             for sequence in target_sequences:
                 target_chars.extend(sequence.split(' '))
@@ -215,7 +187,27 @@ class Proba_sequitur:
             list_of_best_symbols.append(best_symbols)
             rule_names = []
             for best_symbol in best_symbols:
-                self.rules['rule%d' % self.current_rule_index] = best_symbol
+                new_rule_name = 'rule%d' % self.current_rule_index
+                self.rules[new_rule_name] = best_symbol
+                #
+                #
+                #
+                left_member, right_member = best_symbol.split('-')
+                hash_code = ''
+                if left_member in self.rule_to_hashcode:
+                    hash_code += self.rule_to_hashcode[left_member]
+                else:
+                    hash_code += left_member
+                hash_code += '_'
+                if right_member in self.rule_to_hashcode:
+                    hash_code += self.rule_to_hashcode[right_member]
+                else:
+                    hash_code += right_member
+                self.rule_to_hashcode[new_rule_name] = hash_code
+                self.hashcode_to_rule[hash_code] = new_rule_name
+                #
+                #
+                #
                 rule_names.append('Rule%d' % self.current_rule_index)
                 self.current_rule_index += 1
             list_of_rules.append(rule_names)
@@ -227,41 +219,28 @@ class Proba_sequitur:
             temp_target_sequences = []
             for i, seq in enumerate(target_sequences):
                 new_seq = seq.split(' ')
-                if not self.keep_data:
-                    new_seq = filter(lambda x : 'Rule' in x, new_seq)
-                else:
-                    n_not_rule = len(filter(lambda x : 'Rule' in x, new_seq))
+                new_seq = filter(lambda x : 'Rule' in x, new_seq)
                 new_seq = ' '.join(new_seq)
                 new_seq = re.sub('\-', '', new_seq)
                 new_seq = string.lower(new_seq)
-                if not self.keep_data:
-                    if self.level == 1:
-                        self.reconstructed[i] = [x if 'Rule' in x else '*' for x in seq.split(' ')]
-                        self.reconstructed_length[i] = 2 * len(filter(lambda x : 'Rule' in x, seq.split(' ')))
-                if not self.keep_data:
-                    if len(new_seq) == 0:
-                        self.terminal_parsing[i] = seq
-                    else:
-                        temp_target_sequences.append(new_seq)
+                if self.level == 1:
+                    self.reconstructed[i] = [x if 'Rule' in x else '*' for x in seq.split(' ')]
+                    self.reconstructed_length[i] = 2 * len(filter(lambda x : 'Rule' in x, seq.split(' ')))
+                if len(new_seq) == 0:
+                    self.terminal_parsing[i] = seq
                 else:
-                    if n_not_rule == 0:
-                        self.terminal_parsing[i] = seq
-                    else:
-                        temp_target_sequences.append(new_seq)
+                    temp_target_sequences.append(new_seq)
+            if self.level == 1:
+                total_reconstructed_length = sum(self.reconstructed_length.values())
+                total_length = sum([len(x) for x in self.samples])
+                print 'Total reconstructured length = ' + str(total_reconstructed_length)
+                print 'Total length = ' + str(total_length)
+                self.reconstructed_ratio = float(total_reconstructed_length) / float(total_length)
             target_sequences = temp_target_sequences
             """
-            print '\nIteration %d, %d rules\n' % (self.level, len(self.rules))
             print len(target_sequences)
             print '\n-----------------------------\n'
             """
-        if self.keep_data:
-            total_length = float(sum([len(x) for x in self.samples]))
-            total_reconstructed_length = 0
-            for key, value in self.terminal_parsing.iteritems():
-                total_reconstructed_length += len(self.samples[key]) - len(filter(lambda x : 'rule' not in x, value.split(' ')))
-            self.reconstructed_ratio = float(total_reconstructed_length) / total_length    
-            print 'Total reconstructured length = ' + str(total_reconstructed_length)
-            print 'Total length = ' + str(total_length)
         to_delete = []
         for key, value in self.counts.iteritems():
             if value == 0:
@@ -377,7 +356,5 @@ class Proba_sequitur:
                                           []))
         self.grammar = SCFG(list_of_rules, 0)
         self.grammar.blurr_A()
-                            
-        
         
         

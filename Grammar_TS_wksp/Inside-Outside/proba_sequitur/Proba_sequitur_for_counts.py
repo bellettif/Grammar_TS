@@ -22,16 +22,21 @@ from surrogate import sto_grammar
 class Proba_sequitur:
 
     def __init__(self,
-                 samples,
-                 repetitions,
-                 keep_data):
+                 build_samples,
+                 count_samples,
+                 repetitions):
         self.current_rule_index = 1
-        self.samples = samples
+        #
+        self.build_samples = build_samples
+        self.count_samples = count_samples
+        self.all_counts = {}
+        self.hashcode_to_rule = {}
+        self.rule_to_hashcode = {}
+        #
         self.terminal_parsing = {}
         self.rules = {}
         self.level = 0
         self.repetitions = repetitions
-        self.keep_data = keep_data
         self.counts = {}
         self.terminal_chars = []
         self.next_rule_name = 0
@@ -40,7 +45,7 @@ class Proba_sequitur:
         self.reconstructed_length = {}
         self.reconstructed_ratio = 0
         self.index_to_non_term = []
-        self.non_term_to_index = {}  
+        self.non_term_to_index = {}
 
     def reduce_counts(self,
                       list_of_dicts):
@@ -145,44 +150,17 @@ class Proba_sequitur:
         for k, symbol in enumerate(symbols):
             pattern = re.subn('\-', ' ', symbol)[0]
             pattern = re.subn('_', '.', pattern)[0]
-            #pattern = string.lower(pattern)
-            temp_counts[string.lower(rule_names[k])] = 0
+            temp_counts[string.lower(rule_names[k])] = {}
             for i, sequence in enumerate(sequences):
-                #print re.subn(pattern, rule_names[k], sequence)
                 sequences[i], c = re.subn(pattern, rule_names[k], sequence)
-                temp_counts[string.lower(rule_names[k])] += c
+                temp_counts[string.lower(rule_names[k])][i] = c
         return sequences, temp_counts
 
-    def reconstruct(self, terminal_parse):
-        to_parse = copy.deepcopy(filter(lambda x : 'rule' in x, terminal_parse.split(' ')))
-        to_parse = ' '.join(to_parse)
-        next_to_parse = []
-        reconstructed = []
-        while len(to_parse) > 0:
-            for elt in to_parse.split(' '):
-                if elt not in self.rules:
-                    reconstructed.append(elt)
-                    continue
-                rhs = self.rules[elt]
-                left_member, right_member = rhs.split('-')
-                if left_member in self.rules:
-                    next_to_parse.append(left_member)
-                else:
-                    reconstructed.append(left_member)
-                if right_member in self.rules:
-                    next_to_parse.append(right_member)
-                else:
-                    reconstructed.append(right_member)
-            to_parse = ' '.join(next_to_parse)
-            next_to_parse = []
-        reconstructed = ' '.join(reconstructed)
-        return reconstructed
-
     def infer_grammar(self, degree):
-        print self.samples
         self.level = 0
         self.current_rule_index = 1
-        target_sequences = copy.deepcopy(self.samples)
+        target_sequences = copy.deepcopy(self.build_samples)
+        target_for_counts = copy.deepcopy(self.count_samples)
         list_of_best_symbols = []
         list_of_rules = []
         self.counts = {}
@@ -192,8 +170,6 @@ class Proba_sequitur:
         self.barelk_table = self.init_barelk(target_sequences)
         while len(target_sequences) > 0:
             self.level += 1
-            print self.level
-            print [len(x) for x in target_sequences]
             target_chars = []
             for sequence in target_sequences:
                 target_chars.extend(sequence.split(' '))
@@ -215,53 +191,79 @@ class Proba_sequitur:
             list_of_best_symbols.append(best_symbols)
             rule_names = []
             for best_symbol in best_symbols:
-                self.rules['rule%d' % self.current_rule_index] = best_symbol
+                new_rule_name = 'rule%d' % self.current_rule_index
+                self.rules[new_rule_name] = best_symbol
+                #
+                #
+                #
+                left_member, right_member = best_symbol.split('-')
+                hash_code = ''
+                if left_member in self.rule_to_hashcode:
+                    hash_code += self.rule_to_hashcode[left_member]
+                else:
+                    hash_code += left_member
+                hash_code += '_'
+                if right_member in self.rule_to_hashcode:
+                    hash_code += self.rule_to_hashcode[right_member]
+                else:
+                    hash_code += right_member
+                self.rule_to_hashcode[new_rule_name] = hash_code
+                self.hashcode_to_rule[hash_code] = new_rule_name
+                #
+                #
+                #
                 rule_names.append('Rule%d' % self.current_rule_index)
                 self.current_rule_index += 1
             list_of_rules.append(rule_names)
+            #
+            #
+            #
+            target_for_counts, target_counts = self.substitute(target_for_counts, best_symbols, rule_names)
+            for key, count_dict in target_counts.iteritems():
+                for i, count in count_dict.iteritems():
+                    if len(target_for_counts[i]) == 0:
+                        continue
+                    target_counts[key][i] = float(count) / float(len(target_for_counts[i]))
+            for key, value in target_counts.iteritems():
+                if key in self.all_counts:
+                    print 'Key already in counts'
+                self.all_counts[key] = value
+            for i, seq in enumerate(target_for_counts):
+                new_seq = seq.split(' ')
+                new_seq = filter(lambda x : 'Rule' in x, new_seq)
+                new_seq = ' '.join(new_seq)
+                new_seq = re.sub('\-', '', new_seq)
+                new_seq = string.lower(new_seq)
+                target_for_counts[i] = new_seq
+            #
+            #
+            #
             target_sequences, temp_counts = self.substitute(target_sequences, best_symbols, rule_names)
             for key, value in temp_counts.iteritems():
                 if key not in self.counts:
                     self.counts[key] = 0
-                self.counts[key] += value
+                self.counts[key] += sum(value.values())
             temp_target_sequences = []
             for i, seq in enumerate(target_sequences):
                 new_seq = seq.split(' ')
-                if not self.keep_data:
-                    new_seq = filter(lambda x : 'Rule' in x, new_seq)
-                else:
-                    n_not_rule = len(filter(lambda x : 'Rule' in x, new_seq))
+                new_seq = filter(lambda x : 'Rule' in x, new_seq)
                 new_seq = ' '.join(new_seq)
                 new_seq = re.sub('\-', '', new_seq)
                 new_seq = string.lower(new_seq)
-                if not self.keep_data:
-                    if self.level == 1:
-                        self.reconstructed[i] = [x if 'Rule' in x else '*' for x in seq.split(' ')]
-                        self.reconstructed_length[i] = 2 * len(filter(lambda x : 'Rule' in x, seq.split(' ')))
-                if not self.keep_data:
-                    if len(new_seq) == 0:
-                        self.terminal_parsing[i] = seq
-                    else:
-                        temp_target_sequences.append(new_seq)
+                if self.level == 1:
+                    self.reconstructed[i] = [x if 'Rule' in x else '*' for x in seq.split(' ')]
+                    self.reconstructed_length[i] = 2 * len(filter(lambda x : 'Rule' in x, seq.split(' ')))
+                if len(new_seq) == 0:
+                    self.terminal_parsing[i] = seq
                 else:
-                    if n_not_rule == 0:
-                        self.terminal_parsing[i] = seq
-                    else:
-                        temp_target_sequences.append(new_seq)
+                    temp_target_sequences.append(new_seq)
+            if self.level == 1:
+                total_reconstructed_length = sum(self.reconstructed_length.values())
+                total_length = sum([len(x) for x in self.build_samples])
+                print 'Total reconstructured length = ' + str(total_reconstructed_length)
+                print 'Total length = ' + str(total_length)
+                self.reconstructed_ratio = float(total_reconstructed_length) / float(total_length)
             target_sequences = temp_target_sequences
-            """
-            print '\nIteration %d, %d rules\n' % (self.level, len(self.rules))
-            print len(target_sequences)
-            print '\n-----------------------------\n'
-            """
-        if self.keep_data:
-            total_length = float(sum([len(x) for x in self.samples]))
-            total_reconstructed_length = 0
-            for key, value in self.terminal_parsing.iteritems():
-                total_reconstructed_length += len(self.samples[key]) - len(filter(lambda x : 'rule' not in x, value.split(' ')))
-            self.reconstructed_ratio = float(total_reconstructed_length) / total_length    
-            print 'Total reconstructured length = ' + str(total_reconstructed_length)
-            print 'Total length = ' + str(total_length)
         to_delete = []
         for key, value in self.counts.iteritems():
             if value == 0:
@@ -269,6 +271,7 @@ class Proba_sequitur:
         for key in to_delete:
             del self.counts[key]
             del self.rules[key]
+            del self.all_counts[key]
             
     
     def print_result(self):
@@ -287,97 +290,4 @@ class Proba_sequitur:
         print 'Reconstructed ratio:'
         print self.reconstructed_ratio
         print ''
-     
-    def map_rules(self):
-        self.index_to_non_term = {}
-        self.index_to_score = {}
-        self.non_term_to_index = {}
-        self.index_to_non_term[0] = 0
-        self.non_term_to_index[0] = 0
-        n = 1
-        for rule_lhs in self.rules:
-            rule_number = n
-            self.index_to_non_term[rule_number] = rule_lhs
-            self.index_to_score[rule_number] = self.counts[rule_lhs]
-            self.non_term_to_index[rule_lhs] = rule_number
-            n += 1
-        self.preterminal_rules = {}
-        for i, term in enumerate(self.terminal_chars):
-            weights = np.ones(len(self.terminal_chars)) * 0.01
-            weights[i] = 1.0
-            self.preterminal_rules[term] = \
-                Sto_rule(int(n),
-                         [],
-                         [],
-                         weights,
-                         self.terminal_chars)
-            self.index_to_non_term[n] = string.upper(term)
-            self.non_term_to_index[string.upper(term)] = n
-            n += 1
-        list_of_keys = self.index_to_non_term.keys()
-        list_of_keys.sort()
-        temp = []
-        temp_2 = {}
-        for i, key in enumerate(list_of_keys):
-            temp.append(self.index_to_non_term[key])
-            if key in self.index_to_score:
-                temp_2[i] = self.index_to_score[key]
-        self.index_to_non_term = temp
-        self.index_to_score = temp_2
-        
-    def create_root_rule(self):
-        self.map_rules()
-        terminal_parsing_counts = {}
-        for value in self.terminal_parsing.values():
-            for rule in value.split(' '):
-                if rule not in self.rules:
-                    continue
-                if rule not in terminal_parsing_counts:
-                    terminal_parsing_counts[rule] = 0
-                terminal_parsing_counts[rule] += 1
-        total_weight = float(sum(terminal_parsing_counts.values()))
-        weight_list = []
-        rule_list = []
-        for key, value in terminal_parsing_counts.iteritems():
-            left_rule, right_rule = self.rules[key].split('-')
-            if (left_rule in self.rules) and (right_rule in self.rules):
-                left_rule = self.non_term_to_index[left_rule]
-                right_rule = self.non_term_to_index[right_rule]
-                rule_list.append([left_rule, right_rule])
-                weight_list.append(value / total_weight)
-        total_weight = sum(weight_list)
-        for i, w in enumerate(weight_list):
-            weight_list[i] = w / total_weight
-        self.root_rule = Sto_rule(0,
-                                  weight_list,
-                                  rule_list,
-                                  [],
-                                  [])
-        
-    def create_grammar(self):
-        list_of_rules = []
-        list_of_rules.append(self.root_rule)
-        for rule_name, rule_content in self.preterminal_rules.iteritems():
-            list_of_rules.append(rule_content)
-        for rule_name, rule_content in self.rules.iteritems():
-            left_rule, right_rule = rule_content.split('-')
-            if left_rule not in self.rules:
-                left_rule = self.non_term_to_index[string.upper(left_rule)]
-            else:
-                left_rule = self.non_term_to_index[left_rule]
-            if right_rule not in self.rules:
-                right_rule = self.non_term_to_index[string.upper(right_rule)]
-            else:
-                right_rule = self.non_term_to_index[right_rule]
-            rule_name = self.non_term_to_index[rule_name]
-            list_of_rules.append(Sto_rule(int(rule_name),
-                                          [1.0],
-                                          [[left_rule, right_rule]],
-                                          [],
-                                          []))
-        self.grammar = SCFG(list_of_rules, 0)
-        self.grammar.blurr_A()
-                            
-        
-        
         

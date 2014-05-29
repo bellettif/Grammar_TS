@@ -175,3 +175,15 @@ class SCFG:
                                              proposal_B)
         log_lk = np.log(E[self.non_term_to_index[self.root_symbol], 0, -1])
         return E, F, log_lk
+    
+    def compute_probas(self,
+                    sentences):
+        lks = []
+        for sentence in sentences:
+            E, F = SCFG_c.compute_inside_outside(self,
+                                                 sentence,
+                                                 self.A,
+                                                 self.B)
+            lks.append(E[self.non_term_to_index[self.root_symbol], 0, -1])
+        return np.asarray(lks, dtype = np.double)
+        
