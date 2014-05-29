@@ -9,21 +9,22 @@ import numpy as np
 
 from proba_sequitur.Proba_sequitur import Proba_sequitur
 from Grammar_folder import Grammar_folder
+import proba_sequitur.load_data as load_data
 
 from benchmarks.grammar_examples import *
 from benchmarks.learning_rate_analyst import Learning_rate_analyst
 
-selected_grammar = action_grammar
-n_samples = 100
+selected_grammar = palindrom_grammar
+n_samples = 50
 
 sentences = selected_grammar.produce_sentences(n_samples)
 sentences = [' '.join(x) for x in sentences]
 sentences = filter(lambda x : len(x) > 2, sentences)
 
-selected_grammar = sentences
+selected_samples = sentences
 
-proba_seq = Proba_sequitur(selected_grammar, True)
-proba_seq.infer_grammar(10)
+proba_seq = Proba_sequitur(load_data.oldo_file_contents.values(), True)
+proba_seq.infer_grammar(6)
 proba_seq.print_result()
 
 proba_seq.create_root_rule()
@@ -38,25 +39,32 @@ print proba_seq.grammar.term_to_index
 
 samples = [x.split(' ') for x in sentences]
 
+step_size = 20
+
+title = 'Oldo_data_set'
+
 grammar_folder = Grammar_folder(proba_seq.grammar,
                                 samples,
-                                20)
+                                step_size)
 
-grammar_folder.iterate()
+max_size = len(proba_seq.grammar.grammar)
 
-grammar_folder.to_merge = [3, 5]
-grammar_folder.merge()
-grammar_folder.iterate()
-grammar_folder.to_merge = [1, 2]
-grammar_folder.merge()
-grammar_folder.iterate()
-
-all_log_lks = np.vstack(grammar_folder.all_lks)
-
-print all_log_lks
-
-plt.plot(all_log_lks)
-plt.show()
+for i in xrange(max_size):
+    grammar_folder.iterate()
+    print grammar_folder.to_merge
+    grammar_folder.merge()
+    all_log_lks = np.vstack(grammar_folder.all_lks)
+    min_y = np.min(all_log_lks)
+    max_y = np.max(all_log_lks)
+    print all_log_lks
+    n = len(grammar_folder.sto_grammar.grammar)
+    plt.plot(all_log_lks)
+    plt.vlines(step_size * np.asarray(range(i + 1)), min_y, max_y)
+    plt.xlabel('Iterations')
+    plt.ylabel('Log lks')
+    plt.title('Estimated %s grammar (%d rules)' % (title, n))
+    plt.savefig("Mergin_strategy_%s_%d.png" % (title, i))
+    plt.close()
 
 
 """
