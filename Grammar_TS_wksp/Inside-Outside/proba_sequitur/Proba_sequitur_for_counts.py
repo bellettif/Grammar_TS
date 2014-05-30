@@ -6,32 +6,23 @@ Created on 22 mai 2014
 
 import numpy as np
 import re
-from matplotlib import pyplot as plt
 import string
-import cPickle as pickle
 import copy
-import time
 
-import load_data
-
-from surrogate.sto_grammar import SCFG
-from surrogate.sto_rule import Sto_rule
-from surrogate import sto_grammar
-
+MAX_RULES = 40
 
 class Proba_sequitur:
 
     def __init__(self,
                  build_samples,
                  count_samples,
-                 repetitions):
+                 repetitions,
+                 keep_data):
         self.current_rule_index = 1
         #
         self.build_samples = build_samples
         self.count_samples = count_samples
         self.all_counts = {}
-        self.hashcode_to_rule = {}
-        self.rule_to_hashcode = {}
         #
         self.terminal_parsing = {}
         self.rules = {}
@@ -41,11 +32,11 @@ class Proba_sequitur:
         self.terminal_chars = []
         self.next_rule_name = 0
         self.barelk_table = {}
-        self.reconstructed = {}
-        self.reconstructed_length = {}
-        self.reconstructed_ratio = 0
+        #
         self.index_to_non_term = []
         self.non_term_to_index = {}
+        #
+        self.keep_data = keep_data
 
     def reduce_counts(self,
                       list_of_dicts):
@@ -168,7 +159,7 @@ class Proba_sequitur:
             self.terminal_chars.extend(sequence.split(' '))
         self.terminal_chars = set(self.terminal_chars)
         self.barelk_table = self.init_barelk(target_sequences)
-        while len(target_sequences) > 0:
+        while len(target_sequences) > 0 and len(self.rules) < MAX_RULES:
             self.level += 1
             target_chars = []
             for sequence in target_sequences:
@@ -191,28 +182,9 @@ class Proba_sequitur:
             list_of_best_symbols.append(best_symbols)
             rule_names = []
             for best_symbol in best_symbols:
-                new_rule_name = 'rule%d' % self.current_rule_index
+                new_rule_name = 'rule%dr' % self.current_rule_index
                 self.rules[new_rule_name] = best_symbol
-                #
-                #
-                #
-                left_member, right_member = best_symbol.split('-')
-                hash_code = ''
-                if left_member in self.rule_to_hashcode:
-                    hash_code += self.rule_to_hashcode[left_member]
-                else:
-                    hash_code += left_member
-                hash_code += '_'
-                if right_member in self.rule_to_hashcode:
-                    hash_code += self.rule_to_hashcode[right_member]
-                else:
-                    hash_code += right_member
-                self.rule_to_hashcode[new_rule_name] = hash_code
-                self.hashcode_to_rule[hash_code] = new_rule_name
-                #
-                #
-                #
-                rule_names.append('Rule%d' % self.current_rule_index)
+                rule_names.append('rule%dr' % self.current_rule_index)
                 self.current_rule_index += 1
             list_of_rules.append(rule_names)
             #
@@ -230,7 +202,7 @@ class Proba_sequitur:
                 self.all_counts[key] = value
             for i, seq in enumerate(target_for_counts):
                 new_seq = seq.split(' ')
-                new_seq = filter(lambda x : 'Rule' in x, new_seq)
+                #new_seq = filter(lambda x : 'Rule' in x, new_seq)
                 new_seq = ' '.join(new_seq)
                 new_seq = re.sub('\-', '', new_seq)
                 new_seq = string.lower(new_seq)
@@ -245,33 +217,26 @@ class Proba_sequitur:
                 self.counts[key] += sum(value.values())
             temp_target_sequences = []
             for i, seq in enumerate(target_sequences):
-                new_seq = seq.split(' ')
-                new_seq = filter(lambda x : 'Rule' in x, new_seq)
-                new_seq = ' '.join(new_seq)
-                new_seq = re.sub('\-', '', new_seq)
-                new_seq = string.lower(new_seq)
-                if self.level == 1:
-                    self.reconstructed[i] = [x if 'Rule' in x else '*' for x in seq.split(' ')]
-                    self.reconstructed_length[i] = 2 * len(filter(lambda x : 'Rule' in x, seq.split(' ')))
-                if len(new_seq) == 0:
+                to_delete = (len(filter(lambda x : 'rule' in x, seq.split(' '))) == 0)
+                if not self.keep_data:
+                    new_seq = seq.split(' ')
+                    new_seq = filter(lambda x : 'rule' in x, new_seq)
+                    new_seq = ' '.join(new_seq)
+                    new_seq = re.sub('\-', '', new_seq)
+                new_seq = string.lower(seq)
+                if to_delete:
                     self.terminal_parsing[i] = seq
                 else:
                     temp_target_sequences.append(new_seq)
-            if self.level == 1:
-                total_reconstructed_length = sum(self.reconstructed_length.values())
-                total_length = sum([len(x) for x in self.build_samples])
-                print 'Total reconstructured length = ' + str(total_reconstructed_length)
-                print 'Total length = ' + str(total_length)
-                self.reconstructed_ratio = float(total_reconstructed_length) / float(total_length)
             target_sequences = temp_target_sequences
-        to_delete = []
-        for key, value in self.counts.iteritems():
-            if value == 0:
-                to_delete.append(key)
-        for key in to_delete:
-            del self.counts[key]
-            del self.rules[key]
-            del self.all_counts[key]
+            to_delete = []
+            for key, value in self.counts.iteritems():
+                if value == 0:
+                    to_delete.append(key)
+            for key in to_delete:
+                del self.counts[key]
+                del self.rules[key]
+                del self.all_counts[key]
             
     
     def print_result(self):
@@ -287,7 +252,5 @@ class Proba_sequitur:
         print self.rule_ranking
         print 'Rules:'
         print self.rules
-        print 'Reconstructed ratio:'
-        print self.reconstructed_ratio
         print ''
         

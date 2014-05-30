@@ -12,32 +12,33 @@ from Proba_sequitur_for_counts import Proba_sequitur
 import load_data
 
 achu_data_set = load_data.achu_file_contents.values()
+f_achu_data_set = load_data.filtered_achu_file_contents.values()
 oldo_data_set = load_data.oldo_file_contents.values()
+f_oldo_data_set = load_data.filtered_oldo_file_contents.values()
 
-build_data_set = oldo_data_set
-count_data_set = achu_data_set + oldo_data_set
-                    
-proba_sequitur = Proba_sequitur(build_data_set,
-                                count_data_set,
-                                False)
+k_set = [3, 6, 9, 12]
 
-proba_sequitur.infer_grammar(6)
+from assess_proba_seq_for_counts import compute_plots
 
-print proba_sequitur.all_counts
+repetition_options = ['rep', 'no_rep']
+loss_options = ['lossless', 'forgetful']
+filter_options = ['filtered', 'not_filtered']
 
-n_achu = len(achu_data_set)
-n_oldo = len(oldo_data_set)
+task_list = [(achu_data_set + oldo_data_set, achu_data_set, oldo_data_set, 'achu_and_oldo', 'not_filtered'),
+             (achu_data_set, achu_data_set, oldo_data_set, 'achu', 'not_filtered'),
+             (oldo_data_set, achu_data_set, oldo_data_set, 'oldo', 'not_filtered'),
+             (f_achu_data_set + f_oldo_data_set, f_achu_data_set, f_oldo_data_set, 'achu_and_oldo', 'filtered'),
+             (f_achu_data_set, f_achu_data_set, f_oldo_data_set, 'achu', 'filtered'),
+             (f_oldo_data_set, f_achu_data_set, f_oldo_data_set, 'oldo', 'filtered')]
 
-achu_sub_set = range(n_achu)
-oldo_sub_set = range(n_achu, n_achu + n_oldo)
-
-rule_names = [proba_sequitur.rules[x] for x in proba_sequitur.all_counts.keys()]
-rule_counts = [x.values() for x in proba_sequitur.all_counts.values()]
-rule_counts = np.asanyarray(rule_counts)
-
-for i in achu_sub_set:
-    plt.plot(rule_counts[:,i], linestyle = 'None', marker = 'o', color = 'r')
-for i in oldo_sub_set:
-    plt.plot(rule_counts[:,i], linestyle = 'None', marker = 'o', color = 'b')
-plt.xticks(range(len(rule_names)), rule_names, rotation = 'vertical', fontsize = 8)
-plt.show()
+for repetition_option in repetition_options:
+    for loss_option in loss_options:
+        for build_data_set, achu_set, oldo_set, title, filter_option in task_list:
+            compute_plots(repetition_option,
+                          loss_option,
+                          filter_option,
+                          title,
+                          build_data_set,
+                          achu_set,
+                          oldo_set,
+                          k_set)
