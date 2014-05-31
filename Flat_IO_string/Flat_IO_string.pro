@@ -17,19 +17,3 @@ LIBS += \
     -lboost_filesystem \
     -lboost_timer
 
-SOURCES += \
-    main.cpp \
-    stochastic_rule.cpp
-
-HEADERS += \
-    file_reader.h \
-    scfg.h \
-    in_out_proba.h \
-    parse_tree.h \
-    model_estimator.h \
-    bare_estimator.h \
-    stochastic_rule.h \
-    raw_in_out.h \
-    array_utils.h
-
-OTHER_FILES += \

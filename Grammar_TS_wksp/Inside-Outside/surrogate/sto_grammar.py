@@ -53,25 +53,6 @@ class SCFG:
             self.A = old_A[np.ix_(sub_selection, sub_selection, sub_selection)]
             self.B = np.copy(B[sub_selection])
             self.B[first_index] = 0.5 * B[first_index] + 0.5 * B[second_index]
-            """
-            first_index = to_merge[0]
-            second_index = to_merge[1]
-            sub_selection = range(A.shape[0])
-            sub_selection = filter(lambda x : x != second_index, sub_selection)
-            n = A.shape[0] - 1
-            old_A = np.copy(A)
-            new_A = A[sub_selection, :, :]
-            new_A[first_index, :, :] = 0.5 * old_A[first_index, :, :] + 0.5 * old_A[second_index, :, :]
-            old_A = old_A[sub_selection, :, :]
-            new_A = new_A[:, sub_selection, :]
-            new_A[:, first_index, :] = 0.5 * old_A[:, first_index, :] + 0.5 * old_A[:, second_index, :]
-            old_A = old_A[:, sub_selection, :]
-            new_A = new_A[:, :, sub_selection]
-            new_A[:, :, first_index] = 0.5 * old_A[:, :, first_index] + 0.5 * old_A[:, :, second_index]
-            self.A = new_A
-            self.B = np.copy(B[sub_selection])
-            self.B[first_index] = 0.5 * B[first_index] + 0.5 * B[second_index]
-            """
             for i in xrange(self.A.shape[0]):
                 total_weight = np.sum(self.A[i]) + np.sum(self.B[i])
                 self.A[i,:,:] /= total_weight
@@ -177,13 +158,27 @@ class SCFG:
         return E, F, log_lk
     
     def compute_probas(self,
-                    sentences):
-        lks = []
+                       sentences):
+        probas = []
         for sentence in sentences:
             E, F = SCFG_c.compute_inside_outside(self,
                                                  sentence,
                                                  self.A,
                                                  self.B)
-            lks.append(E[self.non_term_to_index[self.root_symbol], 0, -1])
-        return np.asarray(lks, dtype = np.double)
+            probas.append(E[self.non_term_to_index[self.root_symbol], 0, -1])
+        return np.asarray(probas, dtype = np.double)
+        
+    def compute_probas_proposal(self,
+                                sentences,
+                                A_proposal,
+                                B_proposal):
+        probas = []
+        for sentence in sentences:
+            E, F = SCFG_c.compute_inside_outside(self,
+                                                 sentence,
+                                                 A_proposal,
+                                                 B_proposal)
+            probas.append(E[self.non_term_to_index[self.root_symbol], 0, -1])
+        return np.asarray(probas, dtype = np.double)    
+        
         

@@ -6,11 +6,13 @@
 
 #include "file_reader.h"
 #include "in_out_proba.h"
+#include "raw_in_out.h"
 #include "stochastic_rule.h"
 #include "scfg.h"
 #include "parse_tree.h"
 #include "model_estimator.h"
 #include "bare_estimator.h"
+#include "array_utils.h"
 
 namespace std {
     std::string to_string(std::string x){
@@ -34,8 +36,52 @@ typedef In_out_proba                            inside_T;
 typedef Model_estimator                         model_estim_T;
 typedef Bare_estimator                          bare_estim_T;
 
+
+
+
+
+
 int main(){
 
+    int N = 5;
+    int M = 10;
+    double *** A;
+    double **B;
+
+    std::vector<std::string> terminal_chars = {"Bernard",
+                                               "Jacques",
+                                               "Jean",
+                                               "Mathieu",
+                                               "George",
+                                               "Michel",
+                                               "Bernadette",
+                                               "Henriette",
+                                               "Jeanne",
+                                               "Elise"};
+
+
+    auto duration =  std::chrono::system_clock::now().time_since_epoch();
+    auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
+
+    RNG my_rng(millis);
+
+    array_utils::allocate_arrays(A, B, N, M);
+
+    std::cout << "Arrays allocated" << std::endl;
+
+    array_utils::fill_arrays_with_random(A, B, N, M, my_rng);
+
+    std::cout << "Arrays filled" << std::endl;
+
+    array_utils::print_array_content(A, B, N, M);
+
+    array_utils::deallocate_arrays(A, B, N, M);
+
+
+
+
+
+    /*
     auto duration =  std::chrono::system_clock::now().time_since_epoch();
     auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
 
@@ -118,43 +164,6 @@ int main(){
     double*** A = grammar.get_A();
     double** B = grammar.get_B();
 
-    /*
-    std::uniform_real_distribution<double> perturbation(-0.01, 0.01);
-
-    double current_sum;
-
-    std::cout << "Initial parameters" << std::endl;
-    grammar.print_params();
-
-    for(int i = 0; i < N; ++i){
-        current_sum = 0;
-        for(int j = 0; j < N; ++j){
-            for(int k = 0; k < N; ++k){
-                A[i][j][k] += perturbation(my_rng);
-                if(A[i][j][k] <= 0){
-                    A[i][j][k] = 0;
-                }
-                current_sum += A[i][j][k];
-            }
-        }
-        for(int k = 0; k < N; ++k){
-            B[i][k] += perturbation(my_rng);
-            if(B[i][k] <= 0){
-                B[i][k] = 0;
-            }
-            current_sum += B[i][k];
-        }
-        for(int j = 0; j < N; ++j){
-            for(int k = 0; k < N; ++k){
-                A[i][j][k] /= current_sum;
-            }
-        }
-        for(int k = 0; k < N; ++k){
-            B[i][k] /= current_sum;
-        }
-    }
-    */
-
     std::cout << "Perturbated parameters" << std::endl;
     grammar.print_params();
 
@@ -198,17 +207,6 @@ int main(){
             }std::cout << std::endl;
         }
     }
-
-    /*
-
-    for(int j = 0; j < 100; ++j){
-        model_estimator.estimate_from_inputs();
-        model_estimator.swap_model_estim();
-    }
-
-    model_estimator.estimate_from_inputs();
-
-    model_estimator.print_estimates();
     */
 
 }

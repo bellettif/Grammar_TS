@@ -247,4 +247,3 @@ def estimate_model(input_grammar,
 	del c_list_of_rules
 	del rng
 	return A_estim_converted, B_estim_converted
-	
