@@ -6,7 +6,7 @@
 
 #include "file_reader.h"
 #include "in_out_proba.h"
-#include "raw_in_out.h"
+#include "flat_in_out.h"
 #include "stochastic_rule.h"
 #include "scfg.h"
 #include "parse_tree.h"
@@ -43,45 +43,6 @@ typedef Bare_estimator                          bare_estim_T;
 
 int main(){
 
-    int N = 5;
-    int M = 10;
-    double *** A;
-    double **B;
-
-    std::vector<std::string> terminal_chars = {"Bernard",
-                                               "Jacques",
-                                               "Jean",
-                                               "Mathieu",
-                                               "George",
-                                               "Michel",
-                                               "Bernadette",
-                                               "Henriette",
-                                               "Jeanne",
-                                               "Elise"};
-
-
-    auto duration =  std::chrono::system_clock::now().time_since_epoch();
-    auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
-
-    RNG my_rng(millis);
-
-    array_utils::allocate_arrays(A, B, N, M);
-
-    std::cout << "Arrays allocated" << std::endl;
-
-    array_utils::fill_arrays_with_random(A, B, N, M, my_rng);
-
-    std::cout << "Arrays filled" << std::endl;
-
-    array_utils::print_array_content(A, B, N, M);
-
-    array_utils::deallocate_arrays(A, B, N, M);
-
-
-
-
-
-    /*
     auto duration =  std::chrono::system_clock::now().time_since_epoch();
     auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
 
@@ -135,7 +96,7 @@ int main(){
                                            S_pair_3,
                                            S_pair_4});
 
-    SRule_T                 S_rule(3,
+    SRule_T                 S_rule(0,
                                    S_non_term_w,
                                    S_non_term_s,
                                    my_rng);
@@ -148,11 +109,13 @@ int main(){
     B_rule.print_rule();
     S_rule.print_rule();
 
-    SGrammar_T              grammar(rules, 3);
+    SGrammar_T              grammar(rules, 0);
+
+    int n_samples = 100;
 
     T_vect_vect inputs;
     T_list temp;
-    for(int i = 0; i < 1000; ++i){
+    for(int i = 0; i < n_samples; ++i){
         temp = S_rule.complete_derivation(grammar);
         inputs.emplace_back(T_vect(temp.begin(),
                                    temp.end()));
@@ -164,49 +127,82 @@ int main(){
     double*** A = grammar.get_A();
     double** B = grammar.get_B();
 
-    std::cout << "Perturbated parameters" << std::endl;
-    grammar.print_params();
+    double* A_flat = new double[N*N*N];
+    double* B_flat = new double[N*M];
 
-    model_estim_T model_estimator(grammar,
-                                  inputs);
+    double*** A_converted = new double**[N];
+    double** B_converted = new double*[N];
 
-    std::vector<std::string> sentence = {"Bernadette",
-                                         "Bernadette",
-                                         "Mathieu",
-                                         "Mathieu",
-                                         "Bernadette",
-                                         "Mathieu",
-                                         "Mathieu"};
+    std::unordered_map<int, int> index_to_non_term = grammar.get_index_to_non_term();
 
-    In_out_proba in_out_proba(grammar,
-                              sentence,
-                              A,
-                              B);
-
-    double*** E;
-    double*** F;
-    int M_;
-    int N_;
-    int length;
-
-    in_out_proba.get_inside_outside(E,
-                                    F,
-                                    N_,
-                                    M_,
-                                    length);
-
-    for(int i = 0; i < N_; ++i){
-        std::cout << "Non terminal character " << i << std::endl;
-        for(int s = 0; s < length; ++s){
-            std::cout << "\t";
-            for(int r = 0; r < length; ++r){
-                if(E[i][s][r] == 0){
-                    std::cout << "0.0000000 ";
-                }
-                std::cout << E[i][s][r] << " ";
-            }std::cout << std::endl;
+    int ii;
+    int jj;
+    int kk;
+    for(int i = 0; i < N; ++i){
+        A_converted[i] = new double*[N];
+        ii = index_to_non_term[i];
+        for(int j = 0; j < N; ++j){
+            jj = index_to_non_term[j];
+            A_converted[i][j] = new double[N];
+            for(int k = 0; k < N; ++k){
+                kk = index_to_non_term[k];
+                A_converted[i][j][k] = A[ii][jj][kk];
+            }
+        }
+        B_converted[i] = new double[M];
+        for(int j = 0; j < N; ++j){
+            B_converted[i][j] = B[ii][j];
         }
     }
-    */
 
+
+    array_utils::flatten_params(A_converted, B_converted, N, M, A_flat, B_flat);
+
+    T_vect terminals = grammar.get_index_to_term_vect();
+
+    Model_estimator model_estim (grammar,
+                                 inputs);
+
+    Flat_in_out fao (A_flat, B_flat, N, M, terminals);
+
+    std::cout << "Fao created" << std::endl;
+
+    model_estim.estimate_from_inputs();
+
+    double * sample_probas = new double[inputs.size()];
+    double * new_A = new double[N*N*N];
+    double * new_B = new double[N*M];
+
+    std::cout << "Estimating" << std::endl;
+
+    fao.estimate_A_B(inputs,
+                     sample_probas,
+                     new_A, new_B);
+
+    std::cout << "Estimation done" << std::endl;
+
+    std::cout << "A estimates" << std::endl;
+    for(int i = 0; i < N; ++i){
+        for(int j = 0; j < N; ++j){
+            for(int k = 0; k < N; ++k){
+                std::cout << "i = " << i << ", j = " << j << ", k = " << k
+                          << ", A = " << A[i][j][k]
+                          << ", A flat = " << new_A[i*N*N + j*N + k] << std::endl;
+            }
+        }
+    }
+    std::cout << "B estimates" << std::endl;
+    for(int i = 0; i < N; ++i){
+        for(int j = 0; j < M; ++j){
+            std::cout << "i = " << i << ", j = " << j
+                      << ", B = " << B[i][j]
+                      << ", B flat = " << new_B[i*N + j] << std::endl;
+        }
+    }
+
+    delete[] new_B;
+    delete[] new_A;
+    delete[] sample_probas;
+    delete[] B;
+    delete[] A;
 }

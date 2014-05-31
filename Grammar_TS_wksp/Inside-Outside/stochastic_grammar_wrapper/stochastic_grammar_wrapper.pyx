@@ -62,6 +62,19 @@ cdef extern from "in_out_proba.h":
 		double run_CYK()
 		void print_A_and_B()
 		
+cdef extern from "flat_in_out.h":
+	cdef cppclass Flat_in_out:
+		Flat_in_out(double* A, double* B,
+	               	int N, int M,
+	               	const vector[string] & terminals)
+		void compute_probas_flat(const vector[vector[string]] & samples,
+                           	double * probas)
+		void compute_proba_flat(const vector[string] & sample)
+		void compute_inside_outside_flat(double* E, double* F,
+									const vector[string] & sample)
+		void compute_inside_probas_flat(double* E,
+								   const vector[string] & sample)
+		
 cdef extern from "model_estimator.h":
 	cdef cppclass Model_estimator:
 		Model_estimator(const SCFG & grammar,
@@ -247,3 +260,24 @@ def estimate_model(input_grammar,
 	del c_list_of_rules
 	del rng
 	return A_estim_converted, B_estim_converted
+
+def estimate_likelihoods(np.ndarray A_proposal,
+						 np.ndarray B_proposal,
+						 terminals,
+						 samples):
+	assert(A_proposal.shape[0] == A_proposal.shape[1] == A_proposal.shape[2] == B_proposal.shape[0])
+	assert(B_proposal.shape[1] == len(terminals))
+	N = A_proposal.shape[0]
+	M = B_proposal.shape[1]
+	n_samples = len(samples)
+	cdef np.ndarray[DTYPE_t, ndim = 1, mode = 'c'] likelihoods = np.zeros(n_samples, dtype = DTYPE)
+	cdef np.ndarray[DTYPE_t, ndim = 3, mode = 'c'] c_A_proposal = A_proposal
+	cdef np.ndarray[DTYPE_t, ndim = 2, mode = 'c'] c_B_proposal = B_proposal
+	cdef Flat_in_out* fio = new Flat_in_out(<double*> c_A_proposal.data,
+											<double*> c_B_proposal.data,
+	               							N, M,
+	               		     				terminals)
+	fio.compute_probas_flat(samples,
+					   <double*> likelihoods.data)
+	del fio
+	return likelihoods
