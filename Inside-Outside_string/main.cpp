@@ -70,8 +70,8 @@ int main(){
 
     std::pair<int, int>     B_pair_1 (2, 2);
     std::pair<int, int>     B_pair_2 (2, 1);
-    std::pair<int, int>     B_pair_3 (1, 2);
-    std::pair<int, int>     B_pair_4 (1, 1);
+    std::pair<int, int>     B_pair_3 (0, 2);
+    std::pair<int, int>     B_pair_4 (1, 0);
     double_vect             B_non_term_w ({0.2, 0.3, 0.4, 0.1});
     pair_i_i_vect           B_non_term_s ({B_pair_1,
                                            B_pair_2,
@@ -88,9 +88,9 @@ int main(){
 
     std::pair<int, int>     S_pair_1 (1, 1);
     std::pair<int, int>     S_pair_2 (1, 2);
-    std::pair<int, int>     S_pair_3 (2, 1);
-    std::pair<int, int>     S_pair_4 (2, 2);
-    double_vect             S_non_term_w ({0.6, 0.5, 0.4, 0.8});
+    std::pair<int, int>     S_pair_3 (2, 0);
+    std::pair<int, int>     S_pair_4 (0, 2);
+    double_vect             S_non_term_w ({0.6, 0.5, 0.1, 0.1});
     pair_i_i_vect           S_non_term_s ({S_pair_1,
                                            S_pair_2,
                                            S_pair_3,
@@ -168,8 +168,7 @@ int main(){
 
     RNG second_rng (first_option);
 
-    std::vector<std::vector<std::string>> sentences = fao.produce_sentences(second_rng,
-                                                                            n_samples);
+    std::vector<std::vector<std::string>> sentences = fao.produce_sentences(n_samples);
 
     for(int i = 0; i < n_samples; ++i){
         for(auto x : inputs.at(i)){
@@ -179,6 +178,8 @@ int main(){
             std::cout << x << " ";
         }std::cout << std::endl;
     }
+
+    std::cout << "Done" << std::endl;
 
     delete[] A_flat;
     delete[] B_flat;

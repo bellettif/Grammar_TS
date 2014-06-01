@@ -1,6 +1,8 @@
 #ifndef FLAT_IN_OUT_H
 #define FLAT_IN_OUT_H
 
+
+#include <iostream>
 #include <vector>
 #include <list>
 #include <unordered_map>
@@ -15,6 +17,11 @@ typedef std::discrete_distribution<>                      choice_distrib;
 typedef std::mt19937                                      RNG;
 typedef std::vector<int>::iterator                        vect_it;
 typedef std::list<int>::iterator                          list_it;
+
+static auto duration =  std::chrono::system_clock::now().time_since_epoch();
+static auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
+static RNG core_rng (millis);
+
 
 class Rule{
     int                             _N;
@@ -53,12 +60,10 @@ public:
         emission = (_emission_choice(rng) == 1);
         if(emission){
             term = _term_choice(rng);
-            std::cout << "\t\t\tTerminal " << term << std::endl;
         }else{
             int non_term = _non_term_choice(rng);
             left = non_term / _N;
             right = non_term % _N;
-            std::cout << "\t\t\tLeft " << left << " right " << right << std::endl;
         }
     }
 
@@ -250,7 +255,6 @@ public:
             compute_inside_outside_flat(Es[id], Fs[id], samples[id]);
             length = sample_lengths[id];
             sample_probas[id] = Es[id][0*length*length + 0*length + length - 1];
-            std::cout << "Id: " << id << " proba " << sample_probas[id] << std::endl;
         }
 
         double den;
@@ -336,16 +340,21 @@ public:
         delete[] sample_lengths;
     }
 
-    string_vect_vect inline produce_sentences(RNG & rng,
-                                              int n_sentences){
+    string_vect_vect inline produce_sentences(int n_sentences){
+        return produce_sentences(n_sentences, core_rng);
+    }
+
+    string_vect_vect inline produce_sentences(int n_sentences,
+                                              RNG & rng){
         string_vect_vect result (n_sentences);
         for(int i = 0; i < n_sentences; ++i){
-            produce_sentence(rng, result.at(i));
+            std::cout << i << std::endl;
+            produce_sentence(result.at(i), rng);
         }
         return result;
     }
 
-    void inline produce_sentence(RNG & rng, string_vect & result){
+    void inline produce_sentence(string_vect & result, RNG & rng){
         if(!_built_rule_map){
             build_rule_map();
         }
@@ -360,17 +369,7 @@ public:
         list_it second_it;
         int current_iter = 0;
         while(!index_to_do.empty()){
-            std::cout << "Iteration " << current_iter++ << std::endl;
-            std::cout << "\t";
-            for(auto x : index_to_do){
-                std::cout << *x << " ";
-            }std::cout << std::endl;
-            std::cout << "\t";
-            for(auto x : temp_result){
-                std::cout << x << " ";
-            }std::cout << std::endl;
             for(list_it & it : index_to_do){
-                std::cout << "\t\tContent of it: " << *it << std::endl;
                 current_rule = &(_rule_map.at(*it));
                 current_rule->derivation(rng, emission, terminal, left, right);
                 if(emission){
@@ -386,13 +385,7 @@ public:
             }
             index_to_do.swap(next_index_to_do);
             next_index_to_do.clear();
-            std::cout << "End of iteration " << current_iter << std::endl;
         }
-        std::cout << "Final result:" << std::endl;
-        for(auto x : temp_result){
-            std::cout << x << " ";
-        }std::cout << std::endl;
-        std::cout << std::endl;
         for(auto x : temp_result){
             result.push_back(_terminals.at(x));
         }
