@@ -255,14 +255,14 @@ public:
                     length = sample_lengths[id];
                     for(s = 0; s < length; ++s){
                         if(_terminal_to_index[samples[id][s]] == j){
-                            temp += Es[id][i*length*length + s*length + t]
+                            temp += Es[id][i*length*length + s*length + s]
                                     *
-                                    Fs[id][i*length*length + s*length + t];
+                                    Fs[id][i*length*length + s*length + s];
                         }
                     }
                     num += temp / sample_probas[id];
                 }
-                new_B[i*_N + j] = num / den;
+                new_B[i*_M + j] = num / den;
             }
         }
 
