@@ -47,37 +47,115 @@ samples = produce_sentences(A, B,
 #for sample in samples:
 #    print sample
     
+def estimate_with_random_init(): 
+    A_init = np.random.uniform(0.0, 1.0, (N, N, N))
+    B_init = np.random.uniform(0.0, 1.0, (N, M))
+    A_init = np.maximum(A_init, 0.01 * np.ones((N, N, N)))
+    B_init = np.maximum(B_init, 0.01 * np.ones((N, M)))
+    for i in xrange(N):
+        total = np.sum(A_init[i]) + np.sum(B_init[i])
+        A_init[i] /= total
+        B_init[i] /= total
+    estim_A, estim_B, likelihoods = iterate_estimation(A_init,
+                                                       B_init,
+                                                       terms,
+                                                       samples,
+                                                       100)
+    return likelihoods
+
+def estimate_with_random_init_perturbated():
+    A_init = np.random.uniform(0.0, 1.0, (N, N, N))
+    B_init = np.random.uniform(0.0, 1.0, (N, M))
+    A_init = np.maximum(A_init, 0.01 * np.ones((N, N, N)))
+    B_init = np.maximum(B_init, 0.01 * np.ones((N, M)))
+    for i in xrange(N):
+        total = np.sum(A_init[i]) + np.sum(B_init[i])
+        A_init[i] /= total
+        B_init[i] /= total
+    estim_A, estim_B, likelihoods = iterate_estimation_perturbated(A_init,
+                                                                   B_init,
+                                                                   terms,
+                                                                   samples,
+                                                                   100,
+                                                                   np.random.uniform,
+                                                                   0.0,
+                                                                   1.0,
+                                                                   0.1,
+                                                                   np.random.uniform,
+                                                                   0.0,
+                                                                   1.0,
+                                                                   0.1,
+                                                                   0.5)
+    return likelihoods
+
+"""
+plt.subplot(221)
+plt.plot(np.log(estimate_with_random_init_perturbated()))
+#
+plt.subplot(222)
+plt.plot(np.log(estimate_with_random_init_perturbated()))
+#
+plt.subplot(223)
+plt.plot(np.log(estimate_with_random_init()))
+#
+plt.subplot(224)
+plt.plot(np.log(estimate_with_random_init()))
+#
+plt.show()
+"""
+
 A_init = np.random.uniform(0.0, 1.0, (N, N, N))
 B_init = np.random.uniform(0.0, 1.0, (N, M))
-
-A_init = np.maximum(A, 0.01 * np.ones((N, N, N)))
-B_init = np.maximum(B, 0.01 * np.ones((N, M)))
-
+A_init = np.maximum(A_init, 0.01 * np.ones((N, N, N)))
+B_init = np.maximum(B_init, 0.01 * np.ones((N, M)))
 for i in xrange(N):
     total = np.sum(A_init[i]) + np.sum(B_init[i])
     A_init[i] /= total
     B_init[i] /= total
-    
-estim_A, estim_B, likelihoods = iterate_estimation(A_init,
-                                                   B_init,
-                                                   terms,
-                                                   samples,
-                                                   100)
+estim_A, estim_B, likelihoods = iterate_estimation_perturbated(A_init,
+                                                               B_init,
+                                                               terms,
+                                                               samples,
+                                                               100,
+                                                               np.random.uniform,
+                                                               0.0,
+                                                               1.0,
+                                                               0.1,
+                                                               np.random.uniform,
+                                                               0.0,
+                                                               1.0,
+                                                               0.1,
+                                                               0.5)
 
 for i in xrange(N):
-    plt.subplot(221)
+    plt.subplot(231)
     plt.title('Actual A %d' % i)
     plt.imshow(A[i])
-    plt.subplot(222)
+    plt.clim(0, 1.0)
+    plt.subplot(232)
     plt.title('Estimated A %d' % i)
     plt.imshow(estim_A[i])
-    plt.subplot(223)
+    plt.clim(0, 1.0)
+    plt.subplot(233)
+    plt.title('Init A %d' % i)
+    plt.imshow(A_init[i])
+    plt.clim(0, 1.0)
+    #
+    plt.subplot(234)
     plt.title('Actual B %d' % i)
     plt.plot(range(len(B[i])), B[i], linestyle = 'None', marker = 'o')
-    plt.subplot(224)
+    plt.ylim(-0.2, 1.0)
+    plt.xlim(-1, len(B[i]))
+    plt.subplot(235)
     plt.title('Estimated B %d' % i)
-    plt.plot(range(len(B[i])), estim_B[i], linestyle = 'None', marker = 'o')
-    
+    plt.plot(range(len(estim_B[i])), estim_B[i], linestyle = 'None', marker = 'o')
+    plt.ylim(-0.2, 1.0)
+    plt.xlim(-1, len(estim_B[i]))
+    plt.subplot(236)
+    plt.title('Init B %d' % i)
+    plt.plot(range(len(B_init[i])), B_init[i], linestyle = 'None', marker = 'o')
+    plt.ylim(-0.2, 1.0)
+    plt.xlim(-1, len(B_init[i]))
     plt.show()
     
 

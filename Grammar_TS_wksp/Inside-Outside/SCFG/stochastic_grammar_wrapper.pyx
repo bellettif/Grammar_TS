@@ -149,4 +149,106 @@ def iterate_estimation(np.ndarray A_proposal,
 	del fio
 	return c_new_A, c_new_B, likelihoods
 
-	
+def iterate_estimation(np.ndarray A_proposal,
+					   np.ndarray B_proposal,
+					   terminals,
+					   samples,
+					   n_iterations):
+	assert(A_proposal.shape[0] == A_proposal.shape[1] == A_proposal.shape[2] == B_proposal.shape[0])
+	assert(B_proposal.shape[1] == len(terminals))
+	N = A_proposal.shape[0]
+	M = B_proposal.shape[1]
+	n_samples = len(samples)
+	cdef np.ndarray[DTYPE_t, ndim = 3, mode = 'c'] c_A_proposal = np.copy(A_proposal)
+	cdef np.ndarray[DTYPE_t, ndim = 2, mode = 'c'] c_B_proposal = np.copy(B_proposal)
+	cdef np.ndarray[DTYPE_t, ndim = 3, mode = 'c'] c_new_A = np.zeros((N, N, N), dtype = DTYPE)
+	cdef np.ndarray[DTYPE_t, ndim = 2, mode = 'c'] c_new_B = np.zeros((N, M), dtype = DTYPE)
+	cdef Flat_in_out* fio
+	cdef np.ndarray[DTYPE_t, ndim = 1, mode = 'c'] temp_likelihoods
+	likelihoods = np.zeros((n_iterations + 1, n_samples), dtype = DTYPE)
+	for iter in xrange(n_iterations):
+		fio = new Flat_in_out(<double*> c_A_proposal.data,
+							  <double*> c_B_proposal.data,
+   							  N, M,
+   		     				  terminals)
+		temp_likelihoods = np.zeros(n_samples, dtype = DTYPE)
+		fio.estimate_A_B(samples, 
+						 <double *> temp_likelihoods.data,
+						 <double*> c_new_A.data,
+						 <double*> c_new_B.data)
+		likelihoods[iter, :] = temp_likelihoods
+		del fio
+		c_A_proposal = c_new_A
+		c_B_proposal = c_new_B
+	fio = new Flat_in_out(<double*> c_A_proposal.data,
+						  <double*> c_B_proposal.data,
+						  N, M,
+	     				  terminals)
+	temp_likelihoods = np.zeros(n_samples, dtype = DTYPE)
+	fio.compute_probas_flat(samples,
+					   	    <double*> temp_likelihoods.data)
+	likelihoods[n_iterations, :] = temp_likelihoods
+	del c_A_proposal
+	del c_B_proposal
+	del fio
+	return c_new_A, c_new_B, likelihoods
+
+def iterate_estimation_perturbated(np.ndarray A_proposal,
+					   np.ndarray B_proposal,
+					   terminals,
+					   samples,
+					   n_iterations,
+					   noise_source_A,
+					   param_1_A,
+					   param_2_A,
+					   epsilon_A,
+					   noise_source_B,
+					   param_1_B,
+					   param_2_B,
+					   epsilon_B,
+					   dampen):
+	assert(A_proposal.shape[0] == A_proposal.shape[1] == A_proposal.shape[2] == B_proposal.shape[0])
+	assert(B_proposal.shape[1] == len(terminals))
+	N = A_proposal.shape[0]
+	M = B_proposal.shape[1]
+	n_samples = len(samples)
+	cdef np.ndarray[DTYPE_t, ndim = 3, mode = 'c'] c_A_proposal = np.copy(A_proposal)
+	cdef np.ndarray[DTYPE_t, ndim = 2, mode = 'c'] c_B_proposal = np.copy(B_proposal)
+	cdef np.ndarray[DTYPE_t, ndim = 3, mode = 'c'] c_new_A = np.zeros((N, N, N), dtype = DTYPE)
+	cdef np.ndarray[DTYPE_t, ndim = 2, mode = 'c'] c_new_B = np.zeros((N, M), dtype = DTYPE)
+	cdef Flat_in_out* fio
+	cdef np.ndarray[DTYPE_t, ndim = 1, mode = 'c'] temp_likelihoods
+	likelihoods = np.zeros((n_iterations + 1, n_samples), dtype = DTYPE)
+	delta = 1.0 / float(n_iterations)
+	for iter in xrange(n_iterations):
+		fio = new Flat_in_out(<double*> c_A_proposal.data,
+							  <double*> c_B_proposal.data,
+   							  N, M,
+   		     				  terminals)
+		temp_likelihoods = np.zeros(n_samples, dtype = DTYPE)
+		fio.estimate_A_B(samples, 
+						 <double *> temp_likelihoods.data,
+						 <double*> c_new_A.data,
+						 <double*> c_new_B.data)
+		likelihoods[iter, :] = temp_likelihoods
+		del fio
+		c_A_proposal = c_new_A + noise_source_A(param_1_A, param_2_A * np.power(1.0 - n_iterations * delta, dampen), (N, N, N))
+		c_B_proposal = c_new_B + noise_source_B(param_1_B, param_1_A * np.power(1.0 - n_iterations * delta, dampen), (N, M))
+		c_A_proposal = np.maximum(c_A_proposal, np.power(1.0 - n_iterations * delta, dampen) * epsilon_A * np.ones((N, N, N), dtype = np.double))
+		c_B_proposal = np.maximum(c_B_proposal, np.power(1.0 - n_iterations * delta, dampen) * epsilon_B * np.ones((N, M), dtype = np.double))
+		for i in xrange(N):
+			total = np.sum(c_A_proposal[i]) + np.sum(c_B_proposal[i])
+			c_A_proposal[i] /= total
+			c_B_proposal[i] /= total
+	fio = new Flat_in_out(<double*> c_A_proposal.data,
+						  <double*> c_B_proposal.data,
+						  N, M,
+	     				  terminals)
+	temp_likelihoods = np.zeros(n_samples, dtype = DTYPE)
+	fio.compute_probas_flat(samples,
+					   	    <double*> temp_likelihoods.data)
+	likelihoods[n_iterations, :] = temp_likelihoods
+	del c_A_proposal
+	del c_B_proposal
+	del fio
+	return c_new_A, c_new_B, likelihoods
