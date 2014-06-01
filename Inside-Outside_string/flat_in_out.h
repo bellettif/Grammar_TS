@@ -2,11 +2,69 @@
 #define FLAT_IN_OUT_H
 
 #include <vector>
+#include <list>
 #include <unordered_map>
 #include <string>
+#include <random>
+#include <deque>
 
 typedef std::unordered_map<std::string, int>              string_int_map;
 typedef std::vector<std::string>                          string_vect;
+typedef std::vector<string_vect>                          string_vect_vect;
+typedef std::discrete_distribution<>                      choice_distrib;
+typedef std::mt19937                                      RNG;
+typedef std::vector<int>::iterator                        vect_it;
+typedef std::list<int>::iterator                          list_it;
+
+class Rule{
+    int                             _N;
+    int                             _M;
+    choice_distrib                  _emission_choice;
+    choice_distrib                  _non_term_choice;
+    choice_distrib                  _term_choice;
+    const string_vect &             _terminals;
+
+
+public:
+
+    Rule(int i, double * A, double * B, int N, int M,
+         const string_vect & terminals):
+        _N(N),
+        _M(M),
+        _terminals(terminals)
+    {
+        double total_emission_weight = 0;
+        double total_non_emission_weight = 0;
+        for(int j = 0; j < _M; ++j){
+            total_emission_weight += B[i*_M + j];
+        }
+        total_non_emission_weight = 1.0 - total_emission_weight;
+        _emission_choice = choice_distrib({total_non_emission_weight,
+                                           total_emission_weight});
+        _non_term_choice = choice_distrib(A + i*N*N, A + (i+1)*N*N);
+        _term_choice = choice_distrib(B + i*M, B+ (i+1)*M);
+    }
+
+    void inline derivation(RNG & rng,
+                           bool & emission,
+                           int & term,
+                           int & left,
+                           int & right){
+        emission = (_emission_choice(rng) == 1);
+        if(emission){
+            term = _term_choice(rng);
+            std::cout << "\t\t\tTerminal " << term << std::endl;
+        }else{
+            int non_term = _non_term_choice(rng);
+            left = non_term / _N;
+            right = non_term % _N;
+            std::cout << "\t\t\tLeft " << left << " right " << right << std::endl;
+        }
+    }
+
+
+};
+
 
 class Flat_in_out
 {
@@ -18,6 +76,9 @@ private:
     int                                         _M;
     string_vect                                 _terminals;
     string_int_map                              _terminal_to_index;
+
+    bool                                        _built_rule_map         = false;
+    std::unordered_map<int, Rule>               _rule_map;
 
 public:
     Flat_in_out(double* A, double* B,
@@ -273,6 +334,75 @@ public:
         delete[] Es;
         delete[] Fs;
         delete[] sample_lengths;
+    }
+
+    string_vect_vect inline produce_sentences(RNG & rng,
+                                              int n_sentences){
+        string_vect_vect result (n_sentences);
+        for(int i = 0; i < n_sentences; ++i){
+            produce_sentence(rng, result.at(i));
+        }
+        return result;
+    }
+
+    void inline produce_sentence(RNG & rng, string_vect & result){
+        if(!_built_rule_map){
+            build_rule_map();
+        }
+        std::list<int>                                  temp_result = {0};
+        std::vector<list_it>                            index_to_do = {temp_result.begin()};
+        std::vector<list_it>                            next_index_to_do;
+        bool emission;
+        int terminal;
+        int left;
+        int right;
+        Rule * current_rule;
+        list_it second_it;
+        int current_iter = 0;
+        while(!index_to_do.empty()){
+            std::cout << "Iteration " << current_iter++ << std::endl;
+            std::cout << "\t";
+            for(auto x : index_to_do){
+                std::cout << *x << " ";
+            }std::cout << std::endl;
+            std::cout << "\t";
+            for(auto x : temp_result){
+                std::cout << x << " ";
+            }std::cout << std::endl;
+            for(list_it & it : index_to_do){
+                std::cout << "\t\tContent of it: " << *it << std::endl;
+                current_rule = &(_rule_map.at(*it));
+                current_rule->derivation(rng, emission, terminal, left, right);
+                if(emission){
+                    *it = terminal;
+                }else{
+                    *it = right;
+                    it = temp_result.insert(it, left);
+                    next_index_to_do.push_back(it);
+                    second_it = it;
+                    std::advance(second_it, 1);
+                    next_index_to_do.push_back(second_it);
+                }
+            }
+            index_to_do.swap(next_index_to_do);
+            next_index_to_do.clear();
+            std::cout << "End of iteration " << current_iter << std::endl;
+        }
+        std::cout << "Final result:" << std::endl;
+        for(auto x : temp_result){
+            std::cout << x << " ";
+        }std::cout << std::endl;
+        std::cout << std::endl;
+        for(auto x : temp_result){
+            result.push_back(_terminals.at(x));
+        }
+    }
+
+    void inline build_rule_map(){
+        for(int i = 0; i < _N; ++i){
+            _rule_map.emplace(i, Rule(i, _A, _B, _N, _M, _terminals));
+        }
+        _built_rule_map = true;
     }
 
 };

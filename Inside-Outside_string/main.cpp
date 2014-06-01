@@ -48,7 +48,7 @@ int main(){
 
     int first_option = 1100;
     int second_option = 11198;
-    RNG                     my_rng(millis);
+    RNG                     my_rng(first_option);
 
     std::pair<int, int>     A_pair_1 (1, 1);
     std::pair<int, int>     A_pair_2 (1, 2);
@@ -111,7 +111,7 @@ int main(){
 
     SGrammar_T              grammar(rules, 0);
 
-    int n_samples = 100;
+    int n_samples = 10;
 
     T_vect_vect inputs;
     T_list temp;
@@ -161,69 +161,27 @@ int main(){
 
     array_utils::flatten_params(A_converted, B_converted, N, M, A_flat, B_flat);
 
-    T_vect terminals = grammar.get_index_to_term_vect();
+    std::vector<std::string> terminals = grammar.get_index_to_term_vect();
 
     Flat_in_out fao (A_flat, B_flat, N, M, terminals);
 
-    Model_estimator model_estim (grammar,
-                                 inputs);
 
-    model_estim.estimate_from_inputs();
+    RNG second_rng (first_option);
 
-    double * sample_probas = new double[inputs.size()];
-    double * new_A = new double[N*N*N];
-    double * new_B = new double[N*M];
+    std::vector<std::vector<std::string>> sentences = fao.produce_sentences(second_rng,
+                                                                            n_samples);
 
-    std::cout << "Estimating" << std::endl;
-
-    fao.estimate_A_B(inputs,
-                     sample_probas,
-                     new_A, new_B);
-
-    std::cout << "Estimation done" << std::endl;
-
-    double *** A_estim = model_estim.get_A_estim();
-    double ** B_estim = model_estim.get_B_estim();
-
-    double *** A_estim_converted = new double**[N];
-    double ** B_estim_converted = new double*[N];
-
-    for(int i = 0; i < N; ++i){
-        ii = index_to_non_term[i];
-        A_estim_converted[ii] = new double*[N];
-        for(int j = 0; j < N; ++j){
-            jj = index_to_non_term[j];
-            A_estim_converted[ii][jj] = new double[N];
-            for(int k = 0; k < N; ++k){
-                kk = index_to_non_term[k];
-                A_estim_converted[ii][jj][kk] = A_estim[i][j][k];
-            }
-        }
-        B_estim_converted[ii] = new double[M];
-        for(int j = 0; j < M; ++j){
-            B_estim_converted[ii][j] = B_estim[i][j];
-        }
+    for(int i = 0; i < n_samples; ++i){
+        for(auto x : inputs.at(i)){
+            std::cout << x << " ";
+        }std::cout << std::endl;
+        for(auto x : sentences.at(i)){
+            std::cout << x << " ";
+        }std::cout << std::endl;
     }
 
-    std::cout << "Printing A estim converted" << std::endl;
-    array_utils::print_3d_array(A_estim_converted, N, N, N);
-    std::cout << std::endl;
-
-    std::cout << "Printing new A estim" << std::endl;
-    array_utils::print_3d_array(new_A, N, N, N);
-    std::cout << std::endl;
-
-    std::cout << "Printing B estim converted" << std::endl;
-    array_utils::print_2d_array(B_estim_converted, N, M);
-    std::cout << std::endl;
-
-    std::cout << "Printing new B estim" << std::endl;
-    array_utils::print_2d_array(new_B, N, M);
-    std::cout << std::endl;
-
-    delete[] new_B;
-    delete[] new_A;
-    delete[] sample_probas;
+    delete[] A_flat;
+    delete[] B_flat;
     delete[] B;
     delete[] A;
 
