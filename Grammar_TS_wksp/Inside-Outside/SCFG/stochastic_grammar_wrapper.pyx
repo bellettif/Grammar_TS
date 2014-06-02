@@ -219,7 +219,6 @@ def iterate_estimation_perturbated(np.ndarray A_proposal,
 	cdef Flat_in_out* fio
 	cdef np.ndarray[DTYPE_t, ndim = 1, mode = 'c'] temp_likelihoods
 	likelihoods = np.zeros((n_iterations + 1, n_samples), dtype = DTYPE)
-	delta = 1.0 / float(n_iterations)
 	for iter in xrange(n_iterations):
 		fio = new Flat_in_out(<double*> c_A_proposal.data,
 							  <double*> c_B_proposal.data,
@@ -232,10 +231,10 @@ def iterate_estimation_perturbated(np.ndarray A_proposal,
 						 <double*> c_new_B.data)
 		likelihoods[iter, :] = temp_likelihoods
 		del fio
-		c_A_proposal = c_new_A + noise_source_A(param_1_A, param_2_A * np.power(1.0 - n_iterations * delta, dampen), (N, N, N))
-		c_B_proposal = c_new_B + noise_source_B(param_1_B, param_1_A * np.power(1.0 - n_iterations * delta, dampen), (N, M))
-		c_A_proposal = np.maximum(c_A_proposal, np.power(1.0 - n_iterations * delta, dampen) * epsilon_A * np.ones((N, N, N), dtype = np.double))
-		c_B_proposal = np.maximum(c_B_proposal, np.power(1.0 - n_iterations * delta, dampen) * epsilon_B * np.ones((N, M), dtype = np.double))
+		c_A_proposal = c_new_A + noise_source_A(param_1_A, param_2_A * np.power(1.0 / float(n_iterations + 1.0), dampen), (N, N, N))
+		c_B_proposal = c_new_B + noise_source_B(param_1_B, param_1_A * np.power(1.0 / float(n_iterations + 1.0), dampen), (N, M))
+		c_A_proposal = np.maximum(c_A_proposal, np.power(1.0 / float(n_iterations + 1.0), dampen) * epsilon_A * np.ones((N, N, N), dtype = np.double))
+		c_B_proposal = np.maximum(c_B_proposal, np.power(1.0 / float(n_iterations + 1.0), dampen) * epsilon_B * np.ones((N, M), dtype = np.double))
 		for i in xrange(N):
 			total = np.sum(c_A_proposal[i]) + np.sum(c_B_proposal[i])
 			c_A_proposal[i] /= total

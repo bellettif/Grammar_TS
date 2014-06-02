@@ -348,7 +348,6 @@ public:
                                               RNG & rng){
         string_vect_vect result (n_sentences);
         for(int i = 0; i < n_sentences; ++i){
-            std::cout << i << std::endl;
             produce_sentence(result.at(i), rng);
         }
         return result;

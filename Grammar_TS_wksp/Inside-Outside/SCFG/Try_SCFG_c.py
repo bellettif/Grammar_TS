@@ -42,7 +42,11 @@ for i in xrange(N):
 
 samples = produce_sentences(A, B,
                             terms,
-                            100)
+                            1000)
+
+samples = filter(lambda x : len(x) < 10, samples)
+
+print len(set([' '.join(x) for x in samples]))
 
 #for sample in samples:
 #    print sample
@@ -52,6 +56,16 @@ def estimate_with_random_init():
     B_init = np.random.uniform(0.0, 1.0, (N, M))
     A_init = np.maximum(A_init, 0.01 * np.ones((N, N, N)))
     B_init = np.maximum(B_init, 0.01 * np.ones((N, M)))
+    B_init[0,:] = np.zeros(M) 
+    B_init[1,:] = [1.0, 0.0, 0.0]
+    A_init[1,:,:] = np.zeros((N, N))
+    B_init[2,:] = np.zeros(M)
+    B_init[3,:] = [0.0, 1.0, 0.0]
+    A_init[3,:,:] = np.zeros((N, N))
+    B_init[4,:] = np.zeros(M)
+    B_init[5,:] = [0.0, 0.0, 1.0]
+    A_init[5,:,:] = np.zeros((N, N))
+    B_init[6,:] = np.zeros(M)
     for i in xrange(N):
         total = np.sum(A_init[i]) + np.sum(B_init[i])
         A_init[i] /= total
@@ -68,6 +82,16 @@ def estimate_with_random_init_perturbated():
     B_init = np.random.uniform(0.0, 1.0, (N, M))
     A_init = np.maximum(A_init, 0.01 * np.ones((N, N, N)))
     B_init = np.maximum(B_init, 0.01 * np.ones((N, M)))
+    B_init[0,:] = np.zeros(M) 
+    B_init[1,:] = [1.0, 0.0, 0.0]
+    A_init[1,:,:] = np.zeros((N, N))
+    B_init[2,:] = np.zeros(M)
+    B_init[3,:] = [0.0, 1.0, 0.0]
+    A_init[3,:,:] = np.zeros((N, N))
+    B_init[4,:] = np.zeros(M)
+    B_init[5,:] = [0.0, 0.0, 1.0]
+    A_init[5,:,:] = np.zeros((N, N))
+    B_init[6,:] = np.zeros(M)
     for i in xrange(N):
         total = np.sum(A_init[i]) + np.sum(B_init[i])
         A_init[i] /= total
@@ -108,6 +132,16 @@ A_init = np.random.uniform(0.0, 1.0, (N, N, N))
 B_init = np.random.uniform(0.0, 1.0, (N, M))
 A_init = np.maximum(A_init, 0.01 * np.ones((N, N, N)))
 B_init = np.maximum(B_init, 0.01 * np.ones((N, M)))
+B_init[0,:] = np.zeros(M) 
+B_init[1,:] = [1.0, 0.0, 0.0]
+A_init[1,:,:] = np.zeros((N, N))
+B_init[2,:] = np.zeros(M)
+B_init[3,:] = [0.0, 1.0, 0.0]
+A_init[3,:,:] = np.zeros((N, N))
+B_init[4,:] = np.zeros(M)
+B_init[5,:] = [0.0, 0.0, 1.0]
+A_init[5,:,:] = np.zeros((N, N))
+B_init[6,:] = np.zeros(M)
 for i in xrange(N):
     total = np.sum(A_init[i]) + np.sum(B_init[i])
     A_init[i] /= total
@@ -117,15 +151,30 @@ estim_A, estim_B, likelihoods = iterate_estimation_perturbated(A_init,
                                                                terms,
                                                                samples,
                                                                100,
+                                                               np.random.normal,
+                                                               0.0,
+                                                               0.1,
+                                                               0.01,
                                                                np.random.uniform,
                                                                0.0,
-                                                               1.0,
-                                                               0.1,
-                                                               np.random.uniform,
                                                                0.0,
-                                                               1.0,
-                                                               0.1,
-                                                               0.5)
+                                                               0.0,
+                                                               0.9)
+
+likelihoods_exact = estimate_likelihoods(A,
+                                         B,
+                                         terms,
+                                         samples)
+temp = np.zeros((100, len(samples)))
+for i in range(100):
+    temp[i] = likelihoods_exact
+likelihoods_exact = temp
+
+plt.plot(np.log(likelihoods))
+plt.plot(np.log(likelihoods_exact), linestyle = '--')
+plt.ylim((-30, 0))
+plt.show()
+
 
 for i in xrange(N):
     plt.subplot(231)
