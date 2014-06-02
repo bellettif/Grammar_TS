@@ -35,7 +35,7 @@ class SCFG:
     # Rule_dict[int] = (list of int pairs, list of weights, list of terms, list_of_weights)
     def init_from_rule_dict(self, rule_dict):
         self.N = len(rule_dict)
-        assert all(rule_dict.keys().sort() == range(self.N))
+        assert sorted(rule_dict.keys()) == range(self.N)
         #
         #    Grabbing all terminal characters
         #
@@ -45,7 +45,7 @@ class SCFG:
             for left, right in list_of_pairs:
                 assert(left in rule_dict)
                 assert(right in rule_dict)
-        self.term_chars = list(set(all_terms))
+        self.term_chars = sorted(list(set(all_terms)))
         assert(len(self.term_chars) > 0)
         self.M = len(self.term_chars)
         for i, term_char in enumerate(self.term_chars):
@@ -66,7 +66,8 @@ class SCFG:
             for l in xrange(len(list_of_terms)):
                 term = list_of_terms[l]
                 weight = list_of_term_weights[l]
-                self.B[i, self.term_char_to_index[term]] = weight               
+                self.B[i, self.term_char_to_index[term]] = weight     
+        normalize_slices(self.A, self.B)          
         
     def init_from_A_B(self, A, B, term_chars):
         assert(len(term_chars) > 0)
@@ -104,9 +105,9 @@ class SCFG:
         if(A_proposal == 0 or B_proposal == 0 or len(term_chars) == 0):
             assert(A_proposal == 0 and B_proposal == 0 and len(term_chars) == 0)
             return SCGF_c.estimate_likelihoods(self.A,
-                                        self.B,
-                                        self.term_chars,
-                                        samples)
+                                               self.B,
+                                               self.term_chars,
+                                               samples)
         else:
             assert(A_proposal.ndim == 3)
             assert(B_proposal.ndim == 2)
