@@ -6,7 +6,11 @@ Created on 20 mai 2014
 
 import SCFG_c
 import numpy as np
+from matplotlib import pyplot as plt
 
+import os
+import shutil
+import string
 
 def normalize_slices(A, B):
     assert(A.ndim == 3)
@@ -104,7 +108,7 @@ class SCFG:
         assert(len(samples) > 0)
         if(A_proposal == 0 or B_proposal == 0 or len(term_chars) == 0):
             assert(A_proposal == 0 and B_proposal == 0 and len(term_chars) == 0)
-            return SCGF_c.estimate_likelihoods(self.A,
+            return SCFG_c.estimate_likelihoods(self.A,
                                                self.B,
                                                self.term_chars,
                                                samples)
@@ -113,7 +117,7 @@ class SCFG:
             assert(B_proposal.ndim == 2)
             assert(A_proposal.shape[0] == A_proposal.shape[1] == A_proposal.shape[2] == B_proposal.shape[0])
             assert(B_proposal.shape[1] == len(term_chars))
-            return SCGF_c.estimate_likelihoods(A_proposal,
+            return SCFG_c.estimate_likelihoods(A_proposal,
                                                B_proposal,
                                                term_chars,
                                                samples)
@@ -138,7 +142,11 @@ class SCFG:
                      param_1_B = 0,
                      param_2_B = 0,
                      epsilon_B = 0):
-        assert(init_option in ['exact', 'perturbated', 'perturbated_keep_zeros', 'explicit'])
+        assert(init_option in ['exact',
+                               'perturbated',
+                               'perturbated_keep_zeros',
+                               'explicit',
+                               'explicit_keep_zeros'])
         assert(n_iterations > 0)
         assert(len(samples) > 0)
         if init_option == 'exact':
@@ -148,6 +156,7 @@ class SCFG:
                                              samples,
                                              n_iterations)
         if init_option == 'perturbated':
+            assert(A_proposal == 0 and B_proposal == 0 and len(term_chars) == 0)
             A_proposal = self.A + noise_source_A(param_1_A, param_2_A, (self.N, self.N, self.N))
             A_proposal = np.maximum(A_proposal, epsilon_A * np.ones((self.N, self.N, self.N)))
             B_proposal = self.B + noise_source_B(param_1_B, param_2_B, (self.N, self.M))
@@ -159,6 +168,7 @@ class SCFG:
                                              samples,
                                              n_iterations)
         if init_option == 'perturbated_keep_zeros':
+            assert(A_proposal == 0 and B_proposal == 0 and len(term_chars) == 0)
             A_proposal = self.A + noise_source_A(param_1_A, param_2_A, (self.N, self.N, self.N))
             A_proposal = np.maximum(A_proposal, epsilon_A * np.ones((self.N, self.N, self.N)))
             B_proposal = self.B + noise_source_B(param_1_B, param_2_B, (self.N, self.M))
@@ -172,15 +182,77 @@ class SCFG:
                                              samples,
                                              n_iterations)
         if init_option == 'explicit':
+            assert(noise_source_A == 0 and
+                   param_1_A == 0 and
+                   param_2_A == 0 and
+                   epsilon_A == 0 and
+                   noise_source_B == 0 and
+                   param_1_B == 0 and
+                   param_2_B == 0 and
+                   epsilon_B == 0)
             if len(term_chars) == 0:
                 term_chars = self.term_chars
             assert(A_proposal.ndim == 3)
             assert(B_proposal.ndim == 2)
             assert(A_proposal.shape[0] == A_proposal.shape[1] == A_proposal.shape[2] == B_proposal.shape[0])
             assert(B_proposal.shape[1] == len(term_chars))
+            normalize_slices(A_proposal, B_proposal)
             return SCFG_c.iterate_estimation(A_proposal,
                                              B_proposal,
                                              term_chars,
                                              samples,
                                              n_iterations)
+        if init_option == 'explicit_keep_zeros':
+            assert(noise_source_A == 0 and
+                   param_1_A == 0 and
+                   param_2_A == 0 and
+                   epsilon_A == 0 and
+                   noise_source_B == 0 and
+                   param_1_B == 0 and
+                   param_2_B == 0 and
+                   epsilon_B == 0)
+            if len(term_chars) == 0:
+                term_chars = self.term_chars
+            assert(A_proposal.ndim == 3)
+            assert(B_proposal.ndim == 2)
+            assert(A_proposal.shape[0] == A_proposal.shape[1] == A_proposal.shape[2] == B_proposal.shape[0])
+            assert(B_proposal.shape[1] == len(term_chars))
+            A_proposal[np.where(self.A == 0)] = 0
+            B_proposal[np.where(self.B == 0)] = 0
+            normalize_slices(A_proposal, B_proposal)
+            return SCFG_c.iterate_estimation(A_proposal,
+                                             B_proposal,
+                                             term_chars,
+                                             samples,
+                                             n_iterations)
+            
+    def plot_grammar_matrices(self,
+                              folder_path,
+                              folder_name,
+                              A_matrix = np.zeros(0),
+                              B_matrix = np.zeros(0)):
+        if folder_name in os.listdir(folder_path):
+            shutil.rmtree(folder_path + '/' + folder_name,
+                          True)
+        os.mkdir(folder_path + '/' + folder_name)
+        if(len(A_matrix) == 0):
+            A_matrix = self.A
+        if(len(B_matrix) == 0):
+            B_matrix = self.B
+        assert(A_matrix.shape[0] == A_matrix.shape[1] == A_matrix.shape[2] == B_matrix.shape[0])
+        N = A_matrix.shape[0]
+        for i in xrange(N):
+            plt.subplot(211)
+            plt.title('A %d' % i)
+            plt.imshow(A_matrix[i])
+            plt.clim(0, 1.0)
+            plt.subplot(212)
+            plt.plot(range(len(B_matrix[i])), B_matrix[i], linestyle = 'None', marker = 'o')
+            plt.ylim(-0.2, 1.0)
+            plt.xlim(-1, len(B_matrix[i]))
+            plt.title('B %d' % i)
+            plt.savefig(folder_path + '/' + folder_name + '/' + string.lower(folder_name) + '_rule_' + str(i) + '.png', dpi = 300)
+            plt.close()
+        
+            
             

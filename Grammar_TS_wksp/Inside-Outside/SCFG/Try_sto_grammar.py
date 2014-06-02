@@ -93,4 +93,41 @@ print 'Second try B'
 print second_try.B
 print ''
 
+n_samples = 20
+n_iterations = 100
 
+sentences = first_try.produce_sentences(n_samples)
+
+for sentence in sentences:
+    print sentence
+    
+N = first_try.N
+M = first_try.M
+
+A_proposal = np.random.uniform(0.0, 1.0, (N, N, N))
+B_proposal = np.random.uniform(0.0, 1.0, (N, M))
+
+A_proposal = np.maximum(A_proposal, 0.1 * np.ones((N, N, N)))
+B_proposal = np.maximum(B_proposal, 0.1 * np.ones((N, M)))
+    
+estim_A, estim_B, likelihoods = first_try.estimate_A_B(sentences,
+                                                       n_iterations, 
+                                                       'explicit',
+                                                       A_proposal,
+                                                       B_proposal)
+
+exact_likelihood = first_try.estimate_likelihoods(sentences)
+exact_likelihoods = np.zeros((n_iterations + 1, len(sentences)))
+
+for i in xrange(n_iterations + 1):
+    exact_likelihoods[i] = exact_likelihood
+
+print likelihoods.shape
+print exact_likelihoods.shape
+
+first_try.plot_grammar_matrices('Examples','Estimated', estim_A, estim_B)
+first_try.plot_grammar_matrices('Examples','Exact')
+
+plt.plot(np.log(likelihoods))
+plt.plot(np.log(exact_likelihoods), linestyle = "--")
+plt.show()
