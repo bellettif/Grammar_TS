@@ -17,6 +17,8 @@ typedef std::discrete_distribution<>                      choice_distrib;
 typedef std::mt19937                                      RNG;
 typedef std::vector<int>::iterator                        vect_it;
 typedef std::list<int>::iterator                          list_it;
+typedef std::vector<double>                               double_vect;
+typedef std::vector<int>                                  int_vect;
 
 static auto duration =  std::chrono::system_clock::now().time_since_epoch();
 static auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
@@ -351,6 +353,29 @@ public:
             produce_sentence(result.at(i), rng);
         }
         return result;
+    }
+
+    void inline compute_frequences(int n_sentences,
+                                    int_vect & freqs,
+                                    string_vect & strings,
+                                    int max_length = 0){
+        string_vect_vect samples = produce_sentences(n_sentences);
+        string_int_map counts;
+        std::string temp;
+        for(const string_vect & sample : samples){
+            if ((max_length != 0) && (sample.size() > max_length)) {
+                continue;
+            }
+            temp = "";
+            for(const std::string & x : sample){
+                temp += x + " ";
+            }
+            counts[temp] ++;
+        }
+        for(auto xy : counts){
+            freqs.push_back(xy.second);
+            strings.push_back(xy.first);
+        }
     }
 
     void inline produce_sentence(string_vect & result, RNG & rng){

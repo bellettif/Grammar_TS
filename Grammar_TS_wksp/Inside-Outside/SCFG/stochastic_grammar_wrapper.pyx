@@ -40,6 +40,10 @@ cdef extern from "flat_in_out.h":
 						  double * new_A,
 						  double * new_B)
 		vector[vector[string]] produce_sentences(int n_sentences)
+		void compute_frequences(int n_sentences,
+                                 vector[int] & freqs,
+                                 vector[string] & strings,
+                                 int max_length)
 	
 def estimate_likelihoods(np.ndarray A_proposal,
 						 np.ndarray B_proposal,
@@ -251,3 +255,25 @@ def iterate_estimation_perturbated(np.ndarray A_proposal,
 	del c_B_proposal
 	del fio
 	return c_new_A, c_new_B, likelihoods
+
+def compute_stats(np.ndarray A_proposal,
+				  np.ndarray B_proposal,
+				  terminals,
+				  n_sentences,
+				  max_length):
+	assert(A_proposal.shape[0] == A_proposal.shape[1] == A_proposal.shape[2] == B_proposal.shape[0])
+	assert(B_proposal.shape[1] == len(terminals))
+	N = A_proposal.shape[0]
+	M = B_proposal.shape[1]
+	cdef np.ndarray[DTYPE_t, ndim = 3, mode = 'c'] c_A_proposal = A_proposal
+	cdef np.ndarray[DTYPE_t, ndim = 2, mode = 'c'] c_B_proposal = B_proposal
+	cdef Flat_in_out* fio = new Flat_in_out(<double*> c_A_proposal.data,
+											<double*> c_B_proposal.data,
+	               							N, M,
+	               		     				terminals)
+	cdef vector[string] strings
+	cdef vector[int] freqs
+	fio.compute_frequences(n_sentences, freqs, strings, max_length)
+	del fio
+	return freqs, strings
+	

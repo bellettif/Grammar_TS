@@ -11,6 +11,8 @@ from matplotlib import pyplot as plt
 
 from sto_grammar import SCFG
 
+import time
+
 N = 7
 
 terms = ['a', 'b', 'c']
@@ -98,6 +100,12 @@ n_iterations = 100
 
 sentences = first_try.produce_sentences(n_samples)
 
+
+
+first_try.plot_stats(100000, max_represented = 100)
+
+
+
 for sentence in sentences:
     print sentence
     
@@ -127,6 +135,10 @@ print exact_likelihoods.shape
 
 first_try.plot_grammar_matrices('Examples','Estimated', estim_A, estim_B)
 first_try.plot_grammar_matrices('Examples','Exact')
+first_try.compare_grammar_matrices_3('Examples', 'Random_init', 
+                                   estim_A, estim_B,
+                                   A_proposal, B_proposal)
+
 
 plt.plot(np.log(likelihoods))
 plt.plot(np.log(exact_likelihoods), linestyle = "--")

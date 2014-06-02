@@ -5,12 +5,15 @@ Created on 20 mai 2014
 '''
 
 import SCFG_c
+
 import numpy as np
 from matplotlib import pyplot as plt
 
 import os
 import shutil
 import string
+
+import time
 
 def normalize_slices(A, B):
     assert(A.ndim == 3)
@@ -254,5 +257,123 @@ class SCFG:
             plt.savefig(folder_path + '/' + folder_name + '/' + string.lower(folder_name) + '_rule_' + str(i) + '.png', dpi = 300)
             plt.close()
         
+    def compare_grammar_matrices_3(self,
+                                 folder_path,
+                                 folder_name,
+                                 A_1_matrix = np.zeros(0),
+                                 B_1_matrix = np.zeros(0),
+                                 A_2_matrix = np.zeros(0),
+                                 B_2_matrix = np.zeros(0),
+                                 A_3_matrix = np.zeros(0),
+                                 B_3_matrix = np.zeros(0)):
+        if folder_name in os.listdir(folder_path):
+            shutil.rmtree(folder_path + '/' + folder_name,
+                          True)
+        os.mkdir(folder_path + '/' + folder_name)
+        if(len(A_3_matrix) == 0):
+            A_3_matrix = self.A
+        if(len(B_3_matrix) == 0):
+            B_3_matrix = self.B
+        assert(A_1_matrix.shape[0] == A_1_matrix.shape[1] == A_1_matrix.shape[2] == B_1_matrix.shape[0])
+        assert(A_2_matrix.shape[0] == A_2_matrix.shape[1] == A_2_matrix.shape[2] == B_2_matrix.shape[0])
+        assert(A_3_matrix.shape[0] == A_3_matrix.shape[1] == A_3_matrix.shape[2] == B_3_matrix.shape[0])
+        N = A_1_matrix.shape[0]
+        for i in xrange(N):
+            plt.subplot(231)
+            plt.title('First A matrix %d' % i)
+            plt.imshow(A_1_matrix[i])
+            plt.clim(0, 1.0)
+            plt.subplot(232)
+            plt.title('Second A matrix %d' % i)
+            plt.imshow(A_2_matrix[i])
+            plt.clim(0, 1.0)
+            plt.subplot(233)
+            plt.title('Third A matrix %d' % i)
+            plt.imshow(A_3_matrix[i])
+            plt.clim(0, 1.0)
+            plt.subplot(234)
+            plt.plot(range(len(B_1_matrix[i])), B_1_matrix[i], linestyle = 'None', marker = 'o')
+            plt.ylim(-0.2, 1.0)
+            plt.xlim(-1, len(B_1_matrix[i]))
+            plt.title('First B matrix %d' % i)
+            plt.subplot(235)          
+            plt.plot(range(len(B_2_matrix[i])), B_2_matrix[i], linestyle = 'None', marker = 'o')
+            plt.ylim(-0.2, 1.0)
+            plt.xlim(-1, len(B_2_matrix[i]))
+            plt.title('Second B matrix %d' % i)
+            plt.subplot(236)          
+            plt.plot(range(len(B_3_matrix[i])), B_3_matrix[i], linestyle = 'None', marker = 'o')
+            plt.ylim(-0.2, 1.0)
+            plt.xlim(-1, len(B_3_matrix[i]))
+            plt.title('Third B matrix %d' % i)
+            plt.savefig(folder_path + '/' + folder_name + '/' + string.lower(folder_name) + '_compare_rule_' + str(i) + '.png', dpi = 300)
+            plt.close()
             
+    def compare_grammar_matrices(self,
+                                 folder_path,
+                                 folder_name,
+                                 A_1_matrix = np.zeros(0),
+                                 B_1_matrix = np.zeros(0),
+                                 A_2_matrix = np.zeros(0),
+                                 B_2_matrix = np.zeros(0)):
+        if folder_name in os.listdir(folder_path):
+            shutil.rmtree(folder_path + '/' + folder_name,
+                          True)
+        os.mkdir(folder_path + '/' + folder_name)
+        if(len(A_2_matrix) == 0):
+            A_2_matrix = self.A
+        if(len(B_2_matrix) == 0):
+            B_2_matrix = self.B
+        assert(A_1_matrix.shape[0] == A_1_matrix.shape[1] == A_1_matrix.shape[2] == B_1_matrix.shape[0])
+        assert(A_2_matrix.shape[0] == A_2_matrix.shape[1] == A_2_matrix.shape[2] == B_2_matrix.shape[0])
+        N = A_1_matrix.shape[0]
+        for i in xrange(N):
+            plt.subplot(221)
+            plt.title('First A matrix %d' % i)
+            plt.imshow(A_1_matrix[i])
+            plt.clim(0, 1.0)
+            plt.subplot(222)
+            plt.title('Second A matrix %d' % i)
+            plt.imshow(A_2_matrix[i])
+            plt.clim(0, 1.0)  
+            plt.subplot(223)          
+            plt.plot(range(len(B_1_matrix[i])), B_1_matrix[i], linestyle = 'None', marker = 'o')
+            plt.ylim(-0.2, 1.0)
+            plt.xlim(-1, len(B_1_matrix[i]))
+            plt.title('First B matrix %d' % i)
+            plt.subplot(224)          
+            plt.plot(range(len(B_2_matrix[i])), B_2_matrix[i], linestyle = 'None', marker = 'o')
+            plt.ylim(-0.2, 1.0)
+            plt.xlim(-1, len(B_2_matrix[i]))
+            plt.title('Second B matrix %d' % i)
+            plt.savefig(folder_path + '/' + folder_name + '/' + string.lower(folder_name) + '_compare_rule_' + str(i) + '.png', dpi = 300)
+            plt.close()
+            
+    def plot_stats(self, n_samples, max_length = 0, max_represented = 0):
+        first_time = time.clock()
+        freqs, strings = SCFG_c.compute_stats(self.A,
+                                              self.B,
+                                              self.term_chars,
+                                              n_samples,
+                                              max_length)
+        print time.clock() - first_time
+        freqs = np.asarray(freqs, dtype = np.double)
+        total = float(np.sum(freqs))
+        print 'Number of sentences %f' % total
+        freqs /= total
+        entropy = -np.sum(freqs * np.log(freqs))
+        indices = range(len(freqs))
+        indices.sort(key = (lambda i : -freqs[i]))
+        freqs = [freqs[i] for i in indices]
+        strings = [strings[i] for i in indices]
+        if max_represented != 0:
+            freqs = freqs[:max_represented]
+            strings = strings[:max_represented]
+        plt.bar(np.arange(len(strings)), np.log(freqs), align = 'center')
+        plt.xticks(np.arange(len(strings)), strings, rotation = 'vertical', fontsize = 4)
+        plt.title('Frequences (%d sequences, %f entropy)' % (int(total), entropy))
+        plt.show()
+        
+        
+        
             
