@@ -21,7 +21,7 @@ N = selected_grammar.N
 M = selected_grammar.M
 
 n_samples = 100
-n_iterations = 50
+n_iterations = 20
 
 sentences = selected_grammar.produce_sentences(n_samples)
     

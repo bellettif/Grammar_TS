@@ -7,7 +7,7 @@ Created on 29 mai 2014
 import numpy as np
 from matplotlib import pyplot as plt
 
-from Proba_sequitur_for_counts import Proba_sequitur
+from proba_sequitur.Proba_sequitur import Proba_sequitur
 
 MAX_N_RULES_PLOTTED = 20
 

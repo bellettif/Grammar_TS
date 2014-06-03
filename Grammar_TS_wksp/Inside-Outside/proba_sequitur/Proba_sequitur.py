@@ -5,42 +5,55 @@ Created on 22 mai 2014
 '''
 
 import numpy as np
+import matplotlib.pyplot as plt
 import re
-from matplotlib import pyplot as plt
 import string
-import cPickle as pickle
 import copy
 import time
 
-import load_data
-
-from surrogate.sto_grammar import SCFG
-from surrogate.sto_rule import Sto_rule
-from surrogate import sto_grammar
-
+MAX_RULES = 30
 
 class Proba_sequitur:
 
     def __init__(self,
-                 samples,
+                 build_samples,
+                 count_samples,
                  repetitions,
-                 keep_data):
+                 keep_data,
+                 degree,
+                 max_rules = MAX_RULES):
         self.current_rule_index = 1
-        self.samples = samples
+        #
+        self.build_samples = build_samples
+        self.count_samples = count_samples
+        self.all_counts = {}
+        self.cumulated_counts = {}
+        #
         self.terminal_parsing = {}
         self.rules = {}
         self.level = 0
         self.repetitions = repetitions
-        self.keep_data = keep_data
         self.counts = {}
         self.terminal_chars = []
         self.next_rule_name = 0
         self.barelk_table = {}
-        self.reconstructed = {}
-        self.reconstructed_length = {}
-        self.reconstructed_ratio = 0
+        #
         self.index_to_non_term = []
-        self.non_term_to_index = {}  
+        self.non_term_to_index = {}
+        #
+        self.keep_data = keep_data
+        self.degree = degree
+        self.max_rules = max_rules
+        #
+        self.hash_codes = {}
+        self.hashed_rules = {}
+        self.hashed_counts = {}
+        #
+        self.total_divs = []
+        self.lengths = []
+        self.rule_divs = {}
+        #
+        self.rule_levels = {}
 
     def reduce_counts(self,
                       list_of_dicts):
@@ -68,18 +81,11 @@ class Proba_sequitur:
 
     def pair_counts(self,
                     sequence,
-                    candidates):
-        if not self.repetitions:
-            all_pairs = [x + ' ' + y if x != y else None for x in candidates for y in candidates]
-        else:
-            all_pairs = [x + ' ' + y for x in candidates for y in candidates]
-        #all_pairs.extend(x + ' _ ' + y if x != y else None for x in candidates for y in candidates)
-        all_pairs = filter(lambda x : x != None, all_pairs)
+                    all_pairs):
         counts = {}
         for pair in all_pairs:
             symbol = pair
-            symbol = re.subn(' ', '-', pair)[0]
-            pattern = re.subn('_', '.', pair)[0]
+            pattern = re.sub('-', ' ', pair)
             counts[symbol] = len(re.findall(pattern, sequence))
         to_delete = []
         for key, value in counts.iteritems():
@@ -92,7 +98,15 @@ class Proba_sequitur:
     def pair_counts_multi(self,
                           sequences,
                           candidates):
-        list_of_counts = [self.pair_counts(x, candidates) for x in sequences]
+        if not self.repetitions:
+            all_pairs = [x + '-' + y if x != y else None for x in candidates for y in candidates]
+        else:
+            all_pairs = [x + '-' + y for x in candidates for y in candidates]
+        all_pairs = filter(lambda x : x != None, all_pairs)
+        list_of_counts = []
+        for sequence in sequences:
+            if sequence == '': continue
+            list_of_counts.append(self.pair_counts(sequence, all_pairs))
         return self.reduce_counts(list_of_counts)
 
     def init_barelk(self,
@@ -127,10 +141,6 @@ class Proba_sequitur:
             pair_probas[key] = value / total
             self.compute_barelk(key, barelk_table)
         divergences = {}
-        total_chars = 0
-        for seq in sequences:
-            total_chars += len(seq)
-        total_chars = float(total_chars)
         for key in pair_probas:
             divergences[key] = pair_probas[key] / float(self.length_of_symbol(key)) \
                                 * np.log2(pair_probas[key] / 
@@ -144,45 +154,31 @@ class Proba_sequitur:
         temp_counts = {}
         for k, symbol in enumerate(symbols):
             pattern = re.subn('\-', ' ', symbol)[0]
-            pattern = re.subn('_', '.', pattern)[0]
-            #pattern = string.lower(pattern)
-            temp_counts[string.lower(rule_names[k])] = 0
+            temp_counts[string.lower(rule_names[k])] = {}
             for i, sequence in enumerate(sequences):
-                #print re.subn(pattern, rule_names[k], sequence)
+                if sequence == '': continue
                 sequences[i], c = re.subn(pattern, rule_names[k], sequence)
-                temp_counts[string.lower(rule_names[k])] += c
+                temp_counts[string.lower(rule_names[k])][i] = c
         return sequences, temp_counts
+    
+    def compute_hash_code(self,
+                          symbol):
+        left, right = symbol.split('-')
+        if left in self.terminal_chars:
+            left_hash = left
+        else:
+            left_hash = self.hash_codes[left]
+        if right in self.terminal_chars:
+            right_hash = right
+        else:
+            right_hash = self.hash_codes[right]
+        return '>' + left_hash + '-' + right_hash + '<'
 
-    def reconstruct(self, terminal_parse):
-        to_parse = copy.deepcopy(filter(lambda x : 'rule' in x, terminal_parse.split(' ')))
-        to_parse = ' '.join(to_parse)
-        next_to_parse = []
-        reconstructed = []
-        while len(to_parse) > 0:
-            for elt in to_parse.split(' '):
-                if elt not in self.rules:
-                    reconstructed.append(elt)
-                    continue
-                rhs = self.rules[elt]
-                left_member, right_member = rhs.split('-')
-                if left_member in self.rules:
-                    next_to_parse.append(left_member)
-                else:
-                    reconstructed.append(left_member)
-                if right_member in self.rules:
-                    next_to_parse.append(right_member)
-                else:
-                    reconstructed.append(right_member)
-            to_parse = ' '.join(next_to_parse)
-            next_to_parse = []
-        reconstructed = ' '.join(reconstructed)
-        return reconstructed
-
-    def infer_grammar(self, degree):
-        print self.samples
+    def infer_grammar(self):
         self.level = 0
         self.current_rule_index = 1
-        target_sequences = copy.deepcopy(self.samples)
+        target_sequences = copy.deepcopy(self.build_samples)
+        target_for_counts = copy.deepcopy(self.count_samples)
         list_of_best_symbols = []
         list_of_rules = []
         self.counts = {}
@@ -190,10 +186,15 @@ class Proba_sequitur:
             self.terminal_chars.extend(sequence.split(' '))
         self.terminal_chars = set(self.terminal_chars)
         self.barelk_table = self.init_barelk(target_sequences)
-        while len(target_sequences) > 0:
+        print '\nStarting grammar inference, degree = %d' % (self.degree)
+        self.lengths.append([len(x.split(' ')) for x in target_for_counts])
+        while len(target_sequences) > 0 and len(self.rules) < self.max_rules:
             self.level += 1
-            print self.level
-            print [len(x) for x in target_sequences]
+            begin_time = time.clock()
+            print '\tIteration %d, %d rules, %d words for build, %d words for count' % (self.level,
+                                                                                        len(self.rules),
+                                                                                        sum([len(x.split(' ')) for x in target_sequences]),
+                                                                                        sum([len(x.split(' ')) for x in target_for_counts]))
             target_chars = []
             for sequence in target_sequences:
                 target_chars.extend(sequence.split(' '))
@@ -207,68 +208,108 @@ class Proba_sequitur:
             items.sort(key = (lambda x : -x[1]))
             labels = [x[0] for x in items]
             values = [x[1] for x in items]
-            if degree != 0:
-                best_symbols = labels[:degree]
+            if self.degree != 0:
+                best_symbols = labels[:self.degree]
             else:
                 best_symbols_index = filter(lambda i : values[i] > 0, range(len(values)))
                 best_symbols = labels[:len(best_symbols_index)]
+            self.total_divs.append(sum(values[:self.degree]))
             list_of_best_symbols.append(best_symbols)
             rule_names = []
-            for best_symbol in best_symbols:
-                self.rules['rule%d' % self.current_rule_index] = best_symbol
-                rule_names.append('Rule%d' % self.current_rule_index)
+            for i, best_symbol in enumerate(best_symbols):
+                new_rule_name = 'r%d_' % self.current_rule_index
+                self.rules[new_rule_name] = best_symbol
+                self.rule_levels[new_rule_name] = self.level
+                hashcode = self.compute_hash_code(best_symbol)
+                left, right = best_symbol.split('-')
+                self.hash_codes[new_rule_name] = hashcode
+                if left in self.terminal_chars:
+                    left_hash_code = left
+                else:
+                    left_hash_code = self.hash_codes[left]
+                if right in self.terminal_chars:
+                    right_hash_code = right
+                else:
+                    right_hash_code = self.hash_codes[right]
+                self.hashed_rules[hashcode] = left_hash_code + '_' + right_hash_code
+                rule_names.append('r%d_' % self.current_rule_index)
                 self.current_rule_index += 1
+                self.rule_divs[new_rule_name] = values[i]
             list_of_rules.append(rule_names)
+            #
+            #
+            #
+            target_for_counts, target_counts = self.substitute(target_for_counts, best_symbols, rule_names)
+            for key, count_dict in target_counts.iteritems():
+                for i, count in count_dict.iteritems():
+                    if len(target_for_counts[i]) == 0:
+                        continue
+                    target_counts[key][i] = float(count) / float(len(target_for_counts[i].split(' ')))
+            for key, value in target_counts.iteritems():
+                if key in self.all_counts:
+                    print 'Key already in counts'
+                self.all_counts[key] = value
+                self.hashed_counts[key] = value
+            for i, seq in enumerate(target_for_counts):
+                if seq == '': continue
+                to_delete = (len(filter(lambda x : x[0] == 'r' and x[-1] == '_', seq.split(' '))) == 0)
+                if not self.keep_data:
+                    new_seq = seq.split(' ')
+                    new_seq = filter(lambda x : x[0] == 'r' and x[-1] == '_', new_seq)
+                    new_seq = ' '.join(new_seq)
+                else:
+                    new_seq = seq
+                if not to_delete:
+                    target_for_counts[i] = new_seq
+                else:
+                    target_for_counts[i] = ''
+            #
+            #
+            #
             target_sequences, temp_counts = self.substitute(target_sequences, best_symbols, rule_names)
             for key, value in temp_counts.iteritems():
                 if key not in self.counts:
                     self.counts[key] = 0
-                self.counts[key] += value
-            temp_target_sequences = []
+                self.counts[key] += sum(value.values())
             for i, seq in enumerate(target_sequences):
-                new_seq = seq.split(' ')
+                if seq == '': continue
+                to_delete = (len(filter(lambda x : x[0] == 'r' and x[-1] == '_', seq.split(' '))) == 0)
                 if not self.keep_data:
-                    new_seq = filter(lambda x : 'Rule' in x, new_seq)
+                    new_seq = seq.split(' ')
+                    new_seq = filter(lambda x : x[0] == 'r' and x[-1] == '_', new_seq)
+                    new_seq = ' '.join(new_seq)
                 else:
-                    n_not_rule = len(filter(lambda x : 'Rule' in x, new_seq))
-                new_seq = ' '.join(new_seq)
-                new_seq = re.sub('\-', '', new_seq)
-                new_seq = string.lower(new_seq)
-                if not self.keep_data:
-                    if self.level == 1:
-                        self.reconstructed[i] = [x if 'Rule' in x else '*' for x in seq.split(' ')]
-                        self.reconstructed_length[i] = 2 * len(filter(lambda x : 'Rule' in x, seq.split(' ')))
-                if not self.keep_data:
-                    if len(new_seq) == 0:
-                        self.terminal_parsing[i] = seq
-                    else:
-                        temp_target_sequences.append(new_seq)
+                    new_seq = seq
+                if to_delete:
+                    self.terminal_parsing[i] = seq
+                    target_sequences[i] = ''
                 else:
-                    if n_not_rule == 0:
-                        self.terminal_parsing[i] = seq
-                    else:
-                        temp_target_sequences.append(new_seq)
-            target_sequences = temp_target_sequences
-            """
-            print '\nIteration %d, %d rules\n' % (self.level, len(self.rules))
-            print len(target_sequences)
-            print '\n-----------------------------\n'
-            """
-        if self.keep_data:
-            total_length = float(sum([len(x) for x in self.samples]))
-            total_reconstructed_length = 0
-            for key, value in self.terminal_parsing.iteritems():
-                total_reconstructed_length += len(self.samples[key]) - len(filter(lambda x : 'rule' not in x, value.split(' ')))
-            self.reconstructed_ratio = float(total_reconstructed_length) / total_length    
-            print 'Total reconstructured length = ' + str(total_reconstructed_length)
-            print 'Total length = ' + str(total_length)
-        to_delete = []
-        for key, value in self.counts.iteritems():
-            if value == 0:
-                to_delete.append(key)
-        for key in to_delete:
-            del self.counts[key]
-            del self.rules[key]
+                    target_sequences[i] = new_seq
+            to_delete = []
+            for key, value in self.counts.iteritems():
+                if value == 0:
+                    to_delete.append(key)
+            for key in to_delete:
+                del self.counts[key]
+                del self.rules[key]
+                del self.rule_divs[key]
+                del self.all_counts[key]
+                del self.rule_levels[key]
+                del self.hashed_rules[self.hash_codes[key]]
+                del self.hash_codes[key]
+            self.lengths.append([len(x.split(' ')) for x in target_for_counts])
+            print '\tTook %f seconds' % (time.clock() - begin_time)
+        print 'Grammar inference done'
+        for i, seq in enumerate(target_sequences):
+            if seq == '': continue
+            self.terminal_parsing[i] = seq
+        for rule_name, count_dict in self.all_counts.iteritems():
+            self.cumulated_counts[rule_name] = sum(count_dict.values())
+        if len(target_sequences) == 0:
+            print '\tNo target sequence remaining'
+        else:
+            print '\tMaximum number of rules (%d) reached' % self.max_rules
+        print '\n'
             
     
     def print_result(self):
@@ -284,100 +325,86 @@ class Proba_sequitur:
         print self.rule_ranking
         print 'Rules:'
         print self.rules
-        print 'Reconstructed ratio:'
-        print self.reconstructed_ratio
         print ''
-     
-    def map_rules(self):
-        self.index_to_non_term = {}
-        self.index_to_score = {}
-        self.non_term_to_index = {}
-        self.index_to_non_term[0] = 0
-        self.non_term_to_index[0] = 0
-        n = 1
-        for rule_lhs in self.rules:
-            rule_number = n
-            self.index_to_non_term[rule_number] = rule_lhs
-            self.index_to_score[rule_number] = self.counts[rule_lhs]
-            self.non_term_to_index[rule_lhs] = rule_number
-            n += 1
-        self.preterminal_rules = {}
-        for i, term in enumerate(self.terminal_chars):
-            weights = np.ones(len(self.terminal_chars)) * 0.01
-            weights[i] = 1.0
-            self.preterminal_rules[term] = \
-                Sto_rule(int(n),
-                         [],
-                         [],
-                         weights,
-                         self.terminal_chars)
-            self.index_to_non_term[n] = string.upper(term)
-            self.non_term_to_index[string.upper(term)] = n
-            n += 1
-        list_of_keys = self.index_to_non_term.keys()
-        list_of_keys.sort()
-        temp = []
-        temp_2 = {}
-        for i, key in enumerate(list_of_keys):
-            temp.append(self.index_to_non_term[key])
-            if key in self.index_to_score:
-                temp_2[i] = self.index_to_score[key]
-        self.index_to_non_term = temp
-        self.index_to_score = temp_2
         
-    def create_root_rule(self):
-        self.map_rules()
-        terminal_parsing_counts = {}
-        for value in self.terminal_parsing.values():
-            for rule in value.split(' '):
-                if rule not in self.rules:
-                    continue
-                if rule not in terminal_parsing_counts:
-                    terminal_parsing_counts[rule] = 0
-                terminal_parsing_counts[rule] += 1
-        total_weight = float(sum(terminal_parsing_counts.values()))
-        weight_list = []
-        rule_list = []
-        for key, value in terminal_parsing_counts.iteritems():
-            left_rule, right_rule = self.rules[key].split('-')
-            if (left_rule in self.rules) and (right_rule in self.rules):
-                left_rule = self.non_term_to_index[left_rule]
-                right_rule = self.non_term_to_index[right_rule]
-                rule_list.append([left_rule, right_rule])
-                weight_list.append(value / total_weight)
-        total_weight = sum(weight_list)
-        for i, w in enumerate(weight_list):
-            weight_list[i] = w / total_weight
-        self.root_rule = Sto_rule(0,
-                                  weight_list,
-                                  rule_list,
-                                  [],
-                                  [])
-        
-    def create_grammar(self):
-        list_of_rules = []
-        list_of_rules.append(self.root_rule)
-        for rule_name, rule_content in self.preterminal_rules.iteritems():
-            list_of_rules.append(rule_content)
-        for rule_name, rule_content in self.rules.iteritems():
-            left_rule, right_rule = rule_content.split('-')
-            if left_rule not in self.rules:
-                left_rule = self.non_term_to_index[string.upper(left_rule)]
-            else:
-                left_rule = self.non_term_to_index[left_rule]
-            if right_rule not in self.rules:
-                right_rule = self.non_term_to_index[string.upper(right_rule)]
-            else:
-                right_rule = self.non_term_to_index[right_rule]
-            rule_name = self.non_term_to_index[rule_name]
-            list_of_rules.append(Sto_rule(int(rule_name),
-                                          [1.0],
-                                          [[left_rule, right_rule]],
-                                          [],
-                                          []))
-        self.grammar = SCFG(list_of_rules, 0)
-        self.grammar.blurr_A()
-                            
-        
-        
+    def plot_stats(self, filename):
+        achu_sub_set = range(9)
+        oldo_sub_set = range(9, 18)
+        #
+        count_items = self.all_counts.items()
+        count_items.sort(key = (lambda x : -sum(x[1].values())))
+        #
+        n_iterations = len(self.total_divs)
+        n_rules = len(self.rule_divs)
+        rule_div_items = self.rule_divs.items()
+        rule_div_items.sort(key = (lambda x : -x[1]))
+        #
+        #    Plotting cumulated divergence
+        #
+        plt.subplot(311)
+        plt.title('Divergence wrt iteration')
+        plt.plot(range(1, n_iterations + 1),
+                 self.total_divs)
+        plt.ylabel('Cumulated divergence')
+        #
+        #    Plotting_lengths
+        #
+        plt.subplot(312)
+        plt.title('Length wrt iteration')
+        bp = plt.boxplot([[x[j] for j in achu_sub_set] for x in self.lengths],
+                             notch=0, sym='+', vert=1, whis=1.5, patch_artist = True)
+        plt.setp(bp['boxes'], color = 'r', facecolor = 'r', alpha = 0.25)
+        plt.setp(bp['whiskers'], color='r')
+        plt.setp(bp['fliers'], color='r', marker='+')
+        bp = plt.boxplot([[x[j] for j in oldo_sub_set] for x in self.lengths],
+                             notch=0, sym='+', vert=1, whis=1.5, patch_artist = True)
+        plt.setp(bp['boxes'], color='b', facecolor = 'b', alpha = 0.25)
+        plt.setp(bp['whiskers'], color='b')
+        plt.setp(bp['fliers'], color='b', marker='+')
+        plt.xticks(range(1, (len(self.lengths)) + 1), 
+                   map(str, range(1, (len(self.lengths)) + 1)),
+                   rotation = 'vertical', fontsize = 6)
+        plt.ylabel('Length of parse')
+        #
+        #    Plotting individual contributions to divergence
+        #
+        plt.subplot(313)
+        plt.title('Individual contributions to divergence')
+        plt.plot(range(n_rules),
+                 [x[1] for x in rule_div_items])
+        plt.xticks(range(n_rules), 
+                   [str(self.rule_levels[x[0]]) + ' ' + x[0] + '->' + self.rules[x[0]] for x in rule_div_items],
+                   rotation = 'vertical',
+                   fontsize = 6)
+        plt.ylabel('Contribution to divergence')
+        #
+        #    Saving plot
+        #
+        fig = plt.gcf()
+        fig.set_size_inches((16, 10))
+        plt.savefig('Stats_%s.png' % filename, dpi = 300)
+        plt.close()
+        #
+        #    Plotting relative use frequency
+        #
+        plt.title('Relative use frequency')
+        bp = plt.boxplot([[count_items[i][1].values()[j] for j in achu_sub_set] for i in xrange(n_rules)],
+                             notch=0, sym='+', vert=1, whis=1.5, patch_artist = True)
+        plt.setp(bp['boxes'], color = 'r', facecolor = 'r', alpha = 0.25)
+        plt.setp(bp['whiskers'], color='r')
+        plt.setp(bp['fliers'], color='r', marker='+')
+        bp = plt.boxplot([[count_items[i][1].values()[j] for j in oldo_sub_set] for i in xrange(n_rules)],
+                             notch=0, sym='+', vert=1, whis=1.5, patch_artist = True)
+        plt.setp(bp['boxes'], color='b', facecolor = 'b', alpha = 0.25)
+        plt.setp(bp['whiskers'], color='b')
+        plt.setp(bp['fliers'], color='b', marker='+')
+        plt.xticks(range(1, n_rules + 1), [str(self.rule_levels[x[0]]) + ' ' + x[0] + '->' + self.rules[x[0]] for x in count_items], rotation = 'vertical', fontsize = 6)
+        plt.ylabel('Frequencies, red for achu, blue for oldo')
+        #
+        #    Saving plot
+        #
+        fig = plt.gcf()
+        fig.set_size_inches((16, 10))
+        plt.savefig('Freqs_%s.png' % filename, dpi = 300)
+        plt.close()
         

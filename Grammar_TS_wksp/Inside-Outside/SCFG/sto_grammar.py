@@ -46,6 +46,46 @@ def merge_rules(A, B,
     new_B = old_B[sub_selection]
     new_B[first_index] = 0.5 * old_B[first_index] + 0.5*old_B[second_index]
     return new_A, new_B
+
+def expand_rule(A, B,
+                target_index):
+    assert(A.ndim == 3)
+    assert(B.ndim == 2)
+    assert(A.shape[0] == A.shape[1] == A.shape[2] == B.shape[0])
+    assert(target_index in range(A.shape[0]))
+    new_index = target_index + 1
+    sub_selection = range(A.shape[0] + 1)
+    sub_selection = filter(lambda x : x != new_index, sub_selection)
+    new_A = np.zeros((A.shape[0] + 1, A.shape[0] + 1, A.shape[0] + 1))
+    new_A[np.ix_(sub_selection, sub_selection, sub_selection)] = A
+    for i in sub_selection:
+        new_A[np.ix_([i], [target_index], sub_selection)] *= 0.5
+        if i <= target_index:
+            new_A[np.ix_([i], [new_index], sub_selection)] = A[i, target_index, :]
+        else:
+            new_A[np.ix_([i], [new_index], sub_selection)] = A[i - 1, target_index, :]
+        new_A[np.ix_([i], [new_index], sub_selection)] *= 0.5
+        new_A[np.ix_([i], sub_selection, [target_index])] *= 0.5
+        if i <= target_index:
+            new_A[np.ix_([i], sub_selection, [new_index])] = A[np.ix_([i], range(A.shape[2]), [target_index])]
+        else:
+            new_A[np.ix_([i], sub_selection, [new_index])] = A[np.ix_([i - 1], range(A.shape[2]), [target_index])]
+        new_A[np.ix_([i], sub_selection, [new_index])] *= 0.5
+        if i <= target_index:
+            new_A[i,target_index, target_index] = A[i,target_index,target_index] * 0.25
+            new_A[i,target_index, new_index] = new_A[i,target_index, target_index]
+            new_A[i,new_index, target_index] = new_A[i,target_index, target_index]
+            new_A[i,new_index, new_index] = new_A[i,target_index, target_index]
+        else:
+            new_A[i,target_index, target_index] = A[i-1,target_index,target_index] * 0.25
+            new_A[i,target_index, new_index] = new_A[i,target_index, target_index]
+            new_A[i,new_index, target_index] = new_A[i,target_index, target_index]
+            new_A[i,new_index, new_index] = new_A[i,target_index, target_index]
+    new_A[new_index] = new_A[target_index]
+    new_B = np.zeros((B.shape[0] + 1, B.shape[1]))
+    new_B[sub_selection] = B
+    new_B[new_index] = new_B[target_index]
+    return new_A, new_B
     
 
 class SCFG:
@@ -108,15 +148,24 @@ class SCFG:
         self.M = B.shape[1]
         self.A = np.copy(A)
         self.B = np.copy(B)
+        normalize_slices(self.A, self.B)
         self.term_chars = term_chars
         for i, term in enumerate(self.term_chars):
             self.term_char_to_index[term] = i
             
     def merge(self, first_index, second_index):
-        merge_rules(self.A, 
+        self.A, self.B = merge_rules(self.A, 
                     self.B,
                     first_index,
                     second_index)
+        self.N = self.A.shape[0]
+        self.rules_mapped = False
+        self.rules = {}
+        
+    def expand(self, target_index):
+        self.A, self.B = expand_rule(self.A,
+                    self.B,
+                    target_index)
         self.N = self.A.shape[0]
         self.rules_mapped = False
         self.rules = {}
