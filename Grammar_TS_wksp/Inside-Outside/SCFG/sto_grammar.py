@@ -25,6 +25,28 @@ def normalize_slices(A, B):
         B[i,:] /= total
     return A, B
 
+def merge_rules(A, B,
+                first_index,
+                second_index):
+    assert(A.ndim == 3)
+    assert(B.ndim == 2)
+    assert(A.shape[0] == A.shape[1] == A.shape[2] == B.shape[0])
+    assert(first_index in range(A.shape[0]))
+    assert(second_index in range(A.shape[0]))
+    assert(first_index != second_index)
+    sub_selection = range(A.shape[0])
+    sub_selection = filter(lambda x : x != second_index, sub_selection)
+    new_A = np.copy(A)
+    old_A = A
+    new_A[first_index, :, :] = 0.5 * old_A[first_index, :, :] + 0.5 * old_A[second_index, :, :]
+    new_A[:, first_index, :] += old_A[:, second_index, :]
+    new_A[:, :, first_index] += old_A[:, :, second_index]
+    new_A = new_A[np.ix_(sub_selection, sub_selection, sub_selection)]
+    old_B = np.copy(B)
+    new_B = old_B[sub_selection]
+    new_B[first_index] = 0.5 * old_B[first_index] + 0.5*old_B[second_index]
+    return new_A, new_B
+    
 
 class SCFG:
     
@@ -89,6 +111,15 @@ class SCFG:
         self.term_chars = term_chars
         for i, term in enumerate(self.term_chars):
             self.term_char_to_index[term] = i
+            
+    def merge(self, first_index, second_index):
+        merge_rules(self.A, 
+                    self.B,
+                    first_index,
+                    second_index)
+        self.N = self.A.shape[0]
+        self.rules_mapped = False
+        self.rules = {}
             
     def produce_sentences(self, n_sentences, max_length = 0):
         if max_length == 0:

@@ -23,10 +23,6 @@ class Grammar_distance():
         left_left_probas = self.left_grammar.estimate_likelihoods(left_samples, max_length)
         right_left_probas = self.right_grammar.estimate_likelihoods(left_samples, max_length)
         right_right_probas = self.right_grammar.estimate_likelihoods(right_samples, max_length)
-        print np.sum(left_left_probas)
-        print np.sum(right_right_probas)
-        print np.sum(left_right_probas)
-        print np.sum(right_left_probas)
         #
         selection = np.where(left_left_probas != 0)
         left_result = np.sum(np.log(left_left_probas[selection] / right_left_probas[selection]) * left_left_probas[selection])
