@@ -13,7 +13,7 @@ typedef std::vector<std::string>                        string_vect;
 
 namespace divergence_metrics{
 
-static string_double_map inline to_probas(const string_double_map & counts){
+inline static string_double_map to_probas(const string_double_map & counts){
     double total = 0;
     string_double_map result (counts.size());
     for(auto xy : counts){
@@ -25,7 +25,7 @@ static string_double_map inline to_probas(const string_double_map & counts){
     return result;
 }
 
-static string_double_map inline compute_divergence(const string_double_map & individual_probas,
+inline static string_double_map compute_divergence(const string_double_map & individual_probas,
                                                    const string_double_map & pair_probas){
     string_double_map divergences (pair_probas.size());
     string_vect parse_result;

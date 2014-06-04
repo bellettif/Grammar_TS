@@ -11,7 +11,7 @@ typedef std::vector<string_double_map>                  string_double_map_vect;
 namespace reduce_utils{
 
 
-static void inline reduce_scores(const string_double_map_vect & dicts,
+inline static void reduce_scores(const string_double_map_vect & dicts,
                                  string_double_map & reduced){
     reduced.clear();
     for(const string_double_map & dict : dicts){

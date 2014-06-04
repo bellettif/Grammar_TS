@@ -16,7 +16,7 @@ typedef std::mt19937        RNG;
 
 namespace preprocessing{
 
-static void inline r_shuffle(std::string & sentence,
+inline static void r_shuffle(std::string & sentence,
                              RNG & rng){
     std::function<int(int)> my_rand = [&](int i){
         return rng() % i;
@@ -36,7 +36,7 @@ static void inline r_shuffle(std::string & sentence,
     }
 }
 
-static void inline r_mask(std::string & sentence,
+inline static void r_mask(std::string & sentence,
                           RNG & rng,
                           double proba){
     std::vector<std::string> split_sentence;
