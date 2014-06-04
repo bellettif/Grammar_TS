@@ -15,7 +15,7 @@ from Grammar_examples import palindrom_grammar
 from Grammar_examples import palindrom_grammar_2
 from Grammar_examples import palindrom_grammar_3
 
-selected_grammar = palindrom_grammar
+selected_grammar = palindrom_grammar_2
 
 N = selected_grammar.N
 M = selected_grammar.M

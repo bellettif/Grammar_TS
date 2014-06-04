@@ -17,6 +17,8 @@ class Grammar_distance():
     def compute_distance(self,
                          n_samples,
                          max_length = 0):
+        if sorted(self.left_grammar.term_chars) != sorted(self.right_grammar.term_chars):
+            return np.inf
         left_samples = self.left_grammar.produce_sentences(n_samples, max_length)
         right_samples = self.right_grammar.produce_sentences(n_samples, max_length)       
         left_right_probas = self.left_grammar.estimate_likelihoods(right_samples, max_length)

@@ -18,15 +18,10 @@ LIBS += \
     -lboost_timer
 
 SOURCES += \
-    main.cpp \
-    rule.cpp
+    main.cpp
 
-HEADERS += \
-    file_reader.h \
-    rule.h \
-    counter.h \
-    k_sequitur.h \
-    mem_sandwitch.h \
-    name_generator.h
+HEADERS += file_reader.h \
+    string_utils.h \
+    reduce_utils.h
 
 OTHER_FILES += \

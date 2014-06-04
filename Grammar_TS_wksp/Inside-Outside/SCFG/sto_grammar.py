@@ -12,6 +12,7 @@ from matplotlib import pyplot as plt
 import os
 import shutil
 import string
+import itertools
 
 import time
 
@@ -87,10 +88,20 @@ def expand_rule(A, B,
     new_B[new_index] = new_B[target_index]
     return new_A, new_B
     
+def compute_KL_signature(first_sign, second_sign):
+    if set(first_sign.keys()) != set(second_sign.keys()):
+        return np.inf
+    else:
+        result = 0
+        for key in first_sign.keys():
+            p = first_sign[key]
+            q = second_sign[key]
+            result += p * np.log(p / q) + q * np.log(q / p)
+        return result
 
 class SCFG:
     
-    def __init__(self):
+    def __init__(self, root_index = 0):
         self.term_chars = []
         self.term_char_to_index = {}
         self.A = np.zeros((0, 0, 0))
@@ -100,6 +111,8 @@ class SCFG:
         #
         self.rules_mapped = False
         self.rules = {}
+        #
+        self.root_index = root_index
         
     # Rule_dict[int] = (list of int pairs, list of weights, list of terms, list_of_weights)
     def init_from_rule_dict(self, rule_dict):
@@ -152,6 +165,44 @@ class SCFG:
         self.term_chars = term_chars
         for i, term in enumerate(self.term_chars):
             self.term_char_to_index[term] = i
+      
+    def rotate(self, new_root_index):
+        self.root_index = new_root_index
+            
+    def map_rules(self):
+        self.rules = {}
+        for i in xrange(self.A.shape[0]):
+            derivation_indices = itertools.product(range(self.A.shape[0]),
+                                                   range(self.A.shape[0]))
+            A_items = zip(derivation_indices, np.ravel(self.A[i]))
+            A_items = filter(lambda x : x[1] != 0, A_items)
+            B_items = zip(range(self.B.shape[0]), self.B[i])
+            B_items = filter(lambda x : x[1] != 0, B_items)
+            pairs = [x[0] for x in A_items]
+            pair_weights = [x[1] for x in A_items]
+            terms = [self.term_chars[x[0]] for x in B_items]
+            term_weights = [x[1] for x in B_items]
+            self.rules[i] = (pairs, pair_weights, terms, term_weights)
+        self.rules_mapped = True
+        
+    def print_rules(self):
+        if not self.rules_mapped:
+            self.map_rules()
+        print 'Root_rule %d:' % self.root_index
+        rule = self.rules[self.root_index]
+        print '\tPairs:'
+        print zip(rule[0], rule[1])
+        print '\tTerms:'
+        print zip(rule[2], rule[3])
+        print ''
+        for i, rule in self.rules.iteritems():
+            if i == self.root_index: continue
+            print 'Rule %d:' % i
+            print '\tPairs:'
+            print zip(rule[0], rule[1])
+            print '\tTerms:'
+            print zip(rule[2], rule[3])
+            print ''
             
     def merge(self, first_index, second_index):
         self.A, self.B = merge_rules(self.A, 
@@ -175,13 +226,15 @@ class SCFG:
             return SCFG_c.produce_sentences(self.A,
                                             self.B,
                                             self.term_chars,
-                                            n_sentences)
+                                            n_sentences,
+                                            self.root_index)
         else:
             return filter(lambda x : len(x) < max_length,
                           SCFG_c.produce_sentences(self.A,
                                             self.B,
                                             self.term_chars,
-                                            n_sentences))
+                                            n_sentences,
+                                            self.root_index))
             
     def estimate_likelihoods(self,
                              samples,
@@ -194,7 +247,8 @@ class SCFG:
             return SCFG_c.estimate_likelihoods(self.A,
                                                self.B,
                                                self.term_chars,
-                                               samples)
+                                               samples,
+                                               self.root_index)
         else:
             assert(A_proposal.ndim == 3)
             assert(B_proposal.ndim == 2)
@@ -203,8 +257,65 @@ class SCFG:
             return SCFG_c.estimate_likelihoods(A_proposal,
                                                B_proposal,
                                                term_chars,
-                                               samples)
-         
+                                               samples,
+                                               self.root_index)
+            
+    #
+    #    Option in  ['all', 'keep_zeros', 'keep_zeros_A', 'keep_zeros_B']
+    #
+    def blur_A_B(self,
+                 option = 'all',
+                 noise_source_A = 0,
+                 param_1_A = 0,
+                 param_2_A = 0,
+                 epsilon_A = 0,
+                 noise_source_B = 0,
+                 param_1_B = 0,
+                 param_2_B = 0,
+                 epsilon_B = 0):
+        assert(option in ['all', 'keep_zeros',
+                          'keep_zeros_A', 'keep_zeros_B'])
+        if option == 'all':
+            if noise_source_A != 0:
+                self.A += noise_source_A(param_1_A, param_2_A, (self.N, self.N, self.N))
+                self.A = np.maximum(self.A, epsilon_A * np.ones((self.N, self.N, self.N)))
+            if noise_source_B != 0:
+                self.B += noise_source_B(param_1_B, param_2_B, (self.N, self.M))
+                self.B = np.maximum(self.B, epsilon_B * np.ones((self.N, self.M)))
+            normalize_slices(self.A, self.B)          
+        if option == 'keep_zeros':
+            A_zeros = np.where(self.A == 0)
+            B_zeros = np.where(self.B == 0)
+            if noise_source_A != 0:
+                self.A += noise_source_A(param_1_A, param_2_A, (self.N, self.N, self.N))
+                self.A = np.maximum(self.A, epsilon_A * np.ones((self.N, self.N, self.N)))
+            if noise_source_B != 0:
+                self.B = noise_source_B(param_1_B, param_2_B, (self.N, self.M))
+                self.B = np.maximum(self.B, epsilon_B * np.ones((self.N, self.M)))
+            self.A[A_zeros] = 0
+            self.B[B_zeros] = 0
+            normalize_slices(self.A, self.B)
+        if option == 'keep_zeros_A':
+            A_zeros = np.where(self.A == 0)
+            if noise_source_A != 0:
+                self.A += noise_source_A(param_1_A, param_2_A, (self.N, self.N, self.N))
+                self.A = np.maximum(self.A, epsilon_A * np.ones((self.N, self.N, self.N)))
+            if noise_source_B != 0:
+                self.B = noise_source_B(param_1_B, param_2_B, (self.N, self.M))
+                self.B = np.maximum(self.B, epsilon_B * np.ones((self.N, self.M)))
+            self.A[A_zeros] = 0
+            normalize_slices(self.A, self.B)
+        if option == 'keep_zeros_B':
+            B_zeros = np.where(self.B == 0)
+            if noise_source_A != 0:
+                self.A += noise_source_A(param_1_A, param_2_A, (self.N, self.N, self.N))
+                self.A = np.maximum(self.A, epsilon_A * np.ones((self.N, self.N, self.N)))
+            if noise_source_B != 0:
+                self.B = noise_source_B(param_1_B, param_2_B, (self.N, self.M))
+                self.B = np.maximum(self.B, epsilon_B * np.ones((self.N, self.M)))
+            self.B[B_zeros] = 0
+            normalize_slices(self.A, self.B)
+            
     #    
     #    Init option = exact, perturbated (need to give perturbation options),
     #            perturbated_keep_zeros, explicit
@@ -237,7 +348,8 @@ class SCFG:
                                              self.B,
                                              self.term_chars,
                                              samples,
-                                             n_iterations)
+                                             n_iterations,
+                                             self.root_index)
         if init_option == 'perturbated':
             assert(A_proposal == 0 and B_proposal == 0 and len(term_chars) == 0)
             A_proposal = self.A + noise_source_A(param_1_A, param_2_A, (self.N, self.N, self.N))
@@ -249,7 +361,8 @@ class SCFG:
                                              B_proposal,
                                              self.term_chars,
                                              samples,
-                                             n_iterations)
+                                             n_iterations,
+                                             self.root_index)
         if init_option == 'perturbated_keep_zeros':
             assert(A_proposal == 0 and B_proposal == 0 and len(term_chars) == 0)
             A_proposal = self.A + noise_source_A(param_1_A, param_2_A, (self.N, self.N, self.N))
@@ -263,7 +376,8 @@ class SCFG:
                                              B_proposal,
                                              self.term_chars,
                                              samples,
-                                             n_iterations)
+                                             n_iterations,
+                                             self.root_index)
         if init_option == 'explicit':
             assert(noise_source_A == 0 and
                    param_1_A == 0 and
@@ -284,7 +398,8 @@ class SCFG:
                                              B_proposal,
                                              term_chars,
                                              samples,
-                                             n_iterations)
+                                             n_iterations,
+                                             self.root_index)
         if init_option == 'explicit_keep_zeros':
             assert(noise_source_A == 0 and
                    param_1_A == 0 and
@@ -307,7 +422,8 @@ class SCFG:
                                              B_proposal,
                                              term_chars,
                                              samples,
-                                             n_iterations)
+                                             n_iterations,
+                                             self.root_index)
             
     def plot_grammar_matrices(self,
                               folder_path,
@@ -429,13 +545,16 @@ class SCFG:
             plt.savefig(folder_path + '/' + folder_name + '/' + string.lower(folder_name) + '_compare_rule_' + str(i) + '.png', dpi = 300)
             plt.close()
             
-    def plot_stats(self, n_samples, max_length = 0, max_represented = 0):
+    def plot_stats(self, n_samples, max_length = 0, 
+                   max_represented = 0,
+                   filename = ''):
         first_time = time.clock()
         freqs, strings = SCFG_c.compute_stats(self.A,
                                               self.B,
                                               self.term_chars,
                                               n_samples,
-                                              max_length)
+                                              max_length,
+                                              self.root_index)
         print time.clock() - first_time
         freqs = np.asarray(freqs, dtype = np.double)
         total = float(np.sum(freqs))
@@ -452,7 +571,41 @@ class SCFG:
         plt.bar(np.arange(len(strings)), np.log(freqs), align = 'center')
         plt.xticks(np.arange(len(strings)), strings, rotation = 'vertical', fontsize = 4)
         plt.title('Frequences (%d sequences, %f entropy)' % (int(total), entropy))
-        plt.show()
+        if filename == '':
+            plt.show()
+        else:
+            plt.savefig(filename, dpi = 300)
+            plt.close()
+            
+    def compute_signature(self, n_samples, epsilon, max_length = 0):
+        freqs, strings = SCFG_c.compute_stats(self.A,
+                                              self.B,
+                                              self.term_chars,
+                                              n_samples,
+                                              max_length = 0,
+                                              root_index = self.root_index)
+        freqs = np.asarray(freqs, dtype = np.double)
+        total = float(np.sum(freqs))
+        freqs /= total
+        indices = range(len(freqs))
+        indices.sort(key = (lambda i : -freqs[i]))
+        freqs = [freqs[i] for i in indices]
+        strings = [strings[i].split(' ') for i in indices]
+        if max_length == 0:
+            length_weight = {}
+            all_lengths = set([len(x) for x in strings])
+            for length in all_lengths:
+                good_indices = filter(lambda i : len(strings[i]) == length, range(len(strings)))
+                length_weight[length] = sum([freqs[i] for i in good_indices])
+            length_weight_items = length_weight.items()
+            length_weight_items.sort(key = (lambda x : -x[1]))
+            cum_weights = np.cumsum([x[1] for x in length_weight_items])
+            max_length = filter(lambda i : cum_weights[i] <= 1.0 - epsilon, range(len(cum_weights)))[-1]
+        good_indices = filter(lambda i : len(strings[i]) <= max_length, range(len(strings)))
+        freqs = [freqs[i] for i in good_indices]
+        strings = [' '.join(strings[i]) for i in good_indices]
+        return dict(zip(strings, freqs))
+
         
         
         

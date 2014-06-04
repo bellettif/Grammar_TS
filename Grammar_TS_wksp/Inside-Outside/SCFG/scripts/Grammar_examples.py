@@ -4,6 +4,8 @@ Created on 2 juin 2014
 @author: francois
 '''
 
+import matplotlib.pyplot as plt
+
 from SCFG.sto_grammar import SCFG
 
 palindrom_rules = {0 : ([[1, 2], [3, 4], [5, 6], [1, 1], [3, 3], [5, 5]],
@@ -36,9 +38,9 @@ palindrom_rules = {0 : ([[1, 2], [3, 4], [5, 6], [1, 1], [3, 3], [5, 5]],
               [])}
 palindrom_grammar = SCFG()
 palindrom_grammar.init_from_rule_dict(palindrom_rules)
-
+    
 palindrom_rules_2 = {0 : ([[1, 2], [3, 4], [5, 6], [1, 1], [3, 3], [5, 5]],
-                      [1.0, 1.0, 1.0, 3.0, 3.0, 3.0],
+                      [1.0, 1.0, 1.0, 1.01, 1.01, 1.01],
                       [],
                       []),
                  1 : ([],
@@ -69,7 +71,7 @@ palindrom_grammar_2 = SCFG()
 palindrom_grammar_2.init_from_rule_dict(palindrom_rules_2)
 
 palindrom_rules_3 = {0 : ([[1, 2], [3, 4], [5, 6], [1, 1], [3, 3], [5, 5]],
-                      [1.0, 1.0, 1.0, 1.5, 1.5, 1.5],
+                      [1.0, 1.0, 1.0, 1.2, 1.2, 1.2],
                       [],
                       []),
                  1 : ([],

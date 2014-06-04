@@ -87,15 +87,19 @@ private:
     bool                                        _built_rule_map         = false;
     std::unordered_map<int, Rule>               _rule_map;
 
+    int                                         _root_index;
+
 public:
     Flat_in_out(double* A, double* B,
                int N, int M,
-               const string_vect & terminals):
+               const string_vect & terminals,
+               int root_index):
         _A(A),
         _B(B),
         _N(N),
         _M(M),
-        _terminals(terminals)
+        _terminals(terminals),
+        _root_index(root_index)
     {
         for(int i = 0; i < _terminals.size(); ++i){
             _terminal_to_index.emplace(_terminals[i], i);
@@ -114,7 +118,7 @@ public:
         int length = sample.size();
         double* E = new double[_N * length * length];
         compute_inside_probas_flat(E, sample);
-        double result = E[0*length*length + 0*length + length - 1];
+        double result = E[_root_index*length*length + _root_index*length + length - 1];
         delete[] E;
         return result;
     }
@@ -195,7 +199,7 @@ public:
                                       int level){
         int length = sample.size();
         if(level == length){
-            F[0*length*length + 0*length + (length - 1)] = 1.0;
+            F[_root_index*length*length + _root_index*length + (length - 1)] = 1.0;
         }else{
             int t;
             int s;
@@ -256,7 +260,7 @@ public:
         for(id = 0; id < n_samples; ++id){
             compute_inside_outside_flat(Es[id], Fs[id], samples[id]);
             length = sample_lengths[id];
-            sample_probas[id] = Es[id][0*length*length + 0*length + length - 1];
+            sample_probas[id] = Es[id][_root_index*length*length + _root_index*length + length - 1];
         }
 
         double den;
@@ -362,13 +366,19 @@ public:
         string_vect_vect samples = produce_sentences(n_sentences);
         string_int_map counts;
         std::string temp;
+        int length;
         for(const string_vect & sample : samples){
             if ((max_length != 0) && (sample.size() > max_length)) {
                 continue;
             }
             temp = "";
-            for(const std::string & x : sample){
-                temp += x + " ";
+            length = sample.size();
+            for(int i = 0; i < length; ++i){
+                if (i == length - 1){
+                    temp += sample.at(i);
+                }else{
+                    temp += sample.at(i) + " ";
+                }
             }
             counts[temp] ++;
         }
@@ -382,7 +392,7 @@ public:
         if(!_built_rule_map){
             build_rule_map();
         }
-        std::list<int>                                  temp_result = {0};
+        std::list<int>                                  temp_result = {_root_index};
         std::vector<list_it>                            index_to_do = {temp_result.begin()};
         std::vector<list_it>                            next_index_to_do;
         bool emission;

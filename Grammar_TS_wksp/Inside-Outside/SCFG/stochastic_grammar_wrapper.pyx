@@ -27,7 +27,8 @@ cdef extern from "flat_in_out.h":
 	cdef cppclass Flat_in_out:
 		Flat_in_out(double* A, double* B,
 	               	int N, int M,
-	               	const vector[string] & terminals)
+	               	const vector[string] & terminals,
+	               	int root_index)
 		void compute_probas_flat(const vector[vector[string]] & samples,
                            	double * probas)
 		void compute_proba_flat(const vector[string] & sample)
@@ -48,7 +49,8 @@ cdef extern from "flat_in_out.h":
 def estimate_likelihoods(np.ndarray A_proposal,
 						 np.ndarray B_proposal,
 						 terminals,
-						 samples):
+						 samples,
+						 root_index):
 	assert(A_proposal.shape[0] == A_proposal.shape[1] == A_proposal.shape[2] == B_proposal.shape[0])
 	assert(B_proposal.shape[1] == len(terminals))
 	N = A_proposal.shape[0]
@@ -60,7 +62,8 @@ def estimate_likelihoods(np.ndarray A_proposal,
 	cdef Flat_in_out* fio = new Flat_in_out(<double*> c_A_proposal.data,
 											<double*> c_B_proposal.data,
 	               							N, M,
-	               		     				terminals)
+	               		     				terminals,
+	               		     				root_index)
 	fio.compute_probas_flat(samples,
 					   		<double*> likelihoods.data)
 	del fio
@@ -69,7 +72,8 @@ def estimate_likelihoods(np.ndarray A_proposal,
 def produce_sentences(np.ndarray A_proposal,
 					  np.ndarray B_proposal,
 					  terminals,
-					  n_sentences):
+					  n_sentences,
+					  root_index):
 	assert(A_proposal.shape[0] == A_proposal.shape[1] == A_proposal.shape[2] == B_proposal.shape[0])
 	assert(B_proposal.shape[1] == len(terminals))
 	N = A_proposal.shape[0]
@@ -79,7 +83,8 @@ def produce_sentences(np.ndarray A_proposal,
 	cdef Flat_in_out* fio = new Flat_in_out(<double*> c_A_proposal.data,
 											<double*> c_B_proposal.data,
 	               							N, M,
-	               		     				terminals)
+	               		     				terminals,
+	               		     				root_index)
 	cdef vector[vector[string]] sentences = fio.produce_sentences(n_sentences)
 	del fio
 	return sentences
@@ -87,7 +92,8 @@ def produce_sentences(np.ndarray A_proposal,
 def estimate_A_B(np.ndarray A_proposal,
 				 np.ndarray B_proposal,
 				 terminals,
-				 samples):
+				 samples,
+				 root_index = 0):
 	assert(A_proposal.shape[0] == A_proposal.shape[1] == A_proposal.shape[2] == B_proposal.shape[0])
 	assert(B_proposal.shape[1] == len(terminals))
 	N = A_proposal.shape[0]
@@ -101,7 +107,8 @@ def estimate_A_B(np.ndarray A_proposal,
 	cdef Flat_in_out* fio = new Flat_in_out(<double*> c_A_proposal.data,
 											<double*> c_B_proposal.data,
 	               							N, M,
-	               		     				terminals)
+	               		     				terminals,
+	               		     				root_index)
 	fio.estimate_A_B(samples,
 		   		     <double*> likelihoods.data,
 	   				 <double*> c_new_A.data,
@@ -113,7 +120,8 @@ def iterate_estimation(np.ndarray A_proposal,
 					   np.ndarray B_proposal,
 					   terminals,
 					   samples,
-					   n_iterations):
+					   n_iterations,
+					   root_index):
 	assert(A_proposal.shape[0] == A_proposal.shape[1] == A_proposal.shape[2] == B_proposal.shape[0])
 	assert(B_proposal.shape[1] == len(terminals))
 	N = A_proposal.shape[0]
@@ -130,7 +138,8 @@ def iterate_estimation(np.ndarray A_proposal,
 		fio = new Flat_in_out(<double*> c_A_proposal.data,
 							  <double*> c_B_proposal.data,
    							  N, M,
-   		     				  terminals)
+   		     				  terminals,
+   		     				  root_index)
 		temp_likelihoods = np.zeros(n_samples, dtype = DTYPE)
 		fio.estimate_A_B(samples, 
 						 <double *> temp_likelihoods.data,
@@ -143,7 +152,8 @@ def iterate_estimation(np.ndarray A_proposal,
 	fio = new Flat_in_out(<double*> c_A_proposal.data,
 						  <double*> c_B_proposal.data,
 						  N, M,
-	     				  terminals)
+	     				  terminals,
+	     				  root_index)
 	temp_likelihoods = np.zeros(n_samples, dtype = DTYPE)
 	fio.compute_probas_flat(samples,
 					   	    <double*> temp_likelihoods.data)
@@ -157,7 +167,8 @@ def iterate_estimation(np.ndarray A_proposal,
 					   np.ndarray B_proposal,
 					   terminals,
 					   samples,
-					   n_iterations):
+					   n_iterations,
+					   root_index):
 	assert(A_proposal.shape[0] == A_proposal.shape[1] == A_proposal.shape[2] == B_proposal.shape[0])
 	assert(B_proposal.shape[1] == len(terminals))
 	N = A_proposal.shape[0]
@@ -174,7 +185,8 @@ def iterate_estimation(np.ndarray A_proposal,
 		fio = new Flat_in_out(<double*> c_A_proposal.data,
 							  <double*> c_B_proposal.data,
    							  N, M,
-   		     				  terminals)
+   		     				  terminals,
+   		     				  root_index)
 		temp_likelihoods = np.zeros(n_samples, dtype = DTYPE)
 		fio.estimate_A_B(samples, 
 						 <double *> temp_likelihoods.data,
@@ -187,7 +199,8 @@ def iterate_estimation(np.ndarray A_proposal,
 	fio = new Flat_in_out(<double*> c_A_proposal.data,
 						  <double*> c_B_proposal.data,
 						  N, M,
-	     				  terminals)
+	     				  terminals,
+	     				  root_index)
 	temp_likelihoods = np.zeros(n_samples, dtype = DTYPE)
 	fio.compute_probas_flat(samples,
 					   	    <double*> temp_likelihoods.data)
@@ -210,7 +223,8 @@ def iterate_estimation_perturbated(np.ndarray A_proposal,
 					   param_1_B,
 					   param_2_B,
 					   epsilon_B,
-					   dampen):
+					   dampen,
+					   root_index):
 	assert(A_proposal.shape[0] == A_proposal.shape[1] == A_proposal.shape[2] == B_proposal.shape[0])
 	assert(B_proposal.shape[1] == len(terminals))
 	N = A_proposal.shape[0]
@@ -227,7 +241,8 @@ def iterate_estimation_perturbated(np.ndarray A_proposal,
 		fio = new Flat_in_out(<double*> c_A_proposal.data,
 							  <double*> c_B_proposal.data,
    							  N, M,
-   		     				  terminals)
+   		     				  terminals,
+   		     				  root_index)
 		temp_likelihoods = np.zeros(n_samples, dtype = DTYPE)
 		fio.estimate_A_B(samples, 
 						 <double *> temp_likelihoods.data,
@@ -246,7 +261,8 @@ def iterate_estimation_perturbated(np.ndarray A_proposal,
 	fio = new Flat_in_out(<double*> c_A_proposal.data,
 						  <double*> c_B_proposal.data,
 						  N, M,
-	     				  terminals)
+	     				  terminals,
+	     				  root_index)
 	temp_likelihoods = np.zeros(n_samples, dtype = DTYPE)
 	fio.compute_probas_flat(samples,
 					   	    <double*> temp_likelihoods.data)
@@ -260,7 +276,8 @@ def compute_stats(np.ndarray A_proposal,
 				  np.ndarray B_proposal,
 				  terminals,
 				  n_sentences,
-				  max_length):
+				  max_length,
+				  root_index):
 	assert(A_proposal.shape[0] == A_proposal.shape[1] == A_proposal.shape[2] == B_proposal.shape[0])
 	assert(B_proposal.shape[1] == len(terminals))
 	N = A_proposal.shape[0]
@@ -270,7 +287,8 @@ def compute_stats(np.ndarray A_proposal,
 	cdef Flat_in_out* fio = new Flat_in_out(<double*> c_A_proposal.data,
 											<double*> c_B_proposal.data,
 	               							N, M,
-	               		     				terminals)
+	               		     				terminals,
+	               		     				root_index)
 	cdef vector[string] strings
 	cdef vector[int] freqs
 	fio.compute_frequences(n_sentences, freqs, strings, max_length)
