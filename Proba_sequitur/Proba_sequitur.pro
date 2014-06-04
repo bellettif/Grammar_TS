@@ -22,6 +22,7 @@ SOURCES += \
 
 HEADERS += file_reader.h \
     string_utils.h \
-    reduce_utils.h
+    reduce_utils.h \
+    divergence_metrics.h
 
 OTHER_FILES += \
