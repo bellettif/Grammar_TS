@@ -26,6 +26,7 @@ HEADERS += file_reader.h \
     divergence_metrics.h \
     preprocessing.h \
     decision_making.h \
-    proba_sequitur.h
+    proba_sequitur.h \
+    print_tools.h
 
 OTHER_FILES += \

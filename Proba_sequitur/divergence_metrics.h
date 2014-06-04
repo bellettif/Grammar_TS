@@ -25,6 +25,17 @@ inline static string_double_map to_probas(const string_double_map & counts){
     return result;
 }
 
+inline static void to_probas_inplace(string_double_map & counts){
+    double total = 0;
+    string_double_map result (counts.size());
+    for(auto xy : counts){
+        total += xy.second;
+    }
+    for(auto xy : counts){
+        counts[xy.first] /= total;
+    }
+}
+
 inline static string_double_map compute_divergence(const string_double_map & individual_probas,
                                                    const string_double_map & pair_probas){
     string_double_map divergences (pair_probas.size());
