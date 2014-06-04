@@ -40,6 +40,7 @@ private:
     string_int_map              _rule_to_level;
     string_int_map              _counts;
     string_double_vect_map      _relative_counts;
+    string_double_map           _merged_relative_counts;
     string_double_map           _cum_relative_counts;
     string_double_map           _rule_divs;
 
@@ -105,6 +106,40 @@ public:
         divergence_metrics::to_probas_inplace(_bare_lk_table);
     }
 
+    inline void extract_candidates(string_vect & candidates){
+        string_vect split_seq;
+        string_set temp_terms;
+        candidates.clear();
+        for(const std::string & sequence : _sequences){
+            boost::algorithm::split(split_seq,
+                                    sequence,
+                                    boost::is_any_of(" "));
+            for(const std::string & x : split_seq){
+                temp_terms.insert(x);
+            }
+        }
+        for(const std::string & x : temp_terms){
+            if (x == "") continue;
+            candidates.push_back(x);
+        }
+    }
+
+    inline std::string compute_hash_code(const std::string & rhs){
+        string_vect split_rhs;
+        boost::algorithm::split(split_rhs,
+                                rhs,
+                                boost::is_any_of("-"));
+        std::string left_part = _rule_to_hashcode[split_rhs.at(0)];
+        string_utils::replace(left_part,
+                              "-",
+                              "_");
+        std::string right_part = _rule_to_hashcode[split_rhs.at(1)];
+        string_utils::replace(right_part,
+                              "-",
+                              "_");
+        return ">" + left_part + "-" + right_part + "<";
+    }
+
     inline void reset(){
         _terminal_parses.clear();
         _terminal_parses_for_counts.clear();
@@ -124,6 +159,70 @@ public:
 
     inline void run(){
         reset();
+        string_double_map       current_divs;
+        string_double_map       pair_counts;
+        string_double_map       pair_probas;
+        string_vect             candidates;
+        string_vect             best_patterns;
+        bool no_more_parsing = false;
+        int next_rule_index;
+        std::string lhs;
+        std::string rhs_pattern;
+        double tot_div;
+        std::string left;
+        std::string right;
+        while((! no_more_parsing) && (_rules.size() < _max_rules)){
+            _current_iter ++;
+            std::cout << "Iteration " << _current_iter << std::endl;
+            extract_candidates(candidates);
+            string_utils::compute_pair_counts(candidates,
+                                              _sequences,
+                                              pair_counts);
+            pair_probas = divergence_metrics::to_probas(pair_counts);
+            current_divs = divergence_metrics::compute_divergence(_bare_lk_table,
+                                                                  pair_probas);
+            if(!_stochastic){
+                best_patterns = decision_making::pick_best_patterns(current_divs,
+                                                                    _degree);
+            }else{
+                best_patterns = decision_making::pick_sto_patterns(current_divs,
+                                                                   _degree,
+                                                                   _T,
+                                                                   *_rng);
+                _T *= (1.0 - _T_decrease_rate);
+            }
+            tot_div = 0;
+            for(const std::string & rhs : best_patterns){
+                rhs_pattern = string_utils::replace(rhs, "-", " ");
+                next_rule_index = _rules.size() + 1;
+                lhs = "r" + std::to_string(next_rule_index) + "_";
+                _rules[lhs] = rhs;
+                _rule_divs[lhs] = current_divs.at(lhs);
+                tot_div += current_divs.at(lhs);
+                _rule_to_hashcode[lhs] = compute_hash_code(rhs);
+                _rule_to_level[lhs] = _current_iter;
+                _counts[lhs] = pair_counts.at(lhs);
+                _relative_counts[lhs] = string_utils::relative_count(_sequences,
+                                                                     rhs_pattern);
+                string_utils::replace(_sequences,
+                                      rhs_pattern,
+                                      lhs);
+                string_utils::replace(_sequences_for_counts,
+                                      rhs_pattern,
+                                      lhs);
+                string_utils::split_rhs(rhs,
+                                        left,
+                                        right);
+                if(_atomic_bare_lk){
+                    _bare_lk_table[lhs] = _bare_lk_table[left] * _bare_lk_table[right];
+                }else{
+                    _bare_lk_table[lhs] = _merged_relative_counts[left] * _merged_relative_counts[right];
+                }
+            }
+            _lengths.push_back(string_utils::compute_n_words(_sequences_for_counts));
+            _div_levels.push_back(tot_div);
+            std::cout << "Done" << std::endl;
+        }
     }
 
     inline void print_state(){
