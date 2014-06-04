@@ -26,8 +26,7 @@ static string_double_map inline to_probas(const string_double_map & counts){
 }
 
 static string_double_map inline compute_divergence(const string_double_map & individual_probas,
-                                                   const string_double_map & pair_probas,
-                                                   bool atomic_bare_lk = false){
+                                                   const string_double_map & pair_probas){
     string_double_map divergences (pair_probas.size());
     string_vect parse_result;
     for(auto xy : pair_probas){
