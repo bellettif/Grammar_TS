@@ -82,10 +82,11 @@ public:
         _rng(rng),
         _init_T(init_T),
         _T_decrease_rate(T_decrease_rate)
-    {
+    {}
+
+    inline void init_bare_lk(){
         string_vect split_seq;
         string_set temp_terms;
-        std::cout << "Looking up term chars" << std::endl;
         int n_symbols = 0;
         for(const std::string & sequence : _sequences){
             boost::algorithm::split(split_seq,
@@ -125,18 +126,27 @@ public:
     }
 
     inline std::string compute_hash_code(const std::string & rhs){
-        string_vect split_rhs;
-        boost::algorithm::split(split_rhs,
-                                rhs,
-                                boost::is_any_of("-"));
-        std::string left_part = _rule_to_hashcode[split_rhs.at(0)];
-        string_utils::replace(left_part,
-                              "-",
+        std::string left;
+        std::string right;
+        string_utils::split_rhs(rhs, left, right);
+        std::string left_part;
+        if (_rule_to_hashcode.count(left) != 0){
+            left_part = _rule_to_hashcode[left];
+            string_utils::replace(left_part,
+                              "\-",
                               "_");
-        std::string right_part = _rule_to_hashcode[split_rhs.at(1)];
-        string_utils::replace(right_part,
-                              "-",
+        }else{
+            left_part = left; // terminal
+        }
+        std::string right_part;
+        if (_rule_to_hashcode.count(right) != 0){
+            right_part = _rule_to_hashcode[right];
+            string_utils::replace(right_part,
+                              "\-",
                               "_");
+        }else{
+            right_part = right;
+        }
         return ">" + left_part + "-" + right_part + "<";
     }
 
@@ -159,6 +169,7 @@ public:
 
     inline void run(){
         reset();
+        init_bare_lk();
         string_double_map       current_divs;
         string_double_map       pair_counts;
         string_double_map       pair_probas;
@@ -173,7 +184,9 @@ public:
         std::string right;
         while((! no_more_parsing) && (_rules.size() < _max_rules)){
             _current_iter ++;
-            std::cout << "Iteration " << _current_iter << std::endl;
+            if(_current_iter > 10) return;
+            std::cout << "Iteration " << _current_iter << " " <<
+                         _rules.size() << " rules" << std::endl;
             extract_candidates(candidates);
             string_utils::compute_pair_counts(candidates,
                                               _sequences,
@@ -192,33 +205,41 @@ public:
                 _T *= (1.0 - _T_decrease_rate);
             }
             tot_div = 0;
+            std::cout << "\tBest patterns" << std::endl;
             for(const std::string & rhs : best_patterns){
                 rhs_pattern = string_utils::replace(rhs, "-", " ");
                 next_rule_index = _rules.size() + 1;
                 lhs = "r" + std::to_string(next_rule_index) + "_";
                 _rules[lhs] = rhs;
-                _rule_divs[lhs] = current_divs.at(lhs);
-                tot_div += current_divs.at(lhs);
+                _rule_divs[lhs] = current_divs.at(rhs);
+                tot_div += current_divs.at(rhs);
                 _rule_to_hashcode[lhs] = compute_hash_code(rhs);
                 _rule_to_level[lhs] = _current_iter;
-                _counts[lhs] = pair_counts.at(lhs);
-                _relative_counts[lhs] = string_utils::relative_count(_sequences,
+                _counts[lhs] = pair_counts.at(rhs);
+                _relative_counts[lhs] = string_utils::relative_count(_sequences_for_counts,
                                                                      rhs_pattern);
-                string_utils::replace(_sequences,
-                                      rhs_pattern,
-                                      lhs);
-                string_utils::replace(_sequences_for_counts,
-                                      rhs_pattern,
-                                      lhs);
                 string_utils::split_rhs(rhs,
                                         left,
                                         right);
                 if(_atomic_bare_lk){
                     _bare_lk_table[lhs] = _bare_lk_table[left] * _bare_lk_table[right];
                 }else{
+                    _merged_relative_counts[left] = string_utils::merged_relative_count(_sequences_for_counts,
+                                                                                        rhs_pattern);
+                    _merged_relative_counts[right] = string_utils::merged_relative_count(_sequences_for_counts,
+                                                                                         rhs_pattern);
                     _bare_lk_table[lhs] = _merged_relative_counts[left] * _merged_relative_counts[right];
                 }
+                std::cout << "\t\t" << rhs << " " << current_divs.at(rhs)
+                          << " bare_lk " << _bare_lk_table.at(lhs) << std::endl;
+                string_utils::replace(_sequences,
+                                      rhs_pattern,
+                                      lhs);
+                string_utils::replace(_sequences_for_counts,
+                                      rhs_pattern,
+                                      lhs);
             }
+            std::cout << tot_div << std::endl;
             _lengths.push_back(string_utils::compute_n_words(_sequences_for_counts));
             _div_levels.push_back(tot_div);
             std::cout << "Done" << std::endl;

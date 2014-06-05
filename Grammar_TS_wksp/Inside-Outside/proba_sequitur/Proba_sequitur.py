@@ -117,14 +117,13 @@ class Proba_sequitur:
         for key, value in counts.iteritems():
             barelk[key] = value / total
         return barelk
-    
-    def compute_barelk(self,
-                       symbol, barelk_table):
-        left_symbol = symbol.split('-')[0]
-        right_symbol = symbol.split('-')[-1]
-        barelk = barelk_table[left_symbol] * barelk_table[right_symbol]
-        barelk_table[symbol] = barelk
-        return barelk
+       
+    def save_bare_lk(self,
+                     lhs,
+                     rhs):
+        left_symbol = rhs.split('-')[0]
+        right_symbol = rhs.split('-')[-1]
+        self.barelk_table[lhs] = self.barelk_table[left_symbol] * self.barelk_table[right_symbol]
 
     def length_of_symbol(self,
                          s):
@@ -132,19 +131,18 @@ class Proba_sequitur:
 
     def compute_pair_divergence(self,
                                 sequences,
-                                candidates,
-                                barelk_table):
+                                candidates):
         pair_counts = self.pair_counts_multi(sequences, candidates)
         total = float(sum(pair_counts.values()))
         pair_probas = {}
         for key, value in pair_counts.iteritems():
             pair_probas[key] = value / total
-            self.compute_barelk(key, barelk_table)
         divergences = {}
         for key in pair_probas:
-            divergences[key] = pair_probas[key] / float(self.length_of_symbol(key)) \
-                                * np.log2(pair_probas[key] / 
-                                          (barelk_table[key]))
+            left, right = key.split('-')
+            divergences[key] = pair_probas[key] \
+                                * np.log(pair_probas[key] / 
+                                          (self.barelk_table[left] * self.barelk_table[right]))
         return divergences
 
     def substitute(self,
@@ -200,10 +198,8 @@ class Proba_sequitur:
                 target_chars.extend(sequence.split(' '))
             target_chars = set(target_chars)
             target_chars = filter(lambda x : x!= ' ', target_chars)
-            barelk_table = self.init_barelk(target_sequences)
             pair_divergence = self.compute_pair_divergence(target_sequences,
-                                                           target_chars,
-                                                           barelk_table)
+                                                           target_chars)
             items = pair_divergence.items()
             items.sort(key = (lambda x : -x[1]))
             labels = [x[0] for x in items]
@@ -214,6 +210,7 @@ class Proba_sequitur:
                 best_symbols_index = filter(lambda i : values[i] > 0, range(len(values)))
                 best_symbols = labels[:len(best_symbols_index)]
             self.total_divs.append(sum(values[:self.degree]))
+            print '\tTot div: %f' % sum(values[:self.degree])
             list_of_best_symbols.append(best_symbols)
             rule_names = []
             for i, best_symbol in enumerate(best_symbols):
@@ -235,6 +232,7 @@ class Proba_sequitur:
                 rule_names.append('r%d_' % self.current_rule_index)
                 self.current_rule_index += 1
                 self.rule_divs[new_rule_name] = values[i]
+                self.save_bare_lk(new_rule_name, best_symbol)
             list_of_rules.append(rule_names)
             #
             #
@@ -285,6 +283,12 @@ class Proba_sequitur:
                     target_sequences[i] = ''
                 else:
                     target_sequences[i] = new_seq
+            print '\tBest patterns:'
+            print best_symbols
+            print values[:self.degree]
+            print [self.barelk_table[s.split('-')[0]]*self.barelk_table[s.split('-')[1]] for s in best_symbols]
+            
+            """
             to_delete = []
             for key, value in self.counts.iteritems():
                 if value == 0:
@@ -297,6 +301,7 @@ class Proba_sequitur:
                 del self.rule_levels[key]
                 del self.hashed_rules[self.hash_codes[key]]
                 del self.hash_codes[key]
+            """
             self.lengths.append([len(x.split(' ')) for x in target_for_counts])
             print '\tTook %f seconds' % (time.clock() - begin_time)
         print 'Grammar inference done'

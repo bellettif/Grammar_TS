@@ -27,6 +27,7 @@ HEADERS += file_reader.h \
     preprocessing.h \
     decision_making.h \
     proba_sequitur.h \
-    print_tools.h
+    print_tools.h \
+    data.h
 
 OTHER_FILES += \

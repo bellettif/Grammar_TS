@@ -5,6 +5,48 @@
 #include<fstream>
 #include<string>
 #include<vector>
+#include<unordered_map>
+
+namespace file_reader{
+
+static const std::unordered_map<std::string, std::string> translation_map({ {"1", "a"},
+                                                                            {"2", "b"},
+                                                                            {"3", "c"},
+                                                                            {"4", "d"},
+                                                                            {"5", "e"},
+                                                                            {"6", "f"},
+                                                                            {"7", "g"}
+                                                                          });
+
+static inline std::string translate_to_chars(std::string input){
+    std::string output (input);
+    for(auto xy : translation_map){
+        string_utils::replace(output,
+                              xy.first,
+                              xy.second);
+    }
+    return output;
+}
+
+static std::vector<std::string> read_lines_from_file(const std::string & file_path){
+    std::ifstream input_file;
+    input_file.open(file_path);
+    if(input_file.is_open()){
+        std::cout << "Reading from file " << file_path << std::endl;
+    }else{
+        std::cout << "Cannot read from file " << file_path << std::endl;
+        return std::vector<std::string>();
+    }
+    std::string temp_value;
+    std::vector<std::string> content;
+    while(input_file.good())
+    {
+         getline(input_file, temp_value);
+         content.push_back(std::string(temp_value));
+    }
+    input_file.close();
+    return content;
+}
 
 static std::vector<std::string> read_csv(const std::string & file_path){
     std::ifstream input_file;
@@ -79,5 +121,6 @@ static std::vector<T> eliminate_elt(std::vector<T> content,
     return buffer;
 }
 
+}
 
 #endif // FILE_READER_H

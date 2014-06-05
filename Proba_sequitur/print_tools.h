@@ -20,8 +20,13 @@ static void print_vect(const std::vector<T> & vect,
 template<typename T1, typename T2>
 static void print_map(const std::unordered_map<T1, T2> & map,
                              const std::string & prefix = ""){
+    std::vector<T1> key_set;
     for(auto xy : map){
-        std::cout << prefix << "key: " << xy.first << " value: " << xy.second << std::endl;
+        key_set.push_back(xy.first);
+    }
+    std::sort(key_set.begin(), key_set.end());
+    for(auto x : key_set){
+        std::cout << prefix << "key: " << x << " value: " << map.at(x) << std::endl;
     }
 }
 

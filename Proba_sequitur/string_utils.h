@@ -102,9 +102,9 @@ inline static std::vector<double> relative_count(string_vect & inputs,
     return result;
 }
 
-inline static std::vector<double> merged_relative_count(string_vect & inputs,
+inline static double merged_relative_count(string_vect & inputs,
                                                         const std::string & sub_string){
-    std::vector<double> result;
+    double result = 0;
     double current_count;
     double total_length = 0;
     std::vector<std::string> split_result;
@@ -114,13 +114,10 @@ inline static std::vector<double> merged_relative_count(string_vect & inputs,
                                 boost::is_any_of(" "));
         total_length += split_result.size();
     }
+    if (total_length == 0) return 0;
     for(std::string & input : inputs){
         current_count = count(input, sub_string);
-        if (total_length > 0){
-            result.push_back(current_count / total_length);
-        }else{
-            result.push_back(0);
-        }
+        result += (current_count / total_length);
     }
     return result;
 }
@@ -138,6 +135,13 @@ inline static void replace(std::string & input,
                            const std::string & replacement){
     std::regex e(replaced);
     input = std::regex_replace(input, e, replacement);
+}
+
+inline static std::string replace_copy(const std::string & input,
+                           const std::string & replaced,
+                           const std::string & replacement){
+    std::regex e(replaced);
+    return std::regex_replace(input, e, replacement);
 }
 
 inline static void replace(string_vect & inputs,

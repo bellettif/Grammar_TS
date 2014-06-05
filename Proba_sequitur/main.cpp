@@ -15,10 +15,12 @@
 #include "preprocessing.h"
 #include "decision_making.h"
 #include "proba_sequitur.h"
+#include "data.h";
 
 int main ()
 {
 
+    /*
     std::vector<std::string> sequences = {"a a a a b c a a b c",
                                           "a a b b c d a d b c",
                                           "e d d e a a a b c b c",
@@ -34,9 +36,22 @@ int main ()
                                                      "b b a b e d b",
                                                      "a d d e e d d",
                                                      "a b b c c d"};
+    */
 
-    int degree = 3;
-    int max_rules = 30;
+    std::vector<std::string> sequences = {achu_1,
+                                         achu_2,
+                                         achu_3,
+                                         achu_4,
+                                         achu_5,
+                                         achu_6,
+                                         achu_7,
+                                         achu_8,
+                                         achu_9};
+
+    std::vector<std::string> sequences_for_counts = sequences;
+
+    int degree = 9;
+    int max_rules = 40;
     bool atomic_bare_lk = true;
     bool stochastic = false;
 
@@ -48,6 +63,9 @@ int main ()
                        stochastic);
 
     ps.run();
+
+    ps.print_sequences_for_counts();
+
 
     return 0;
 }

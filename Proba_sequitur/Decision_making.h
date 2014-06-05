@@ -30,8 +30,9 @@ inline static string_vect pick_best_patterns(const string_double_map & pattern_s
         items.emplace_back(string_double_pair(xy.first, xy.second));
     }
     std::sort(items.begin(), items.end(), compare_scores);
-    string_vect result(n_selected);
-    for(int i = 0; i < n_selected; ++i){
+    int n_to_take = std::min<int>(n_selected, items.size());
+    string_vect result(n_to_take);
+    for(int i = 0; i < n_to_take; ++i){
         result[i] = items.at(i).first;
     }
     return result;
@@ -42,23 +43,32 @@ inline static string_vect pick_sto_patterns(const string_double_map & pattern_sc
                                             int n_selected,
                                             const double & T,
                                             RNG & rng){
-    string_set chosen_rules;
-    string_double_pair_vect items;
-    std::vector<double> scores;
-    double total_score = 0;
-    for(auto xy : pattern_scores){
-        items.emplace_back(string_double_pair(xy.first, xy.second));
-        total_score += xy.second;
+
+    if(pattern_scores.size() > n_selected){
+        string_set chosen_rules;
+        string_double_pair_vect items;
+        std::vector<double> scores;
+        double total_score = 0;
+        for(auto xy : pattern_scores){
+            items.emplace_back(string_double_pair(xy.first, xy.second));
+            total_score += xy.second;
+        }
+        for(auto xy : pattern_scores){
+            scores.push_back(std::exp(xy.second / (T*total_score)));
+        }
+        std::discrete_distribution<double> distrib(scores.begin(), scores.end());
+        while(chosen_rules.size() < n_selected){
+            chosen_rules.insert(items.at(distrib(rng)).first);
+        }
+        string_vect result (chosen_rules.begin(), chosen_rules.end());
+        return result;
+    }else{
+        string_vect result;
+        for(auto xy : pattern_scores){
+            result.push_back(xy.first);
+        }
+        return result;
     }
-    for(auto xy : pattern_scores){
-        scores.push_back(std::exp(xy.second / (T*total_score)));
-    }
-    std::discrete_distribution<double> distrib(scores.begin(), scores.end());
-    while(chosen_rules.size() < n_selected){
-        chosen_rules.insert(items.at(distrib(rng)).first);
-    }
-    string_vect result (chosen_rules.begin(), chosen_rules.end());
-    return result;
 }
 
 
