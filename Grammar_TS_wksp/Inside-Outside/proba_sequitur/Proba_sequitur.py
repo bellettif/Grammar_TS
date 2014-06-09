@@ -21,11 +21,41 @@ class Proba_sequitur:
                  repetitions,
                  keep_data,
                  degree,
-                 max_rules = MAX_RULES):
+                 max_rules = MAX_RULES,
+                 stochastic = False,
+                 init_T = 0,
+                 T_decay = 0,
+                 p_deletion = 0):
         self.current_rule_index = 1
         #
-        self.build_samples = build_samples
-        self.count_samples = count_samples
+        if p_deletion == 0:
+            self.build_samples = build_samples
+            self.count_samples = count_samples
+        else:
+            self.build_samples = []
+            for sample in copy.deepcopy(build_samples):
+                split_sample = sample.split(' ')
+                selected_index = np.random.binomial(n = 1, 
+                                                    p = 1.0 - p_deletion, 
+                                                    size = len(split_sample))
+                self.build_samples.append(' '.join(filter(lambda x : x != None,
+                                                   [split_sample[i] if selected_index[i] == 1 else None 
+                                                    for i in xrange(len(selected_index))]
+                                                          )
+                                                   )
+                                          )
+            self.count_samples = []
+            for sample in copy.deepcopy(count_samples):
+                split_sample = sample.split(' ')
+                selected_index = np.random.binomial(n = 1, 
+                                                    p = 1.0 - p_deletion, 
+                                                    size = len(split_sample))
+                self.count_samples.append(' '.join(filter(lambda x : x != None,
+                                                   [split_sample[i] if selected_index[i] == 1 else None 
+                                                    for i in xrange(len(selected_index))]
+                                                          )
+                                                   )
+                                          )
         self.all_counts = {}
         self.cumulated_counts = {}
         #
@@ -45,15 +75,23 @@ class Proba_sequitur:
         self.degree = degree
         self.max_rules = max_rules
         #
-        self.hash_codes = {}
+        self.hashcodes = {}
+        self.hashcode_to_rule = {}
         self.hashed_rules = {}
+        self.hashed_relative_counts = {}
         self.hashed_counts = {}
+        self.hashed_levels = {}
         #
         self.total_divs = []
         self.lengths = []
         self.rule_divs = {}
         #
         self.rule_levels = {}
+        #
+        self.stochastic = stochastic
+        self.init_T = init_T
+        self.T = init_T
+        self.T_decay = T_decay
 
     def reduce_counts(self,
                       list_of_dicts):
@@ -165,11 +203,11 @@ class Proba_sequitur:
         if left in self.terminal_chars:
             left_hash = left
         else:
-            left_hash = self.hash_codes[left]
+            left_hash = self.hashcodes[left]
         if right in self.terminal_chars:
             right_hash = right
         else:
-            right_hash = self.hash_codes[right]
+            right_hash = self.hashcodes[right]
         return '>' + left_hash + '-' + right_hash + '<'
 
     def infer_grammar(self):
@@ -184,18 +222,28 @@ class Proba_sequitur:
             self.terminal_chars.extend(sequence.split(' '))
         self.terminal_chars = set(self.terminal_chars)
         self.barelk_table = self.init_barelk(target_sequences)
-        print '\nStarting grammar inference, degree = %d' % (self.degree)
+        #print '\t\tStarting grammar inference, degree = %d' % (self.degree)
         self.lengths.append([len(x.split(' ')) for x in target_for_counts])
         while len(target_sequences) > 0 and len(self.rules) < self.max_rules:
             self.level += 1
             begin_time = time.clock()
-            print '\tIteration %d, %d rules, %d words for build, %d words for count' % (self.level,
+            """
+            print '\t\t\tIteration %d, %d rules, %d words for build, %d words for count' % (self.level,
                                                                                         len(self.rules),
                                                                                         sum([len(x.split(' ')) for x in target_sequences]),
                                                                                         sum([len(x.split(' ')) for x in target_for_counts]))
+            """
             target_chars = []
+            """
+            for target_sequence in target_sequences:
+                print target_sequence
+            """
             for sequence in target_sequences:
                 target_chars.extend(sequence.split(' '))
+                """
+                if '' in sequence.split(' '):
+                    print '_' + sequence + '_'
+                """
             target_chars = set(target_chars)
             target_chars = filter(lambda x : x!= ' ', target_chars)
             pair_divergence = self.compute_pair_divergence(target_sequences,
@@ -205,12 +253,23 @@ class Proba_sequitur:
             labels = [x[0] for x in items]
             values = [x[1] for x in items]
             if self.degree != 0:
-                best_symbols = labels[:self.degree]
+                if not self.stochastic:
+                    best_symbols = labels[:self.degree]
+                else:
+                    probas = np.asarray(values, dtype = np.double)
+                    probas /= np.sum(probas)
+                    probas = np.exp(probas / self.T)
+                    probas /= np.sum(probas)
+                    best_symbols = np.random.choice(labels, 
+                                                    size = self.degree,
+                                                    replace = False,
+                                                    p = probas)
+                    self.T *= (1.0 - self.T_decay)
             else:
                 best_symbols_index = filter(lambda i : values[i] > 0, range(len(values)))
                 best_symbols = labels[:len(best_symbols_index)]
             self.total_divs.append(sum(values[:self.degree]))
-            print '\tTot div: %f' % sum(values[:self.degree])
+            #print '\tTot div: %f' % sum(values[:self.degree])
             list_of_best_symbols.append(best_symbols)
             rule_names = []
             for i, best_symbol in enumerate(best_symbols):
@@ -219,16 +278,22 @@ class Proba_sequitur:
                 self.rule_levels[new_rule_name] = self.level
                 hashcode = self.compute_hash_code(best_symbol)
                 left, right = best_symbol.split('-')
-                self.hash_codes[new_rule_name] = hashcode
+                self.hashcodes[new_rule_name] = hashcode
+                self.hashcode_to_rule[hashcode] = new_rule_name
                 if left in self.terminal_chars:
                     left_hash_code = left
+                    left_level = 0
                 else:
-                    left_hash_code = self.hash_codes[left]
+                    left_hash_code = self.hashcodes[left]
+                    left_level = self.hashed_levels[left_hash_code]
                 if right in self.terminal_chars:
                     right_hash_code = right
+                    right_level = 0
                 else:
-                    right_hash_code = self.hash_codes[right]
-                self.hashed_rules[hashcode] = left_hash_code + '_' + right_hash_code
+                    right_hash_code = self.hashcodes[right]
+                    right_level = self.hashed_levels[right_hash_code]
+                self.hashed_rules[hashcode] = (left_hash_code, right_hash_code)
+                self.hashed_levels[hashcode] = max(left_level, right_level)
                 rule_names.append('r%d_' % self.current_rule_index)
                 self.current_rule_index += 1
                 self.rule_divs[new_rule_name] = values[i]
@@ -239,6 +304,7 @@ class Proba_sequitur:
             #
             target_for_counts, target_counts = self.substitute(target_for_counts, best_symbols, rule_names)
             for key, count_dict in target_counts.iteritems():
+                self.hashed_counts[self.hashcodes[key]] = copy.deepcopy(count_dict)
                 for i, count in count_dict.iteritems():
                     if len(target_for_counts[i]) == 0:
                         continue
@@ -247,10 +313,11 @@ class Proba_sequitur:
                 if key in self.all_counts:
                     print 'Key already in counts'
                 self.all_counts[key] = value
-                self.hashed_counts[key] = value
+                self.hashed_relative_counts[self.hashcodes[key]] = value
             for i, seq in enumerate(target_for_counts):
                 if seq == '': continue
-                to_delete = (len(filter(lambda x : x[0] == 'r' and x[-1] == '_', seq.split(' '))) == 0)
+                #to_delete = (len(filter(lambda x : x[0] == 'r' and x[-1] == '_', seq.split(' '))) == 0)
+                to_delete = False
                 if not self.keep_data:
                     new_seq = seq.split(' ')
                     new_seq = filter(lambda x : x[0] == 'r' and x[-1] == '_', new_seq)
@@ -271,7 +338,8 @@ class Proba_sequitur:
                 self.counts[key] += sum(value.values())
             for i, seq in enumerate(target_sequences):
                 if seq == '': continue
-                to_delete = (len(filter(lambda x : x[0] == 'r' and x[-1] == '_', seq.split(' '))) == 0)
+                #to_delete = (len(filter(lambda x : x[0] == 'r' and x[-1] == '_', seq.split(' '))) == 0)
+                to_delete = False
                 if not self.keep_data:
                     new_seq = seq.split(' ')
                     new_seq = filter(lambda x : x[0] == 'r' and x[-1] == '_', new_seq)
@@ -283,11 +351,11 @@ class Proba_sequitur:
                     target_sequences[i] = ''
                 else:
                     target_sequences[i] = new_seq
+            """
             print '\tBest patterns:'
             print best_symbols
             print values[:self.degree]
             print [self.barelk_table[s.split('-')[0]]*self.barelk_table[s.split('-')[1]] for s in best_symbols]
-            
             """
             to_delete = []
             for key, value in self.counts.iteritems():
@@ -299,22 +367,30 @@ class Proba_sequitur:
                 del self.rule_divs[key]
                 del self.all_counts[key]
                 del self.rule_levels[key]
-                del self.hashed_rules[self.hash_codes[key]]
-                del self.hash_codes[key]
-            """
+                del self.hashed_counts[self.hashcodes[key]]
+                del self.hashed_levels[self.hashcodes[key]]
+                del self.hashed_relative_counts[self.hashcodes[key]]
+                del self.hashed_rules[self.hashcodes[key]]
+                del self.hashcode_to_rule[self.hashcodes[key]]
+                del self.hashcodes[key]
             self.lengths.append([len(x.split(' ')) for x in target_for_counts])
+            """
             print '\tTook %f seconds' % (time.clock() - begin_time)
-        print 'Grammar inference done'
+            print ''
+            """
+        #print 'Grammar inference done'
         for i, seq in enumerate(target_sequences):
             if seq == '': continue
             self.terminal_parsing[i] = seq
         for rule_name, count_dict in self.all_counts.iteritems():
             self.cumulated_counts[rule_name] = sum(count_dict.values())
+        """
         if len(target_sequences) == 0:
             print '\tNo target sequence remaining'
         else:
             print '\tMaximum number of rules (%d) reached' % self.max_rules
         print '\n'
+        """
             
     
     def print_result(self):
@@ -332,7 +408,7 @@ class Proba_sequitur:
         print self.rules
         print ''
         
-    def plot_stats(self, filename):
+    def plot_stats(self, filename, folder_path = ''):
         achu_sub_set = range(9)
         oldo_sub_set = range(9, 18)
         #
@@ -387,7 +463,7 @@ class Proba_sequitur:
         #
         fig = plt.gcf()
         fig.set_size_inches((16, 10))
-        plt.savefig('Stats_%s.png' % filename, dpi = 300)
+        plt.savefig(folder_path + ('Stats_%s.png' % filename), dpi = 300)
         plt.close()
         #
         #    Plotting relative use frequency
@@ -410,6 +486,6 @@ class Proba_sequitur:
         #
         fig = plt.gcf()
         fig.set_size_inches((16, 10))
-        plt.savefig('Freqs_%s.png' % filename, dpi = 300)
+        plt.savefig(folder_path + ('Freqs_%s.png' % filename), dpi = 300)
         plt.close()
         

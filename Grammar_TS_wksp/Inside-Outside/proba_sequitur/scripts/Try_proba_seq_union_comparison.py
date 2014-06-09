@@ -35,9 +35,6 @@ for degree in degree_set:
             keep_data = 'keep_data'
             keep_data_bool = (keep_data == 'keep_data')
             
-            selected_achu_data_set = achu_data_set
-            selected_oldo_data_set = oldo_data_set
-            
             both_data_sets = copy.deepcopy(selected_achu_data_set) + \
                              copy.deepcopy(selected_oldo_data_set)
             
