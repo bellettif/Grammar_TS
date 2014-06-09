@@ -31,7 +31,7 @@ T_set = [0.1, 0.5, 1.0]
 T_decay = 0.1
 p_deletion = 0.05
 
-n_Trials = 50
+n_Trials = 5
 
 filter_option_set = [('sto_not_filtered', achu_data_set, oldo_data_set),
                      ('sto_filtered', f_achu_data_set, f_oldo_data_set)]
@@ -74,7 +74,7 @@ def merge_data(proba_seq,
                     hashed_counts[hashcode][i]  
     
 def compute_results_tuple(input_tuple):
-    print input_tuple
+    #print input_tuple
     compute_results(input_tuple[0],
                     input_tuple[1],
                     input_tuple[2],
