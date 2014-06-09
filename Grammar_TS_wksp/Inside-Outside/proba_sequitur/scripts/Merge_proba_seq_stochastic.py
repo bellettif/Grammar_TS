@@ -6,6 +6,7 @@ Created on 29 mai 2014
 
 import numpy as np
 from matplotlib import pyplot as plt
+import matplotlib as mpl
 import copy
 import cPickle as pickle
 import os
@@ -123,7 +124,7 @@ def compute_results(degree,
     keep_data_bool = (keep_data == 'keep_data')
     print "\tDoing degree = %d, max_rules = %d, filter_option = %s, T = %f" % \
                 (degree, max_rules, filter_option, T)
-    target_file_name = ('Resuts_merged_%s_%d_%s_%d_%f.pi' % 
+    target_file_name = ('Results_merged_%s_%d_%s_%d_%f.pi' % 
                         (filter_option, degree, keep_data, max_rules, T))
     if target_file_name in pickled_files:
         print 'Reading from pickled results'
@@ -230,7 +231,7 @@ def compute_results(degree,
     total_counts_achu_oldo = {}
     for hashcode in all_hashcodes:
         if hashcode not in merged_achu_oldo_counts:
-            merged_achu_oldo_levels[hashcode] = 'NA'
+            merged_achu_oldo_levels[hashcode] = 0
             merged_achu_oldo_counts[hashcode] = \
                 dict(zip(achu_set + oldo_set,
                          np.zeros(len(achu_set + oldo_set))))
@@ -238,7 +239,7 @@ def compute_results(degree,
                 dict(zip(achu_set + oldo_set,
                          np.zeros(len(achu_set + oldo_set))))
         if hashcode not in merged_oldo_counts:
-            merged_oldo_levels[hashcode] = 'NA'
+            merged_oldo_levels[hashcode] = 0
             merged_oldo_counts[hashcode] = \
                 dict(zip(achu_set + oldo_set,
                          np.zeros(len(achu_set + oldo_set))))
@@ -246,17 +247,22 @@ def compute_results(degree,
                 dict(zip(achu_set + oldo_set,
                          np.zeros(len(achu_set + oldo_set))))
         if hashcode not in merged_achu_counts:
-            merged_achu_levels[hashcode] = 'NA'
+            merged_achu_levels[hashcode] = 0
             merged_achu_counts[hashcode] = \
                 dict(zip(achu_set + oldo_set,
                          np.zeros(len(achu_set + oldo_set))))
             merged_achu_relative_counts[hashcode] = \
                 dict(zip(achu_set + oldo_set,
                          np.zeros(len(achu_set + oldo_set))))
-        total_counts.append([hashcode, 
-                             sum(merged_oldo_relative_counts[hashcode].values()) + 
-                             sum(merged_achu_relative_counts[hashcode].values()) +
-                             sum(merged_achu_oldo_relative_counts[hashcode].values())])
+        total_counts.append([hashcode,
+                             sum(merged_oldo_relative_counts[hashcode].values()) *
+                             merged_oldo_levels[hashcode]
+                             + 
+                             sum(merged_achu_relative_counts[hashcode].values()) *
+                             merged_achu_levels[hashcode]
+                             +
+                             sum(merged_achu_oldo_relative_counts[hashcode].values()) *
+                             merged_achu_oldo_levels[hashcode]])
         total_counts_achu[hashcode] = sum(merged_achu_relative_counts[hashcode].values())
         total_counts_oldo[hashcode] = sum(merged_oldo_relative_counts[hashcode].values())
         total_counts_achu_oldo[hashcode] = sum(merged_achu_oldo_relative_counts[hashcode].values())
@@ -269,9 +275,25 @@ def compute_results(degree,
     achu_boxes = []
     oldo_boxes = []
     box_names = []
+    #
+    names = []
+    #
+    achu_medians_inferred_achu = []
+    oldo_medians_inferred_achu = []
+    levels_inferred_achu = []
+    #
+    achu_medians_inferred_oldo = []
+    oldo_medians_inferred_oldo = []
+    levels_inferred_oldo = []
+    #
+    achu_medians_inferred_both = []
+    oldo_medians_inferred_both = []
+    levels_inferred_both = []
+    #
     for hashcode in sorted_hashcodes:
         rule_name = merged_rules[hashcode]
         left, right = merged_rhs[hashcode]
+        names.append(rule_name)
         if left in merged_rules:
             left_converted = merged_rules[left]
         else:
@@ -284,21 +306,52 @@ def compute_results(degree,
         achu_boxes.append([])
         oldo_boxes.append([])
         box_names.append('')
+        #
+        #
+        #
         achu_boxes.append([merged_achu_relative_counts[hashcode][j] for j in achu_set])
         oldo_boxes.append([merged_achu_relative_counts[hashcode][j] for j in oldo_set])
+        #
+        achu_medians_inferred_achu.append(
+                      np.median([merged_achu_relative_counts[hashcode][j] for j in achu_set]))
+        oldo_medians_inferred_achu.append(
+                      np.median([merged_achu_relative_counts[hashcode][j] for j in oldo_set]))
+        levels_inferred_achu.append(merged_achu_levels[hashcode])
+        #
         box_names.append('achu ' + str(merged_achu_levels[hashcode]) + ' ' +
                          str(total_counts_achu[hashcode]) + ' ' + 
                          rule_name + '->' + rhs)
+        #
+        #
+        #
         achu_boxes.append([merged_achu_oldo_relative_counts[hashcode][j] for j in achu_set])
         oldo_boxes.append([merged_achu_oldo_relative_counts[hashcode][j] for j in oldo_set])
+        #
+        achu_medians_inferred_both.append(
+                      np.median([merged_achu_oldo_relative_counts[hashcode][j] for j in achu_set]))
+        oldo_medians_inferred_both.append(
+                      np.median([merged_achu_oldo_relative_counts[hashcode][j] for j in oldo_set]))
+        levels_inferred_both.append(merged_achu_oldo_levels[hashcode])
+        #
         box_names.append('both ' + str(merged_achu_oldo_levels[hashcode]) + ' ' +
                          str(total_counts_achu_oldo[hashcode]) + ' ' + 
                          rule_name + '->' + rhs)
+        #
+        #
+        #
         achu_boxes.append([merged_oldo_relative_counts[hashcode][j] for j in achu_set])
         oldo_boxes.append([merged_oldo_relative_counts[hashcode][j] for j in oldo_set])
+        #
+        achu_medians_inferred_oldo.append(
+                      np.median([merged_oldo_relative_counts[hashcode][j] for j in achu_set]))
+        oldo_medians_inferred_oldo.append(
+                      np.median([merged_oldo_relative_counts[hashcode][j] for j in oldo_set]))
+        levels_inferred_oldo.append(merged_oldo_levels[hashcode])
+        #
         box_names.append('oldo ' + str(merged_oldo_levels[hashcode]) + ' ' +
                          str(total_counts_oldo[hashcode]) + ' ' + 
                          rule_name + '->' + rhs)
+        #
         achu_boxes.append([])
         box_names.append('')
         oldo_boxes.append([])
@@ -330,10 +383,80 @@ def compute_results(degree,
                box_names,
                rotation = 'vertical', fontsize = 3)
     plt.yscale('log')
+    plt.ylabel('Relative counts (log)')
     fig = plt.gcf()
     fig.set_size_inches((40, 8))
     plt.savefig(folder_path + ('Freqs_log_merged_%s_%d_%s_%d_%f.png' % 
                 (filter_option, degree, keep_data, max_rules, T)), dpi = 600)
+    plt.close()
+    #
+    #
+    #
+    print np.asarray(levels_inferred_achu)
+    plt.scatter(achu_medians_inferred_achu, 
+                 oldo_medians_inferred_achu,
+                 c = np.asarray(levels_inferred_achu),
+                 marker = 'x',
+                 alpha = 0.25,
+                 cmap=mpl.cm.gray
+                 )
+    plt.title('Relative counts inferred on achu')
+    plt.xlabel('Relative counts on achu (log)')
+    plt.ylabel('Relative counts on oldo (log)')
+    """
+    for i, rule_name in enumerate(names):
+        plt.text(x = achu_medians_inferred_achu[i], 
+                 y = oldo_medians_inferred_achu[i],
+                 s = rule_name, fontsize = 4)
+    """
+    plt.savefig(folder_path + ('Inferred_achu_%s_%d_%s_%d_%f.png' % 
+                (filter_option, degree, keep_data, max_rules, T)), dpi = 300)
+    plt.close()
+    #
+    #
+    #
+    print np.asarray(levels_inferred_oldo)
+    plt.scatter(achu_medians_inferred_oldo, 
+                 oldo_medians_inferred_oldo,
+                 c = np.asarray(levels_inferred_oldo),
+                 marker = 'x',
+                 alpha = 0.25,
+                 cmap=mpl.cm.gray
+                 )
+    plt.title('Relative counts inferred on oldo')
+    plt.xlabel('Relative counts on achu (log)')
+    plt.ylabel('Relative counts on oldo (log)')
+    """
+    for i, rule_name in enumerate(names):
+        plt.text(x = achu_medians_inferred_oldo[i], 
+                 y = oldo_medians_inferred_oldo[i],
+                 s = rule_name, fontsize = 4)
+    """
+    plt.savefig(folder_path + ('Inferred_oldo_%s_%d_%s_%d_%f.png' % 
+                (filter_option, degree, keep_data, max_rules, T)), dpi = 300)
+    plt.close()
+    #
+    #
+    #
+    print np.asarray(levels_inferred_both)
+    plt.scatter(achu_medians_inferred_both, 
+                 oldo_medians_inferred_both,
+                 c = np.asarray(levels_inferred_both),
+                 alpha = 0.25,
+                 marker = 'x',
+                 cmap=mpl.cm.gray
+                 )
+    plt.title('Relative counts inferred on both')
+    plt.xlabel('Relative counts on achu (log)')
+    plt.ylabel('Relative counts on oldo (log)')
+    """
+    for i, rule_name in enumerate(names):
+        plt.text(x = achu_medians_inferred_both[i], 
+                 y = oldo_medians_inferred_both[i],
+                 s = rule_name, fontsize = 4)
+    """
+    plt.savefig(folder_path + ('Inferred_both_%s_%d_%s_%d_%f.png' % 
+                (filter_option, degree, keep_data, max_rules, T)), dpi = 300)
     plt.close()
     #
     #
@@ -349,7 +472,7 @@ def compute_results(degree,
                  'merged_oldo_relative_counts' : merged_oldo_relative_counts,
                  'merged_oldo_counts' : merged_oldo_counts,
                  'merged_oldo_levels' : merged_oldo_levels},
-                open(folder_path + ('Resuts_merged_%s_%d_%s_%d_%f.pi' % 
+                open(folder_path + ('Results_merged_%s_%d_%s_%d_%f.pi' % 
                      (filter_option, degree, keep_data, max_rules, T)),
                      'wb'))
     print 'Done\n'
@@ -366,6 +489,8 @@ instruction_set = [(degree, max_rules, x[0], x[1], x[2], T)
 
 p=multi.Pool(processes = 6)
 p.map(compute_results_tuple, instruction_set)
+
+
 
 """
 #
