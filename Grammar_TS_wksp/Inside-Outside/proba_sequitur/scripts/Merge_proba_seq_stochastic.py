@@ -8,6 +8,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 import copy
 import cPickle as pickle
+import os
 
 from proba_sequitur.Proba_sequitur import Proba_sequitur
 
@@ -31,12 +32,17 @@ T_set = [0.1, 0.5, 1.0]
 T_decay = 0.1
 p_deletion = 0.05
 
-n_Trials = 5
+n_Trials = 50
 
 filter_option_set = [('sto_not_filtered', achu_data_set, oldo_data_set),
                      ('sto_filtered', f_achu_data_set, f_oldo_data_set)]
 
 folder_path = 'Merged_stochastic_results/'
+pickled_files = os.listdir(folder_path)
+
+print ''
+print pickled_files
+print ''
 
 achu_set = range(9)
 oldo_set = range(9, 18)
@@ -113,86 +119,104 @@ def compute_results(degree,
     merged_oldo_levels = {}
     #
     #
+    keep_data = 'keep_data'
+    keep_data_bool = (keep_data == 'keep_data')
     print "\tDoing degree = %d, max_rules = %d, filter_option = %s, T = %f" % \
                 (degree, max_rules, filter_option, T)
-    for i_trial in range(n_Trials):
-        print "\t\tTrial = %d" % i_trial
-        keep_data = 'keep_data'
-        keep_data_bool = (keep_data == 'keep_data')
-        both_data_sets = copy.deepcopy(selected_achu_data_set) + \
-                         copy.deepcopy(selected_oldo_data_set)
-        #
-        #    Proceeding with inference on both data sets
-        #
-        ps = Proba_sequitur(build_samples = both_data_sets,
-                            count_samples = both_data_sets,
-                            repetitions = True,
-                            keep_data = keep_data_bool,
-                            degree = degree,
-                            max_rules = max_rules,
-                            stochastic = True,
-                            init_T = T,
-                            T_decay = T_decay,
-                            p_deletion = p_deletion)
-        ps.infer_grammar()
-        #
-        #    Merging data
-        #
-        merge_data(ps,
-                   achu_set + oldo_set,
-                   merged_achu_oldo_relative_counts,
-                   merged_achu_oldo_counts,
-                   merged_achu_oldo_levels,
-                   merged_rules,
-                   merged_rhs)
-        #
-        #    Proceeding with inference on oldo data set
-        #
-        ps = Proba_sequitur(build_samples = selected_oldo_data_set,
-                            count_samples = both_data_sets,
-                            repetitions = True,
-                            keep_data = keep_data_bool,
-                            degree = degree,
-                            max_rules = max_rules,
-                            stochastic = True,
-                            init_T = T,
-                            T_decay = T_decay,
-                            p_deletion = p_deletion)
-        ps.infer_grammar()
-        #
-        #    Merging data
-        #
-        merge_data(ps, 
-                   achu_set + oldo_set,
-                   merged_oldo_relative_counts,
-                   merged_oldo_counts,
-                   merged_oldo_levels,
-                   merged_rules,
-                   merged_rhs)
-        #
-        #    Proceeding with inference on achu data set
-        #
-        ps = Proba_sequitur(build_samples = selected_achu_data_set,
-                            count_samples = both_data_sets,
-                            repetitions = True,
-                            keep_data = keep_data_bool,
-                            degree = degree,
-                            max_rules = max_rules,
-                            stochastic = True,
-                            init_T = T,
-                            T_decay = T_decay,
-                            p_deletion = p_deletion)
-        ps.infer_grammar()
-        #
-        #    Merging data
-        #
-        merge_data(ps,
-                   achu_set + oldo_set,
-                   merged_achu_relative_counts,
-                   merged_achu_counts,
-                   merged_achu_levels,
-                   merged_rules,
-                   merged_rhs)
+    target_file_name = ('Resuts_merged_%s_%d_%s_%d_%f.pi' % 
+                        (filter_option, degree, keep_data, max_rules, T))
+    if target_file_name in pickled_files:
+        print 'Reading from pickled results'
+        pickled_data = pickle.load(open(folder_path + target_file_name, 'rb'))
+        merged_rules = pickled_data['merged_rules']
+        merged_rhs = pickled_data['merged_rhs']
+        merged_achu_oldo_relative_counts = pickled_data['merged_achu_oldo_relative_counts']
+        merged_achu_oldo_counts = pickled_data['merged_achu_oldo_counts']
+        merged_achu_oldo_levels = pickled_data['merged_achu_oldo_levels']
+        merged_achu_relative_counts = pickled_data['merged_achu_relative_counts']
+        merged_achu_counts = pickled_data['merged_achu_counts']
+        merged_achu_levels = pickled_data['merged_achu_levels']
+        merged_oldo_relative_counts = pickled_data['merged_oldo_relative_counts']
+        merged_oldo_counts = pickled_data['merged_oldo_counts']
+        merged_oldo_levels = pickled_data['merged_oldo_levels']
+    else:
+        for i_trial in range(n_Trials):
+            print "\t\tTrial = %d" % i_trial
+            
+            both_data_sets = copy.deepcopy(selected_achu_data_set) + \
+                             copy.deepcopy(selected_oldo_data_set)
+            #
+            #    Proceeding with inference on both data sets
+            #
+            ps = Proba_sequitur(build_samples = both_data_sets,
+                                count_samples = both_data_sets,
+                                repetitions = True,
+                                keep_data = keep_data_bool,
+                                degree = degree,
+                                max_rules = max_rules,
+                                stochastic = True,
+                                init_T = T,
+                                T_decay = T_decay,
+                                p_deletion = p_deletion)
+            ps.infer_grammar()
+            #
+            #    Merging data
+            #
+            merge_data(ps,
+                       achu_set + oldo_set,
+                       merged_achu_oldo_relative_counts,
+                       merged_achu_oldo_counts,
+                       merged_achu_oldo_levels,
+                       merged_rules,
+                       merged_rhs)
+            #
+            #    Proceeding with inference on oldo data set
+            #
+            ps = Proba_sequitur(build_samples = selected_oldo_data_set,
+                                count_samples = both_data_sets,
+                                repetitions = True,
+                                keep_data = keep_data_bool,
+                                degree = degree,
+                                max_rules = max_rules,
+                                stochastic = True,
+                                init_T = T,
+                                T_decay = T_decay,
+                                p_deletion = p_deletion)
+            ps.infer_grammar()
+            #
+            #    Merging data
+            #
+            merge_data(ps, 
+                       achu_set + oldo_set,
+                       merged_oldo_relative_counts,
+                       merged_oldo_counts,
+                       merged_oldo_levels,
+                       merged_rules,
+                       merged_rhs)
+            #
+            #    Proceeding with inference on achu data set
+            #
+            ps = Proba_sequitur(build_samples = selected_achu_data_set,
+                                count_samples = both_data_sets,
+                                repetitions = True,
+                                keep_data = keep_data_bool,
+                                degree = degree,
+                                max_rules = max_rules,
+                                stochastic = True,
+                                init_T = T,
+                                T_decay = T_decay,
+                                p_deletion = p_deletion)
+            ps.infer_grammar()
+            #
+            #    Merging data
+            #
+            merge_data(ps,
+                       achu_set + oldo_set,
+                       merged_achu_relative_counts,
+                       merged_achu_counts,
+                       merged_achu_levels,
+                       merged_rules,
+                       merged_rhs)
     #
     #    Plotting merged data
     #
@@ -201,6 +225,9 @@ def compute_results(degree,
     #    Filling with zeros and sorting rules
     #
     total_counts = []
+    total_counts_achu = {}
+    total_counts_oldo = {}
+    total_counts_achu_oldo = {}
     for hashcode in all_hashcodes:
         if hashcode not in merged_achu_oldo_counts:
             merged_achu_oldo_levels[hashcode] = 'NA'
@@ -230,8 +257,12 @@ def compute_results(degree,
                              sum(merged_oldo_relative_counts[hashcode].values()) + 
                              sum(merged_achu_relative_counts[hashcode].values()) +
                              sum(merged_achu_oldo_relative_counts[hashcode].values())])
+        total_counts_achu[hashcode] = sum(merged_achu_relative_counts[hashcode].values())
+        total_counts_oldo[hashcode] = sum(merged_oldo_relative_counts[hashcode].values())
+        total_counts_achu_oldo[hashcode] = sum(merged_achu_oldo_relative_counts[hashcode].values())
     total_counts.sort(key = (lambda x : -x[1]))
-    sorted_hashcodes = [x[0] for x in total_counts][:max_rules * 4]   
+    sorted_hashcodes = [x[0] for x in total_counts]
+    sorted_hashcodes = sorted_hashcodes[:max_rules * 4]
     #
     #    Preparing plots
     #               
@@ -255,15 +286,18 @@ def compute_results(degree,
         box_names.append('')
         achu_boxes.append([merged_achu_relative_counts[hashcode][j] for j in achu_set])
         oldo_boxes.append([merged_achu_relative_counts[hashcode][j] for j in oldo_set])
-        box_names.append('achu ' + str(merged_achu_levels[hashcode]) + ' ' + 
+        box_names.append('achu ' + str(merged_achu_levels[hashcode]) + ' ' +
+                         str(total_counts_achu[hashcode]) + ' ' + 
                          rule_name + '->' + rhs)
         achu_boxes.append([merged_achu_oldo_relative_counts[hashcode][j] for j in achu_set])
         oldo_boxes.append([merged_achu_oldo_relative_counts[hashcode][j] for j in oldo_set])
         box_names.append('both ' + str(merged_achu_oldo_levels[hashcode]) + ' ' +
+                         str(total_counts_achu_oldo[hashcode]) + ' ' + 
                          rule_name + '->' + rhs)
         achu_boxes.append([merged_oldo_relative_counts[hashcode][j] for j in achu_set])
         oldo_boxes.append([merged_oldo_relative_counts[hashcode][j] for j in oldo_set])
-        box_names.append('oldo ' + str(merged_oldo_levels[hashcode]) + ' '+ 
+        box_names.append('oldo ' + str(merged_oldo_levels[hashcode]) + ' ' +
+                         str(total_counts_oldo[hashcode]) + ' ' + 
                          rule_name + '->' + rhs)
         achu_boxes.append([])
         box_names.append('')
@@ -294,12 +328,16 @@ def compute_results(degree,
     plt.setp(bp['fliers'], color='b', marker='+')
     plt.xticks(range(1, len(box_names) + 1), 
                box_names,
-               rotation = 'vertical', fontsize = 4)
+               rotation = 'vertical', fontsize = 3)
+    plt.yscale('log')
     fig = plt.gcf()
     fig.set_size_inches((40, 8))
-    plt.savefig(folder_path + ('Freqs_merged_%s_%d_%s_%d_%f.png' % 
+    plt.savefig(folder_path + ('Freqs_log_merged_%s_%d_%s_%d_%f.png' % 
                 (filter_option, degree, keep_data, max_rules, T)), dpi = 600)
     plt.close()
+    #
+    #
+    #
     pickle.dump({'merged_rules' : merged_rules,
                  'merged_rhs' : merged_rhs,
                  'merged_achu_oldo_relative_counts' : merged_achu_oldo_relative_counts,
@@ -326,7 +364,7 @@ instruction_set = [(degree, max_rules, x[0], x[1], x[2], T)
                    for x in filter_option_set
                    for T in T_set]
 
-p=multi.Pool(processes = 8)
+p=multi.Pool(processes = 6)
 p.map(compute_results_tuple, instruction_set)
 
 """

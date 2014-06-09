@@ -282,18 +282,18 @@ class Proba_sequitur:
                 self.hashcode_to_rule[hashcode] = new_rule_name
                 if left in self.terminal_chars:
                     left_hash_code = left
-                    left_level = 0
+                    left_level = 1
                 else:
                     left_hash_code = self.hashcodes[left]
                     left_level = self.hashed_levels[left_hash_code]
                 if right in self.terminal_chars:
                     right_hash_code = right
-                    right_level = 0
+                    right_level = 1
                 else:
                     right_hash_code = self.hashcodes[right]
                     right_level = self.hashed_levels[right_hash_code]
                 self.hashed_rules[hashcode] = (left_hash_code, right_hash_code)
-                self.hashed_levels[hashcode] = max(left_level, right_level)
+                self.hashed_levels[hashcode] = left_level + right_level
                 rule_names.append('r%d_' % self.current_rule_index)
                 self.current_rule_index += 1
                 self.rule_divs[new_rule_name] = values[i]
