@@ -25,4 +25,23 @@ struct Element{
 
 };
 
+std::ostream & operator<< (std::ostream & out, const Element & e){
+    out << "(";
+    if (e._has_prev){
+        out << &(*e._prev) << ", ";
+    }else{
+        out << "no prev, ";
+    }
+    out << e._seq_index << ", "
+        << e._word_index << ", "
+        << &(*e._iter) << ", ";
+    if(e._has_next){
+        out << &(*e._next);
+    }else{
+        out << "no next";
+    }
+    out << ")";
+    return out;
+}
+
 #endif // ELEMENT_H

@@ -69,6 +69,10 @@ all_target_indices = range(n_samples)
 
 folder_path = 'Seq_on_examples/'
 
+already_computed = os.listdir(folder_path)
+
+already_computed = filter(lambda x : '.pi' in x, already_computed)
+
 def merge_data(proba_seq,
                target_indices,
                merged_relative_counts,
@@ -115,17 +119,27 @@ def generate_samples_and_evaluate_ps(grammar_name,
                         for max_rules in max_rules_set
                         for i in range(n_big_trials)
                         for T in T_set]
+    for instruction in instruction_set:
+        evaluate_ps_tuple(instruction)
+    """
     p=multi.Pool(processes = 6)
     p.map(evaluate_ps_tuple, instruction_set)
+    """
     
 
 def evaluate_ps_tuple(arg_tuple):
-    evaluate_ps(arg_tuple[0],
-                arg_tuple[1],
-                arg_tuple[2],
-                arg_tuple[3],
-                arg_tuple[4],
-                arg_tuple[5])
+    try:
+        evaluate_ps(arg_tuple[0],
+                    arg_tuple[1],
+                    arg_tuple[2],
+                    arg_tuple[3],
+                    arg_tuple[4],
+                    arg_tuple[5])
+    except Exception as e:
+        print 'ERRROR'
+        print arg_tuple
+        raise e
+        print '\n'
 
 def evaluate_ps(degree,
                 max_rules,
@@ -147,6 +161,14 @@ def evaluate_ps(degree,
     #
     #
     #
+    target_file_name = ('Results_merged_%s_%d_%d_%d_%f.pi' % 
+                     (grammar_name, sample_id, degree, max_rules, T))
+    if target_file_name in already_computed:
+        print "\tGrammar: %s, sample_id: %d" % (grammar_name, sample_id)
+        print "\t\t degree = %d, max_rules = %d, T = %f" % \
+                (degree, max_rules, T)
+        print 'ALREADY COMPUTED'
+        return
     print "\tGrammar: %s, sample_id: %d" % (grammar_name, sample_id)
     print "\t\tDoing degree = %d, max_rules = %d, T = %f" % \
                 (degree, max_rules, T)

@@ -4,6 +4,8 @@
 #include <vector>
 
 #include "file_reader.h"
+#include "proba_sequitur.h"
+#include "mem_sandwich.h"
 
 static const std::string FOLDER_PATH = "/Users/francois/Grammar_TS/data/";
 static const std::vector<std::string> FILE_NAMES = {"achuSeq_1.csv",
@@ -25,8 +27,6 @@ static const std::vector<std::string> FILE_NAMES = {"achuSeq_1.csv",
                                                     "oldoSeq_9.csv",
                                                     "oldoSeq_10.csv"};
 
-
-
 int main(){
 
     std::vector<std::vector<std::string>> content;
@@ -43,7 +43,8 @@ int main(){
                                    to_string_map,
                                    translation_result);
 
-
+    Proba_sequitur ps (translation_result,
+                       translation_result);
 
     return 0;
 }

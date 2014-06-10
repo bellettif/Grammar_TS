@@ -300,7 +300,9 @@ class Proba_sequitur:
                 self.hashed_levels[hashcode] = left_level + right_level
                 rule_names.append('r%d_' % self.current_rule_index)
                 self.current_rule_index += 1
+                print 'Coucou1'
                 self.rule_divs[new_rule_name] = values[i]
+                print 'Coucou2'
                 self.save_bare_lk(new_rule_name, best_symbol)
             list_of_rules.append(rule_names)
             #

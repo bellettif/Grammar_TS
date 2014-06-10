@@ -5,7 +5,8 @@
 #include <list>
 #include <unordered_map>
 
-#include <element.h>
+#include "element.h"
+#include "mem_sandwich.h"
 
 typedef std::vector<std::vector<int>>           int_vect_vect;
 typedef std::unordered_map<int, double>         int_double_map;
@@ -19,14 +20,14 @@ typedef Element                                 elt;
 typedef std::list<elt>                          elt_list;
 typedef std::vector<elt_list>                   elt_list_vect;
 typedef elt_list::iterator                      elt_list_iter;
-
+typedef std::vector<Mem_sandwich>               mem_vect;
 
 class Proba_sequitur{
 
 private:
 
-    std::list<elt>          _inference_samples;
-    std::list<elt>          _counting_samples;
+    elt_list_vect           _inference_samples;
+    elt_list_vect           _counting_samples;
 
     int_double_map          _relative_counts;
     int_int_map             _absolute_counts;
@@ -37,46 +38,90 @@ private:
     int_string_map          _hashcodes;
     int_double_map          _bare_lks;
 
+    mem_vect                _sample_memory;
+    mem_vect                _count_memory;
 
 public:
     Proba_sequitur(const int_vect_vect & inference_samples,
                    const int_vect_vect & counting_samples,
-                   ):
+                   int max_length = 10000):
+        _inference_samples(inference_samples.size()),
+        _counting_samples(counting_samples.size()),
+        _sample_memory(inference_samples.size()),
+        _count_memory(counting_samples.size())
     {
         // Initialize inference samples
+        elt_list * current_list;
         for(int i = 0; i < inference_samples.size(); ++i){
+            current_list = & _inference_samples.at(i);
             for(int j = 0; j < inference_samples.at(i).size(); ++j){
-                _inference_samples.push_back(
+                current_list->push_back(
                             elt(i, j,
                                 inference_samples.at(i).at(j)));
             }
-        }
-        elt_list_iter begin_inf = _inference_samples.begin();
-        elt_list_iter end_inf = std::prev(_inference_samples.end());
-        for(elt_list_iter x = _inference_samples.begin();
-                          x != _inference_samples.end();
-                          ++x){
-            x->_iter = x;
-            if(x != begin_inf){
-                x->_has_prev = true;
-                x->_prev = std::prev(x);
+            max_length = std::max<int>(max_length,
+                                       current_list->size());
+            for(elt_list_iter x = current_list->begin();
+                              x != current_list->end();
+                              ++x){
+                x->_iter = x;
+                if(x != current_list->begin()){
+                    x->_has_prev = true;
+                    x->_prev = std::prev(x);
+                }
+                if(x != std::prev(current_list->end())){
+                    x->_has_next = true;
+                    x->_next = std::next(x);
+                    _sample_memory.at(i).add_pair({x->_iter, x->_next});
+                }
             }
-            if(x != end_inf){
-                x->_has_next = true;
-                x->_next = std::next(x);
-            }
+            std::cout << "Printing sample memory " << i << std::endl;
+            _sample_memory.at(i).print();
+            std::cout << "Done" << std::endl;
+            std::cout << std::endl;
         }
 
         // Initialize counting samples
         for(int i = 0; i < counting_samples.size(); ++i){
+            current_list = & _counting_samples.at(i);
             for(int j = 0; j < counting_samples.at(i).size(); ++j){
-                _counting_samples.push_back(
-                            elt(i, j,
-                                couting_samples.at(i).at(j)));
+                current_list->push_back(
+                                elt(i, j,
+                                counting_samples.at(i).at(j)));
             }
+            for(elt_list_iter x = current_list->begin();
+                              x != current_list->end();
+                              ++x){
+                x->_iter = x;
+                if(x != current_list->begin()){
+                    x->_has_prev = true;
+                    x->_prev = std::prev(x);
+                }
+                if(x != std::prev(current_list->end())){
+                    x->_has_next = true;
+                    x->_next = std::next(x);
+                    _count_memory.at(i).add_pair({x->_iter, x->_next});
+                }
+            }
+            std::cout << "Printing count memory " << i << std::endl;
+            _count_memory.at(i).print();
+            std::cout << "Done" << std::endl;
         }
-        elt_list_iter begin_count = _counting_samples.begin();
-        elt_list_iter end_count = std::prev(_counting_samples.end());
+
+
+
+    }
+
+    void print_inference_seq(int index){
+        for(const elt & x : _inference_samples.at(index)){
+            std::cout << x << " ";
+        }std::cout << std::endl;
+    }
+
+    void print_counting_seq(int index){
+        for(const elt & x : _counting_samples.at(index)){
+            std::cout << x << " ";
+        }std::cout << std::endl;
     }
 
 

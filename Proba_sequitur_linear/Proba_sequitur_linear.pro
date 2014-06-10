@@ -24,4 +24,5 @@ HEADERS += \
     file_reader.h \
     string_utils.h \
     proba_sequitur.h \
-    element.h
+    element.h \
+    mem_sandwich.h
