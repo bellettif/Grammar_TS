@@ -34,7 +34,8 @@ std::ostream & operator<< (std::ostream & out, const Element & e){
     }
     out << e._seq_index << ", "
         << e._word_index << ", "
-        << &(*e._iter) << ", ";
+        << &(*e._iter) << ", "
+        << e._content << ", ";
     if(e._has_next){
         out << &(*e._next);
     }else{

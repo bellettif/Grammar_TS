@@ -39,7 +39,7 @@ private:
     int_double_map          _bare_lks;
 
     mem_vect                _sample_memory;
-    mem_vect                _count_memory;
+    mem_vect                _counting_memory;
 
 public:
     Proba_sequitur(const int_vect_vect & inference_samples,
@@ -48,12 +48,13 @@ public:
         _inference_samples(inference_samples.size()),
         _counting_samples(counting_samples.size()),
         _sample_memory(inference_samples.size()),
-        _count_memory(counting_samples.size())
+        _counting_memory(counting_samples.size())
     {
         // Initialize inference samples
         elt_list * current_list;
         for(int i = 0; i < inference_samples.size(); ++i){
             current_list = & _inference_samples.at(i);
+            _sample_memory.at(i).set_target_list(current_list);
             for(int j = 0; j < inference_samples.at(i).size(); ++j){
                 current_list->push_back(
                             elt(i, j,
@@ -76,7 +77,7 @@ public:
                 }
             }
             std::cout << "Printing sample memory " << i << std::endl;
-            _sample_memory.at(i).print();
+            _sample_memory.at(i).print({1, 4});
             std::cout << "Done" << std::endl;
             std::cout << std::endl;
         }
@@ -84,6 +85,7 @@ public:
         // Initialize counting samples
         for(int i = 0; i < counting_samples.size(); ++i){
             current_list = & _counting_samples.at(i);
+            _counting_memory.at(i).set_target_list(current_list);
             for(int j = 0; j < counting_samples.at(i).size(); ++j){
                 current_list->push_back(
                                 elt(i, j,
@@ -100,11 +102,11 @@ public:
                 if(x != std::prev(current_list->end())){
                     x->_has_next = true;
                     x->_next = std::next(x);
-                    _count_memory.at(i).add_pair({x->_iter, x->_next});
+                    _counting_memory.at(i).add_pair({x->_iter, x->_next});
                 }
             }
             std::cout << "Printing count memory " << i << std::endl;
-            _count_memory.at(i).print();
+            _counting_memory.at(i).print({1, 4});
             std::cout << "Done" << std::endl;
         }
 
