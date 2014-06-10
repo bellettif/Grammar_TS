@@ -245,13 +245,17 @@ class Proba_sequitur:
                     print '_' + sequence + '_'
                 """
             target_chars = set(target_chars)
-            target_chars = filter(lambda x : x!= ' ', target_chars)
+            target_chars = filter(lambda x : x!= ' ' and x != '', target_chars)
             pair_divergence = self.compute_pair_divergence(target_sequences,
                                                            target_chars)
             items = pair_divergence.items()
             items.sort(key = (lambda x : -x[1]))
             labels = [x[0] for x in items]
             values = [x[1] for x in items]
+            if len(labels) < self.degree:
+                break
+            if len(filter(lambda x : x > 0, copy.copy(values))) == 0:
+                break
             if self.degree != 0:
                 if not self.stochastic:
                     best_symbols = labels[:self.degree]
