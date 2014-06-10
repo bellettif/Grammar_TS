@@ -25,4 +25,5 @@ HEADERS += \
     string_utils.h \
     proba_sequitur.h \
     element.h \
-    mem_sandwich.h
+    mem_sandwich.h \
+    decision_making.h

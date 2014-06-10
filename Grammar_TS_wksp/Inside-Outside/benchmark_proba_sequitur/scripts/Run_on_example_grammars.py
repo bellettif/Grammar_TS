@@ -128,18 +128,12 @@ def generate_samples_and_evaluate_ps(grammar_name,
     
 
 def evaluate_ps_tuple(arg_tuple):
-    try:
-        evaluate_ps(arg_tuple[0],
-                    arg_tuple[1],
-                    arg_tuple[2],
-                    arg_tuple[3],
-                    arg_tuple[4],
-                    arg_tuple[5])
-    except Exception as e:
-        print 'ERRROR'
-        print arg_tuple
-        raise e
-        print '\n'
+    evaluate_ps(arg_tuple[0],
+                arg_tuple[1],
+                arg_tuple[2],
+                arg_tuple[3],
+                arg_tuple[4],
+                arg_tuple[5])
 
 def evaluate_ps(degree,
                 max_rules,

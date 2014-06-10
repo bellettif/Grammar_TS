@@ -28,7 +28,6 @@ static const std::vector<std::string> FILE_NAMES = {"achuSeq_1.csv",
                                                     "oldoSeq_10.csv"};
 
 int main(){
-
     std::vector<std::vector<std::string>> content;
     for(const std::string & file_name : FILE_NAMES){
         content.push_back(file_reader::read_csv(FOLDER_PATH + file_name).front());
@@ -44,7 +43,15 @@ int main(){
                                    translation_result);
 
     Proba_sequitur ps (translation_result,
-                       translation_result);
+                       translation_result,
+                       to_index_map,
+                       to_string_map);
+
+    ps.print_bare_lks();
+
+    ps.compute_pattern_scores();
+
+    ps.print_pattern_scores();
 
     return 0;
 }

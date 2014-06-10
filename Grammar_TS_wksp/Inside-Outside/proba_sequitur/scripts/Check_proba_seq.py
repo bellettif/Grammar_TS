@@ -35,14 +35,14 @@ selected_oldo_data_set = oldo_data_set
 both_data_sets = copy.deepcopy(selected_achu_data_set) + \
                  copy.deepcopy(selected_oldo_data_set)
 
-ps = Proba_sequitur(build_samples = selected_achu_data_set,
-                    count_samples = selected_achu_data_set,
+ps = Proba_sequitur(build_samples = both_data_sets,
+                    count_samples = both_data_sets,
                     repetitions = True,
                     keep_data = keep_data_bool,
                     degree = degree,
                     max_rules = max_rules)
 ps.infer_grammar()
 
-for x in ps.values():
-    print x
+for term_char in ps.terminal_chars:
+    print '%s : %f' % (term_char, ps.barelk_table[term_char])
 

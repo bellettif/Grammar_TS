@@ -4,9 +4,11 @@
 #include <vector>
 #include <list>
 #include <unordered_map>
+#include <string>
 
 #include "element.h"
 #include "mem_sandwich.h"
+#include "decision_making.h"
 
 typedef std::vector<std::vector<int>>           int_vect_vect;
 typedef std::unordered_map<int, double>         int_double_map;
@@ -41,14 +43,24 @@ private:
     mem_vect                _sample_memory;
     mem_vect                _counting_memory;
 
+    const string_int_map &  _to_index_map;
+    const int_string_map &  _to_string_map;
+
+    int_pair_double_map     _pattern_scores;
+
+
 public:
     Proba_sequitur(const int_vect_vect & inference_samples,
                    const int_vect_vect & counting_samples,
-                   int max_length = 10000):
+                   const string_int_map & to_index_map,
+                   const int_string_map & to_string_map):
         _inference_samples(inference_samples.size()),
         _counting_samples(counting_samples.size()),
         _sample_memory(inference_samples.size()),
-        _counting_memory(counting_samples.size())
+        _counting_memory(counting_samples.size()),
+        _to_index_map(to_index_map),
+        _to_string_map(to_string_map),
+        _pattern_scores(10, pair_hasher)
     {
         // Initialize inference samples
         elt_list * current_list;
@@ -59,9 +71,8 @@ public:
                 current_list->push_back(
                             elt(i, j,
                                 inference_samples.at(i).at(j)));
+                _bare_lks[inference_samples.at(i).at(j)] += 1.0;
             }
-            max_length = std::max<int>(max_length,
-                                       current_list->size());
             for(elt_list_iter x = current_list->begin();
                               x != current_list->end();
                               ++x){
@@ -76,10 +87,6 @@ public:
                     _sample_memory.at(i).add_pair({x->_iter, x->_next});
                 }
             }
-            std::cout << "Printing sample memory " << i << std::endl;
-            _sample_memory.at(i).print({1, 4});
-            std::cout << "Done" << std::endl;
-            std::cout << std::endl;
         }
 
         // Initialize counting samples
@@ -105,13 +112,16 @@ public:
                     _counting_memory.at(i).add_pair({x->_iter, x->_next});
                 }
             }
-            std::cout << "Printing count memory " << i << std::endl;
-            _counting_memory.at(i).print({1, 4});
-            std::cout << "Done" << std::endl;
         }
 
-
-
+        // Initializing bare lks
+        double total_counts = 0.0;
+        for(auto xy : _bare_lks){
+            total_counts += xy.second;
+        }
+        for(auto xy : _bare_lks){
+            _bare_lks[xy.first] /= total_counts;
+        }
     }
 
     void print_inference_seq(int index){
@@ -126,6 +136,33 @@ public:
         }std::cout << std::endl;
     }
 
+    void print_bare_lks(){
+        std::cout << "Printing bare lks: " << std::endl;
+        for(auto xy : _bare_lks){
+            std::cout << "Key: " << _to_string_map.at(xy.first) << " lk: " << xy.second << std::endl;
+        }
+    }
+
+    void compute_pattern_scores(){
+        std::cout << "Computing pattern scores" << std::endl;
+        decision_making::compute_pattern_counts(_sample_memory,
+                                                _pattern_scores);
+        /*
+        decision_making::compute_pattern_divergence(_bare_lks,
+                                                    _pattern_scores);
+        */
+        std::cout << "Done" << std::endl;
+    }
+
+    void print_pattern_scores(){
+        for(auto xy : _pattern_scores){
+            std::cout << "Pattern "
+                      << _to_string_map.at(xy.first.first)
+                      << "-"
+                      << _to_string_map.at(xy.first.second)
+                      << ", score: " << xy.second << std::endl;
+        }
+    }
 
 
 };

@@ -175,6 +175,10 @@ class Proba_sequitur:
         pair_probas = {}
         for key, value in pair_counts.iteritems():
             pair_probas[key] = value / total
+        print '\n'
+        for key, value in pair_counts.iteritems():
+            print str(key) + ' ' + str(value)
+        print '\n'
         divergences = {}
         for key in pair_probas:
             left, right = key.split('-')
@@ -248,6 +252,9 @@ class Proba_sequitur:
             target_chars = filter(lambda x : x!= ' ' and x != '', target_chars)
             pair_divergence = self.compute_pair_divergence(target_sequences,
                                                            target_chars)
+            for pair, div in pair_divergence.iteritems():
+                print str(pair) + ' div: ' + str(div)
+            return
             items = pair_divergence.items()
             items.sort(key = (lambda x : -x[1]))
             labels = [x[0] for x in items]
@@ -300,9 +307,7 @@ class Proba_sequitur:
                 self.hashed_levels[hashcode] = left_level + right_level
                 rule_names.append('r%d_' % self.current_rule_index)
                 self.current_rule_index += 1
-                print 'Coucou1'
                 self.rule_divs[new_rule_name] = values[i]
-                print 'Coucou2'
                 self.save_bare_lk(new_rule_name, best_symbol)
             list_of_rules.append(rule_names)
             #

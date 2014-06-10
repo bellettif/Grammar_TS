@@ -63,10 +63,15 @@ public:
         if(_first_maps.count(xy_content) == 0){
             _first_maps.emplace(xy_content, iter_iter_pair_iter_map(MAX_LENGTH, iter_hasher));
         }
-        _first_maps.at(xy_content)[xy.first] = std::prev(_center_list.end());
         if(_second_maps.count(xy_content) == 0){
             _second_maps.emplace(xy_content, iter_iter_pair_iter_map(MAX_LENGTH, iter_hasher));
         }
+        if(_second_maps.at(xy_content).count(xy.first) != 0){
+            // Do not take overlapping pairs into account
+            return;
+        }
+        _first_maps.at(xy_content)[xy.first] = std::prev(_center_list.end());
+
         _second_maps.at(xy_content)[xy.second] = std::prev(_center_list.end());
     }
 
@@ -95,6 +100,18 @@ public:
         }else{
             std::cout << "Pair is not present" << std::endl;
         }
+    }
+
+    const lateral_access_map & get_first_maps() const{
+        return _first_maps;
+    }
+
+    const lateral_access_map & get_second_maps() const{
+        return _second_maps;
+    }
+
+    const iter_pair_list & get_central_list() const{
+        return _center_list;
     }
 
 };
