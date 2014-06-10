@@ -13,6 +13,7 @@ import os
 import shutil
 import string
 import itertools
+import pydot
 
 import time
 
@@ -577,7 +578,7 @@ class SCFG:
             plt.savefig(filename, dpi = 300)
             plt.close()
             
-    def compute_signature(self, n_samples, epsilon, max_length = 0):
+    def compute_signature(self, n_samples, epsilon = 0, max_length = 0):
         freqs, strings = SCFG_c.compute_stats(self.A,
                                               self.B,
                                               self.term_chars,
@@ -587,11 +588,11 @@ class SCFG:
         freqs = np.asarray(freqs, dtype = np.double)
         total = float(np.sum(freqs))
         freqs /= total
-        indices = range(len(freqs))
-        indices.sort(key = (lambda i : -freqs[i]))
-        freqs = [freqs[i] for i in indices]
-        strings = [strings[i].split(' ') for i in indices]
-        if max_length == 0:
+        if max_length == 0 and epsilon != 0:
+            indices = range(len(freqs))
+            indices.sort(key = (lambda i : -freqs[i]))
+            freqs = [freqs[i] for i in indices]
+            strings = [strings[i].split(' ') for i in indices]
             length_weight = {}
             all_lengths = set([len(x) for x in strings])
             for length in all_lengths:
@@ -601,12 +602,62 @@ class SCFG:
             length_weight_items.sort(key = (lambda x : -x[1]))
             cum_weights = np.cumsum([x[1] for x in length_weight_items])
             max_length = filter(lambda i : cum_weights[i] <= 1.0 - epsilon, range(len(cum_weights)))[-1]
-        good_indices = filter(lambda i : len(strings[i]) <= max_length, range(len(strings)))
-        freqs = [freqs[i] for i in good_indices]
-        strings = [' '.join(strings[i]) for i in good_indices]
+            good_indices = filter(lambda i : len(strings[i]) <= max_length, range(len(strings)))
+            freqs = [freqs[i] for i in good_indices]
+            strings = [' '.join(strings[i]) for i in good_indices]
         return dict(zip(strings, freqs))
 
-        
-        
-        
-            
+    def draw_grammar(self,
+                     file_path,
+                     threshold = 0):
+        root_color = 'green'
+        transmission_color = 'red'
+        emission_color = 'blue'
+        left_color = 'magenta'
+        right_color = 'cyan'        
+        graph = pydot.Dot(graph_type='digraph')
+        if not self.rules_mapped:
+            self.map_rules()
+        print len(self.rules)
+        rule_nodes = {}
+        for rule_index in self.rules.keys():
+            if rule_index == self.root_index:
+                rule_nodes[rule_index] = pydot.Node('Root',
+                                               style = 'filled',
+                                               fillcolor = root_color)
+            else:
+                rule_nodes[rule_index] = pydot.Node('Rule %d' % rule_index,
+                                                style = 'filled',
+                                                fillcolor = transmission_color)
+            graph.add_node(rule_nodes[rule_index])
+        terminal_nodes = {}
+        for term, index in self.term_char_to_index.iteritems():
+            terminal_nodes[index] = pydot.Node('Term %s' % str(term),
+                                               style = 'filled',
+                                               fillcolor = emission_color)
+            graph.add_node(terminal_nodes[index])
+        for rule_index, (pairs, pair_weights,
+                         terms, term_weights) in self.rules.iteritems():
+            total_weight = np.sum(self.A[rule_index]) + np.sum(self.B[rule_index])
+            for i in xrange(len(pairs)):
+                if pair_weights[i] < threshold * total_weight:
+                    continue
+                edge = pydot.Edge(rule_nodes[rule_index], 
+                                  rule_nodes[pairs[i][0]])
+                edge.set_label(' %d_%.2f ' % (i, pair_weights[i]))
+                edge.set_color(left_color)
+                graph.add_edge(edge)
+                edge = pydot.Edge(rule_nodes[rule_index], 
+                                  rule_nodes[pairs[i][1]])
+                edge.set_label(' %d_%.2f ' % (i, pair_weights[i]))
+                edge.set_color(right_color)
+                graph.add_edge(edge)
+            for i in xrange(len(terms)):
+                if term_weights[i] < threshold * total_weight:
+                    continue
+                edge = pydot.Edge(rule_nodes[rule_index],
+                                  terminal_nodes[self.term_char_to_index[terms[i]]])
+                edge.set_label('%.2f' % term_weights[i])
+                edge.set_color(emission_color)
+                graph.add_edge(edge)
+        graph.write_png(file_path)
