@@ -29,7 +29,6 @@ public:
 };
 
 std::ostream & operator<< (std::ostream & out, const Element & e){
-    /*
     out << "(";
     if (e._has_prev){
         out << &(*e._prev) << ", ";
@@ -46,8 +45,7 @@ std::ostream & operator<< (std::ostream & out, const Element & e){
         out << "no next";
     }
     out << ")";
-    */
-    out << " " << e._content << " ";
+    //out << " " << e._content << " ";
     return out;
 }
 
