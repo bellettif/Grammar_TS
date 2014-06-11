@@ -17,6 +17,7 @@ typedef std::vector<int_pair_double_pair>               int_pair_double_pair_vec
 typedef std::unordered_set<int_pair, pair_hash>         int_pair_set;
 typedef std::unordered_map<int, double>                 int_double_map;
 typedef std::vector<Mem_sandwich>                       mem_vect;
+typedef std::unordered_map<int, int_pair>       int_int_pair_map;
 
 typedef std::mt19937                                    RNG;
 
@@ -37,15 +38,46 @@ inline static void compute_pattern_counts(const mem_vect & memory_vector,
     }
 }
 
-inline static void compute_pattern_divergence(const int_double_map & bare_lks,
+inline static void delete_zeros(int_pair_double_map & counts){
+    int_pair_vect to_delete;
+    for(auto xy : counts){
+        if(xy.second == 0){
+            to_delete.push_back(xy.first);
+        }
+    }
+    for(auto x : to_delete){
+        counts.erase(x);
+    }
+}
+
+inline static void compute_pattern_divergence(int_double_map & bare_lks,
+                                              const int_int_pair_map & rules,
                                               int_pair_double_map & counts){
     int left;
     int right;
+    int_pair left_rhs;
+    int left_left;
+    int left_right;
+    int_pair right_rhs;
+    int right_left;
+    int right_right;
     double proba_pair;
     double proba_atoms;
     for(auto xy : counts){
         left = xy.first.first;
         right = xy.first.second;
+        if(bare_lks.count(left) == 0){
+            left_rhs = rules.at(left);
+            left_left = left_rhs.first;
+            left_right = left_rhs.second;
+            bare_lks[left] = bare_lks.at(left_left) * bare_lks.at(left_right);
+        }
+        if(bare_lks.count(right) == 0){
+            right_rhs = rules.at(right);
+            right_left = right_rhs.first;
+            right_right = right_rhs.second;
+            bare_lks[right] = bare_lks.at(right_left) * bare_lks.at(right_right);
+        }
         proba_pair = xy.second;
         proba_atoms = bare_lks.at(left) * bare_lks.at(right);
         counts[xy.first] = proba_pair * std::log(proba_pair / proba_atoms);

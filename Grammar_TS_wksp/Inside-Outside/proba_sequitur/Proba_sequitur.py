@@ -252,9 +252,18 @@ class Proba_sequitur:
             target_chars = filter(lambda x : x!= ' ' and x != '', target_chars)
             pair_divergence = self.compute_pair_divergence(target_sequences,
                                                            target_chars)
+            #
+            #
+            #
+            print "Divergences:"
             for pair, div in pair_divergence.iteritems():
                 print str(pair) + ' div: ' + str(div)
-            return
+            print '\n'
+            if self.level == 2:
+                return
+            #
+            #
+            #
             items = pair_divergence.items()
             items.sort(key = (lambda x : -x[1]))
             labels = [x[0] for x in items]

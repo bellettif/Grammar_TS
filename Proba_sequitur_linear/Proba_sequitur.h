@@ -151,17 +151,31 @@ public:
         std::cout << "Computing pattern scores" << std::endl;
         decision_making::compute_pattern_counts(_sample_memory,
                                                 _pattern_scores);
+        decision_making::delete_zeros(_pattern_scores);
         decision_making::compute_pattern_divergence(_bare_lks,
+                                                    _rules,
                                                     _pattern_scores);
         std::cout << "Done" << std::endl;
     }
 
     void print_pattern_scores(){
+        std::string left;
+        std::string right;
         for(auto xy : _pattern_scores){
+            if(xy.first.first >= 0){
+                left = _to_string_map.at(xy.first.first);
+            }else{
+                left = std::to_string(xy.first.first);
+            }
+            if(xy.first.second >= 0){
+                right = _to_string_map.at(xy.first.second);
+            }else{
+                right = std::to_string(xy.first.second);
+            }
             std::cout << "Pattern "
-                      << _to_string_map.at(xy.first.first)
-                      << "-"
-                      << _to_string_map.at(xy.first.second)
+                      << left
+                      << " - "
+                      << right
                       << ", score: " << xy.second << std::endl;
         }
     }
@@ -171,13 +185,15 @@ public:
                 decision_making::pick_best_patterns(_pattern_scores,
                                                     _n_select);
         int rule_index;
+        /*
         std::cout << std::endl;
         for(Mem_sandwich & mem : _counting_memory){
             mem.print_center_lists(_to_string_map);
             std::cout << std::endl;
         }
         std::cout << std::endl;
-        for(int_pair xy: best_pairs){
+        */
+        for(const int_pair & xy: best_pairs){
             rule_index = - (_rules.size() + 1);
             std::cout << "REPLACING PAIR "
                       << _to_string_map.at(xy.first)
@@ -194,11 +210,13 @@ public:
                 mem.remove_pair(xy, rule_index);
             }
         }
+        /*
         std::cout << std::endl;
         for(Mem_sandwich & mem : _counting_memory){
             mem.print_center_lists(_to_string_map);
             std::cout << std::endl;
         }
+        */
     }
 
 
