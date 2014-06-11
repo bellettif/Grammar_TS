@@ -7,13 +7,16 @@ struct Element{
 
     const int                               _seq_index;
     const int                               _word_index;
-    std::list<Element>::iterator            _iter;
     bool                                    _has_prev = false;
     std::list<Element>::iterator            _prev;
     bool                                    _has_next = false;
     std::list<Element>::iterator            _next;
-    const int                               _content;
+    int                                     _content;
 
+public:
+    std::list<Element>::iterator            _iter;
+
+public:
     Element(const int & seq_index,
             const int & word_index,
             const int & content):
@@ -26,6 +29,7 @@ struct Element{
 };
 
 std::ostream & operator<< (std::ostream & out, const Element & e){
+    /*
     out << "(";
     if (e._has_prev){
         out << &(*e._prev) << ", ";
@@ -42,6 +46,8 @@ std::ostream & operator<< (std::ostream & out, const Element & e){
         out << "no next";
     }
     out << ")";
+    */
+    out << " " << e._content << " ";
     return out;
 }
 

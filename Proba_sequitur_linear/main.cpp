@@ -42,16 +42,15 @@ int main(){
                                    to_string_map,
                                    translation_result);
 
-    Proba_sequitur ps (translation_result,
+    Proba_sequitur ps (6,
+                       translation_result,
                        translation_result,
                        to_index_map,
                        to_string_map);
-
     ps.print_bare_lks();
-
     ps.compute_pattern_scores();
-
     ps.print_pattern_scores();
+    ps.replace_best_patterns();
 
     return 0;
 }

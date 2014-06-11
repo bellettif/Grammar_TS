@@ -32,11 +32,9 @@ inline static void compute_pattern_counts(const mem_vect & memory_vector,
             total += xy.second.size();
         }
     }
-    /*
     for(auto xy : counts){
         counts[xy.first] /= total;
     }
-    */
 }
 
 inline static void compute_pattern_divergence(const int_double_map & bare_lks,

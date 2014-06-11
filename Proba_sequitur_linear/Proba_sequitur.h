@@ -28,6 +28,8 @@ class Proba_sequitur{
 
 private:
 
+    const int               _n_select;
+
     elt_list_vect           _inference_samples;
     elt_list_vect           _counting_samples;
 
@@ -50,10 +52,12 @@ private:
 
 
 public:
-    Proba_sequitur(const int_vect_vect & inference_samples,
+    Proba_sequitur(const int & n_select,
+                   const int_vect_vect & inference_samples,
                    const int_vect_vect & counting_samples,
                    const string_int_map & to_index_map,
                    const int_string_map & to_string_map):
+        _n_select(n_select),
         _inference_samples(inference_samples.size()),
         _counting_samples(counting_samples.size()),
         _sample_memory(inference_samples.size()),
@@ -88,6 +92,7 @@ public:
                 }
             }
         }
+        _sample_memory.at(0).print({1, 4});
 
         // Initialize counting samples
         for(int i = 0; i < counting_samples.size(); ++i){
@@ -147,10 +152,8 @@ public:
         std::cout << "Computing pattern scores" << std::endl;
         decision_making::compute_pattern_counts(_sample_memory,
                                                 _pattern_scores);
-        /*
         decision_making::compute_pattern_divergence(_bare_lks,
                                                     _pattern_scores);
-        */
         std::cout << "Done" << std::endl;
     }
 
@@ -161,6 +164,23 @@ public:
                       << "-"
                       << _to_string_map.at(xy.first.second)
                       << ", score: " << xy.second << std::endl;
+        }
+    }
+
+    void replace_best_patterns(){
+        int_pair_vect best_pairs =
+                decision_making::pick_best_patterns(_pattern_scores,
+                                                    _n_select);
+        int rule_index;
+        for(const int_pair & xy: best_pairs){
+            rule_index = - (_rules.size() + 1);
+            _rules[rule_index] = xy;
+            for(Mem_sandwich & mem : _sample_memory){
+                mem.remove_pair(xy, rule_index);
+            }
+            for(Mem_sandwich & mem : _counting_memory){
+                mem.remove_pair(xy, rule_index);
+            }
         }
     }
 
