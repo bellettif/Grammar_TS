@@ -92,7 +92,6 @@ public:
                 }
             }
         }
-        _sample_memory.at(0).print({1, 4});
 
         // Initialize counting samples
         for(int i = 0; i < counting_samples.size(); ++i){
@@ -172,8 +171,21 @@ public:
                 decision_making::pick_best_patterns(_pattern_scores,
                                                     _n_select);
         int rule_index;
-        for(const int_pair & xy: best_pairs){
+        std::cout << std::endl;
+        for(Mem_sandwich & mem : _counting_memory){
+            mem.print_center_lists(_to_string_map);
+            std::cout << std::endl;
+        }
+        std::cout << std::endl;
+        for(int_pair xy: best_pairs){
             rule_index = - (_rules.size() + 1);
+            std::cout << "REPLACING PAIR "
+                      << _to_string_map.at(xy.first)
+                      << " "
+                      << _to_string_map.at(xy.second)
+                      << " by "
+                      << rule_index
+                      << std::endl;
             _rules[rule_index] = xy;
             for(Mem_sandwich & mem : _sample_memory){
                 mem.remove_pair(xy, rule_index);
@@ -181,6 +193,11 @@ public:
             for(Mem_sandwich & mem : _counting_memory){
                 mem.remove_pair(xy, rule_index);
             }
+        }
+        std::cout << std::endl;
+        for(Mem_sandwich & mem : _counting_memory){
+            mem.print_center_lists(_to_string_map);
+            std::cout << std::endl;
         }
     }
 

@@ -7,13 +7,16 @@
 
 #include "element.h"
 
-typedef Element                     elt;
-typedef std::list<Element>          elt_list;
-typedef elt_list::iterator          iter;
+typedef Element                                 elt;
+typedef std::list<Element>                      elt_list;
+typedef elt_list::iterator                      iter;
 
-typedef std::pair<iter, iter>       iter_pair;
-typedef std::list<iter_pair>        iter_pair_list;
-typedef iter_pair_list::iterator    iter_pair_iter;
+typedef std::unordered_map<int, std::string>    int_string_map;
+typedef std::unordered_map<std::string, int>    string_int_map;
+
+typedef std::pair<iter, iter>                   iter_pair;
+typedef std::list<iter_pair>                    iter_pair_list;
+typedef iter_pair_list::iterator                iter_pair_iter;
 
 typedef std::function<size_t(const iter &)> iter_hash;
 typedef std::unordered_map<iter,
@@ -26,7 +29,7 @@ inline static size_t iter_hasher (const iter & x){
     return (size_t) x->_seq_index * MAX_LENGTH + x->_word_index;
 }
 
-typedef std::pair<int, int>         int_pair;
+typedef std::pair<int, int>                     int_pair;
 typedef std::function<size_t(const int_pair &)> pair_hash;
 typedef std::unordered_map<int_pair,
                            iter_iter_pair_iter_map,
@@ -69,7 +72,6 @@ public:
         if(_center_lists.count(xy_content) == 0){
             _center_lists.emplace(xy_content, iter_pair_list());
         }
-        _center_lists.at(xy_content).push_back(xy);
         if(_first_maps.count(xy_content) == 0){
             _first_maps.emplace(xy_content, iter_iter_pair_iter_map(10, iter_hasher));
         }
@@ -80,6 +82,7 @@ public:
             // Do not take overlapping pairs into account
             return;
         }
+        _center_lists.at(xy_content).push_back(xy);
         _first_maps.at(xy_content)[xy.first] = std::prev(_center_lists.at(xy_content).end());
         _second_maps.at(xy_content)[xy.second] = std::prev(_center_lists.at(xy_content).end());
     }
@@ -92,20 +95,14 @@ public:
         iter_pair prev_iters;
         int_pair next_content;
         iter_pair next_iters;
-        std::cout << "Removing pair" << std::endl;
         while(! target_pairs.empty()){
-            std::cout << "Begin" << std::endl;
             current_pair = & target_pairs.front();
-            std::cout << "Doing " << *(current_pair->first) << " " << *(current_pair->second) << std::endl;
-            std::cout << "First" << std::endl;
             if(current_pair->first->_has_prev){
                 // Deletion
-                std::cout << "\tDeletion ";
                 prev_content = {current_pair->first->_prev->_content,
                                 current_pair->first->_content};
                 delete_from_second(prev_content, current_pair->first);
                 // Insertion
-                std::cout << "\tInsertion ";
                 prev_content = {current_pair->first->_prev->_content,
                                 replacement};
                 if(_center_lists.count(prev_content) == 0){
@@ -122,15 +119,12 @@ public:
                 _first_maps.at(prev_content)[prev_iters.first] = std::prev(_center_lists.at(prev_content).end());
                 _second_maps.at(prev_content)[prev_iters.second] = std::prev(_center_lists.at(prev_content).end());
             }
-            std::cout << "Second" << std::endl;
             if(current_pair->second->_has_next){
                 // Deletion
-                std::cout << "\tDeletion ";
                 next_content = {current_pair->second->_content,
                                 current_pair->second->_next->_content};
                 delete_from_first(next_content, current_pair->second);
                 // Insertion
-                std::cout << "\tInsertion ";
                 next_content = {replacement,
                                 current_pair->second->_next->_content};
                 if(_center_lists.count(next_content) == 0){
@@ -147,19 +141,17 @@ public:
                 _first_maps.at(next_content)[next_iters.first] = std::prev(_center_lists.at(next_content).end());
                 _second_maps.at(next_content)[next_iters.second] = std::prev(_center_lists.at(next_content).end());
             }
-            std::cout << "Erasing pair" << std::endl;
             current_pair->first->_content = replacement;
             _target_list->erase(current_pair->second);
             target_pairs.pop_front();
-            std::cout << "End" << std::endl;
-            std::cout << std::endl;
         }
-        std::cout << "Deletion done" << std::endl;
+        _center_lists.erase(xy);
+        _first_maps.erase(xy);
+        _second_maps.erase(xy);
      }
 
     void delete_from_first(const int_pair & content,
                            const iter & target){
-        std::cout <<"\t\t\t" << _first_maps.count(content) << std::endl;
         if(_first_maps.at(content).count(target) == 0){
             return; // Nothing to do, only non overlapping pairs are taken into account
         }
@@ -171,7 +163,6 @@ public:
 
     void delete_from_second(const int_pair & content,
                             const iter & target){
-        std::cout <<"\t\t\t" << _second_maps.count(content) << std::endl;
         if(_second_maps.at(content).count(target) == 0){
             return; // Nothing to do, only non overlapping pairs are taken into account
         }
@@ -184,6 +175,7 @@ public:
     void print(const int_pair & target_pair){
         if(_center_lists.count(target_pair) == 0){
             std::cout << "Pair is not present" << std::endl;
+            return;
         }
         std::cout << "Printing center list" << std::endl;
         for(auto x : _center_lists.at(target_pair)){
@@ -213,6 +205,16 @@ public:
 
     const central_access_map & get_central_lists() const{
         return _center_lists;
+    }
+
+    void print_center_lists(const int_string_map & translation_map) const{
+        for(auto x : *(_target_list)){
+            if(x._content >= 0){
+                std::cout << translation_map.at(x._content) << " ";
+            }else{
+                std::cout << x._content << " ";
+            }
+        }std::cout << std::endl;
     }
 
 };
