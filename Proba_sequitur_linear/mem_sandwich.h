@@ -217,6 +217,7 @@ public:
             int_pair vw_content = {vw.first->_content, vw.second->_content};
             _seen.at(vw_content).insert(vw);
             _masked.at(vw_content).erase(vw);
+            // Flip the mask on the following
             while(_first_maps.at(vw_content).count(vw.second) != 0){
                 iter_pair_iter & temp = _first_maps.at(vw_content).at(vw.second);
                 if(_seen.at(vw_content).count(*temp) > 0){
