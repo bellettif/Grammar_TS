@@ -24,18 +24,33 @@ typedef std::mt19937                                    RNG;
 namespace decision_making{
 
 inline static void compute_pattern_counts(const mem_vect & memory_vector,
-                                          int_pair_double_map & counts){
+                                          int_pair_double_map & counts,
+                                          const int_string_map & translation){
     counts.clear();
     double total = 0;
     for(const Mem_sandwich & mem : memory_vector){
-        for(auto xy : mem.get_central_lists()){
+        for(auto xy : mem.get_seen()){
             counts[xy.first] += xy.second.size();
             total += xy.second.size();
         }
     }
+    std::cout << "Counts:" << std::endl;
     for(auto xy : counts){
+        if(xy.first.first >= 0){
+            std::cout << translation.at(xy.first.first);
+        }else{
+            std::cout << xy.first.first;
+        }
+        std::cout << " ";
+        if(xy.first.second >= 0){
+            std::cout << translation.at(xy.first.second);
+        }else{
+            std::cout << xy.first.second;
+        }
+        std::cout << ": " << xy.second << std::endl;
         counts[xy.first] /= total;
     }
+    std::cout << std::endl;
 }
 
 inline static void delete_zeros(int_pair_double_map & counts){

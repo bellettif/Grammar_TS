@@ -52,7 +52,7 @@ int main(){
     ps.print_pattern_scores();
     ps.replace_best_patterns();
     ps.compute_pattern_scores();
-    ps.print_pattern_scores();
+    //ps.print_pattern_scores();
 
     return 0;
 }

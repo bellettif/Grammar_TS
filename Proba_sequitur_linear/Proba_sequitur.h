@@ -150,7 +150,8 @@ public:
     void compute_pattern_scores(){
         std::cout << "Computing pattern scores" << std::endl;
         decision_making::compute_pattern_counts(_sample_memory,
-                                                _pattern_scores);
+                                                _pattern_scores,
+                                                _to_string_map);
         decision_making::delete_zeros(_pattern_scores);
         decision_making::compute_pattern_divergence(_bare_lks,
                                                     _rules,
@@ -206,9 +207,11 @@ public:
             for(Mem_sandwich & mem : _sample_memory){
                 mem.remove_pair(xy, rule_index);
             }
+            /*
             for(Mem_sandwich & mem : _counting_memory){
                 mem.remove_pair(xy, rule_index);
             }
+            */
         }
         /*
         std::cout << std::endl;
