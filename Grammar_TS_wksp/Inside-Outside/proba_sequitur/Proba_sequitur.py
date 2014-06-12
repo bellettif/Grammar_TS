@@ -260,6 +260,9 @@ class Proba_sequitur:
                 print str(pair) + ' div: ' + str(div)
             print '\n'
             if self.level == 2:
+                for target_sequence in target_sequences:
+                    print target_sequence
+                    print ''
                 return
             #
             #

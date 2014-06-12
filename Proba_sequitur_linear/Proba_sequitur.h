@@ -161,7 +161,7 @@ public:
             }
             std::cout << "Pattern "
                       << left
-                      << " - "
+                      << " "
                       << right
                       << ", score: " << xy.second << std::endl;
         }
@@ -193,11 +193,9 @@ public:
             for(Mem_sandwich & mem : _sample_memory){
                 mem.remove_pair(xy, rule_index);
             }
-            /*
             for(Mem_sandwich & mem : _counting_memory){
                 mem.remove_pair(xy, rule_index);
             }
-            */
         }
         /*
         std::cout << std::endl;

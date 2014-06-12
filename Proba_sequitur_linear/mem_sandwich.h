@@ -128,15 +128,15 @@ public:
         while(!target_pairs.empty() ){
             current_pair = new iter_pair(target_pairs.front());
             target_pairs.pop_front();
-            if(_masked.at(xy).count(*current_pair) > 0) continue;
-            std::cout << "Deleting pair" << *(current_pair->first) << " " << *(current_pair->second) << std::endl;
+            //if(_masked.at(xy).count(*current_pair) > 0) continue;
+            //std::cout << "Deleting pair" << *(current_pair->first) << " " << *(current_pair->second) << std::endl;
             if(current_pair->first != _target_list->begin()){
                 // Deletion
                 prev_content = {std::prev(current_pair->first)->_content,
                                 current_pair->first->_content};
                 prev_iters = {std::prev(current_pair->first),
                               current_pair->first};
-                std::cout << "\tDeleting from second " << *(std::prev(current_pair->first)) << " " << *(current_pair->first) << std::endl;
+                //std::cout << "\tDeleting from second " << *(std::prev(current_pair->first)) << " " << *(current_pair->first) << std::endl;
                 delete_from_second(prev_content, prev_iters);
                 // Insertion
                 prev_content = {std::prev(current_pair->first)->_content,
@@ -157,16 +157,7 @@ public:
                 iter_pair_iter temp_prev = std::prev(_center_lists.at(prev_content).end());
                 _first_maps.at(prev_content)[prev_iters.first] = temp_prev;
                 _second_maps.at(prev_content)[prev_iters.second] = temp_prev;
-                if(_second_maps.at(prev_content).count(prev_iters.first) == 0){
-                    _seen.at(prev_content).insert(prev_iters);
-                }else{
-                    const iter_pair & previous_pair = *(_second_maps.at(prev_content).at(prev_iters.first));
-                    if(_masked.at(prev_content).count(previous_pair) == 0){
-                        _masked.at(prev_content).insert(prev_iters);
-                    }else{
-                        _seen.at(prev_content).insert(prev_iters);
-                    }
-                }
+                _seen.at(prev_content).insert(prev_iters);
             }
             if(current_pair->second != std::prev(_target_list->end())){
                 // Deletion
@@ -174,7 +165,7 @@ public:
                                 std::next(current_pair->second)->_content};
                 next_iters = {current_pair->second,
                               std::next(current_pair->second)};
-                std::cout << "\tDeleting from first " << *(current_pair->second) << " " << *(std::next(current_pair->second)) << std::endl;
+                //std::cout << "\tDeleting from first " << *(current_pair->second) << " " << *(std::next(current_pair->second)) << std::endl;
                 delete_from_first(next_content, next_iters);
                 // Insertion
                 next_content = {replacement,
@@ -196,22 +187,14 @@ public:
                 iter_pair_iter temp_next = std::prev(_center_lists.at(next_content).end());
                 _first_maps.at(next_content)[next_iters.first] = temp_next;
                 _second_maps.at(next_content)[next_iters.second] = temp_next;
-                if(_second_maps.at(next_content).count(next_iters.first) == 0){
-                    _seen.at(next_content).insert(next_iters);
-                }else{
-                    const iter_pair & previous_pair = *(_second_maps.at(next_content).at(next_iters.first));
-                    if(_masked.at(next_content).count(previous_pair) == 0){
-                        _masked.at(next_content).insert(next_iters);
-                    }else{
-                        _seen.at(next_content).insert(next_iters);
-                    }
-                }
+                _seen.at(next_content).insert(next_iters);
             }
             current_pair->first->_content = replacement;
             _target_list->erase(current_pair->second);
             _first_maps.at(xy).erase(current_pair->first);
             _second_maps.at(xy).erase(current_pair->second);
             _seen.at(xy).erase(*current_pair);
+            _masked.at(xy).erase(*current_pair);
         }
         for(iter_pair & vw: _not_overlapping_anymore){
             int_pair vw_content = {vw.first->_content, vw.second->_content};
@@ -237,7 +220,7 @@ public:
         _second_maps.erase(xy);
         _seen.erase(xy);
         _masked.erase(xy);
-        std::cout << "DONE DELETING" << std::endl;
+        //std::cout << "DONE DELETING" << std::endl;
      }
 
     void lookup_forward_overlap(const iter_pair_iter & to_delete){
@@ -260,11 +243,11 @@ public:
         }
         iter_pair_iter to_delete = _first_maps.at(content).at(target.first);
         lookup_forward_overlap(to_delete);
+        _seen.at(content).erase(*to_delete);
+        _masked.at(content).erase(*to_delete);
         _center_lists.at(content).erase(to_delete);
         _second_maps.at(content).erase(target.second);
         _first_maps.at(content).erase(target.first);
-        _seen.at(content).erase(target);
-        _masked.at(content).erase(target);
     }
 
     void delete_from_second(const int_pair & content,
@@ -273,11 +256,11 @@ public:
             std::cout << "Illegal content (second) " << content.first << " " << content.second << std::endl;
         }
         iter_pair_iter to_delete = _second_maps.at(content).at(target.second);
+        _seen.at(content).erase(*to_delete);
+        _masked.at(content).erase(*to_delete);
         _center_lists.at(content).erase(to_delete);
         _first_maps.at(content).erase(target.first);
         _second_maps.at(content).erase(target.second);
-        _seen.at(content).erase(target);
-        _masked.at(content).erase(target);
     }
 
     void print(const int_pair & target_pair){

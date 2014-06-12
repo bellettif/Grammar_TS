@@ -42,7 +42,7 @@ int main(){
                                    to_string_map,
                                    translation_result);
 
-    Proba_sequitur ps (6,
+    Proba_sequitur ps (3,
                        translation_result,
                        translation_result,
                        to_index_map,
