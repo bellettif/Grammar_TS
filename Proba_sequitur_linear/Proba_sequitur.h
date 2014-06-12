@@ -80,15 +80,8 @@ public:
             for(elt_list_iter x = current_list->begin();
                               x != current_list->end();
                               ++x){
-                x->_iter = x;
-                if(x != current_list->begin()){
-                    x->_has_prev = true;
-                    x->_prev = std::prev(x);
-                }
                 if(x != std::prev(current_list->end())){
-                    x->_has_next = true;
-                    x->_next = std::next(x);
-                    _sample_memory.at(i).add_pair({x->_iter, x->_next});
+                    _sample_memory.at(i).add_pair({x, std::next(x)});
                 }
             }
         }
@@ -105,15 +98,8 @@ public:
             for(elt_list_iter x = current_list->begin();
                               x != current_list->end();
                               ++x){
-                x->_iter = x;
-                if(x != current_list->begin()){
-                    x->_has_prev = true;
-                    x->_prev = std::prev(x);
-                }
                 if(x != std::prev(current_list->end())){
-                    x->_has_next = true;
-                    x->_next = std::next(x);
-                    _counting_memory.at(i).add_pair({x->_iter, x->_next});
+                    _counting_memory.at(i).add_pair({x, std::next(x)});
                 }
             }
         }
