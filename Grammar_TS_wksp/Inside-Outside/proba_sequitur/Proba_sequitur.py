@@ -334,6 +334,7 @@ class Proba_sequitur:
                     print 'Key already in counts'
                 self.all_counts[key] = value
                 self.hashed_relative_counts[self.hashcodes[key]] = value
+                print value
             for i, seq in enumerate(target_for_counts):
                 if seq == '': continue
                 #to_delete = (len(filter(lambda x : x[0] == 'r' and x[-1] == '_', seq.split(' '))) == 0)

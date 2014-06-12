@@ -309,13 +309,13 @@ def compute_results(degree,
         #
         #
         #
-        achu_boxes.append([merged_achu_relative_counts[hashcode][j] for j in achu_set])
-        oldo_boxes.append([merged_achu_relative_counts[hashcode][j] for j in oldo_set])
+        achu_boxes.append([merged_achu_relative_counts[hashcode][j] / float(n_Trials) for j in achu_set])
+        oldo_boxes.append([merged_achu_relative_counts[hashcode][j]  / float(n_Trials)for j in oldo_set])
         #
         achu_medians_inferred_achu.append(
-                      np.median([merged_achu_relative_counts[hashcode][j] for j in achu_set]))
+                      np.median([merged_achu_relative_counts[hashcode][j] / float(n_Trials) for j in achu_set]))
         oldo_medians_inferred_achu.append(
-                      np.median([merged_achu_relative_counts[hashcode][j] for j in oldo_set]))
+                      np.median([merged_achu_relative_counts[hashcode][j] / float(n_Trials) for j in oldo_set]))
         levels_inferred_achu.append(merged_achu_levels[hashcode])
         #
         box_names.append('achu %d %.2f %s -> %s' 
@@ -326,13 +326,13 @@ def compute_results(degree,
         #
         #
         #
-        achu_boxes.append([merged_achu_oldo_relative_counts[hashcode][j] for j in achu_set])
-        oldo_boxes.append([merged_achu_oldo_relative_counts[hashcode][j] for j in oldo_set])
+        achu_boxes.append([merged_achu_oldo_relative_counts[hashcode][j] / float(n_Trials) for j in achu_set])
+        oldo_boxes.append([merged_achu_oldo_relative_counts[hashcode][j] / float(n_Trials) for j in oldo_set])
         #
         achu_medians_inferred_both.append(
-                      np.median([merged_achu_oldo_relative_counts[hashcode][j] for j in achu_set]))
+                      np.median([merged_achu_oldo_relative_counts[hashcode][j] / float(n_Trials) for j in achu_set]))
         oldo_medians_inferred_both.append(
-                      np.median([merged_achu_oldo_relative_counts[hashcode][j] for j in oldo_set]))
+                      np.median([merged_achu_oldo_relative_counts[hashcode][j] / float(n_Trials) for j in oldo_set]))
         levels_inferred_both.append(merged_achu_oldo_levels[hashcode])
         #
         box_names.append('both %d %.2f %s -> %s' 
@@ -343,13 +343,13 @@ def compute_results(degree,
         #
         #
         #
-        achu_boxes.append([merged_oldo_relative_counts[hashcode][j] for j in achu_set])
-        oldo_boxes.append([merged_oldo_relative_counts[hashcode][j] for j in oldo_set])
+        achu_boxes.append([merged_oldo_relative_counts[hashcode][j] / float(n_Trials) for j in achu_set])
+        oldo_boxes.append([merged_oldo_relative_counts[hashcode][j] / float(n_Trials) for j in oldo_set])
         #
         achu_medians_inferred_oldo.append(
-                      np.median([merged_oldo_relative_counts[hashcode][j] for j in achu_set]))
+                      np.median([merged_oldo_relative_counts[hashcode][j] / float(n_Trials) for j in achu_set]))
         oldo_medians_inferred_oldo.append(
-                      np.median([merged_oldo_relative_counts[hashcode][j] for j in oldo_set]))
+                      np.median([merged_oldo_relative_counts[hashcode][j] / float(n_Trials) for j in oldo_set]))
         levels_inferred_oldo.append(merged_oldo_levels[hashcode])
         #
         box_names.append('oldo %d %.2f %s -> %s' 

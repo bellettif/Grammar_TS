@@ -29,7 +29,7 @@ inline static void compute_pattern_counts(const mem_vect & memory_vector,
     counts.clear();
     double total = 0;
     for(const Mem_sandwich & mem : memory_vector){
-        for(auto xy : mem.get_central_lists()){
+        for(auto xy : mem.get_seen()){
             counts[xy.first] += xy.second.size();
             total += xy.second.size();
         }
