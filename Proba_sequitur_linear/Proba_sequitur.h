@@ -159,11 +159,10 @@ public:
             }else{
                 right = std::to_string(xy.first.second);
             }
-            std::cout << "Pattern "
-                      << left
+            std::cout << left
                       << " "
                       << right
-                      << ", score: " << xy.second << std::endl;
+                      << ": " << xy.second << std::endl;
         }
     }
 
@@ -172,20 +171,24 @@ public:
                 decision_making::pick_best_patterns(_pattern_scores,
                                                     _n_select);
         int rule_index;
-        /*
-        std::cout << std::endl;
-        for(Mem_sandwich & mem : _counting_memory){
-            mem.print_center_lists(_to_string_map);
-            std::cout << std::endl;
-        }
-        std::cout << std::endl;
-        */
         for(const int_pair & xy: best_pairs){
             rule_index = - (_rules.size() + 1);
+            std::string left;
+            if(_to_string_map.count(xy.first) > 0){
+                left = _to_string_map.at(xy.first);
+            }else{
+                left = std::to_string(xy.first);
+            }
+            std::string right;
+            if(_to_string_map.count(xy.second) > 0){
+                right = _to_string_map.at(xy.second);
+            }else{
+                right = std::to_string(xy.second);
+            }
             std::cout << "REPLACING PAIR "
-                      << _to_string_map.at(xy.first)
+                      << left
                       << " "
-                      << _to_string_map.at(xy.second)
+                      << right
                       << " by "
                       << rule_index
                       << std::endl;

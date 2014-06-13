@@ -257,9 +257,9 @@ class Proba_sequitur:
             #
             print "Divergences:"
             for pair, div in pair_divergence.iteritems():
-                print str(pair) + ' div: ' + str(div)
+                print str(pair) + ': ' + str(div)
             print '\n'
-            if self.level == 2:
+            if self.level == 3:
                 for target_sequence in target_sequences:
                     print target_sequence
                     print ''

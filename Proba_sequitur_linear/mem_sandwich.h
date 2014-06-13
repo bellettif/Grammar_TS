@@ -116,8 +116,10 @@ public:
         _second_maps.at(xy_content)[xy.second] = std::prev(_center_lists.at(xy_content).end());
     }
 
-    void remove_pair(const int_pair & xy,
+    int remove_pair(const int_pair & xy,
                      const int & replacement){
+        int n_counts = 0;
+
         iter_pair_list & target_pairs =_center_lists[xy];
         iter_pair * current_pair;
         int_pair prev_content;
@@ -181,7 +183,9 @@ public:
                 _target_list->erase(current_pair->second);
                 // Insertion
                 next_content = {replacement,
-                                std::next(current_pair->second)->_content};
+                                std::next(current_pair->first)->_content};
+                next_iters = {current_pair->first,
+                              std::next(current_pair->first)};
                 if(_center_lists.count(next_content) == 0){
                     _center_lists.emplace(next_content,
                                           iter_pair_list());
@@ -214,6 +218,7 @@ public:
                 current_pair->first->_content = replacement;
                 _target_list->erase(current_pair->second);
             }
+            ++ n_counts;
             // Deletion from access maps
             _first_maps.at(xy).erase(current_pair->first);
             _second_maps.at(xy).erase(current_pair->second);
@@ -244,7 +249,7 @@ public:
         _second_maps.erase(xy);
         _seen.erase(xy);
         _masked.erase(xy);
-        //std::cout << "DONE DELETING" << std::endl;
+        return n_counts;
      }
 
     void lookup_forward_overlap(const iter_pair_iter & to_delete){
@@ -281,7 +286,7 @@ public:
             std::cout << "Illegal content (second) " << content.first << " " << content.second << std::endl;
         }
         iter_pair_iter to_delete = _second_maps.at(content).at(target.second);
-        std::cout << "Second: " << *(to_delete->first) << " " << *(to_delete->second) << std::endl;
+        //std::cout << "Second: " << *(to_delete->first) << " " << *(to_delete->second) << std::endl;
         _seen.at(content).erase(*to_delete);
         _masked.at(content).erase(*to_delete);
         _center_lists.at(content).erase(to_delete);
