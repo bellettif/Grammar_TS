@@ -5,6 +5,7 @@
 #include <list>
 #include <unordered_map>
 #include <string>
+#include <iostream>
 
 #include "element.h"
 #include "mem_sandwich.h"
@@ -60,8 +61,6 @@ private:
 
     int_pair_double_map     _pattern_scores;
 
-    const string_vect &     _filenames;
-
 
 public:
     Proba_sequitur(const int & n_select,
@@ -69,8 +68,7 @@ public:
                    const int_vect_vect & inference_samples,
                    const int_vect_vect & counting_samples,
                    const string_int_map & to_index_map,
-                   const int_string_map & to_string_map,
-                   const string_vect & filenames):
+                   const int_string_map & to_string_map):
         _n_select(n_select),
         _max_rules(max_rules),
         _inference_samples(inference_samples.size()),
@@ -81,8 +79,7 @@ public:
         _counting_memory(counting_samples.size()),
         _to_index_map(to_index_map),
         _to_string_map(to_string_map),
-        _pattern_scores(10, pair_hasher),
-        _filenames(filenames)
+        _pattern_scores(10, pair_hasher)
     {
         // Initialize depth
         for(auto xy : to_string_map){
@@ -274,7 +271,7 @@ public:
                       << " hash: " << _to_hash_map.at(xy.first)
                       << " counts: " << std::endl;
             for(int i = 0; i < _counting_memory.size(); ++i){
-                std::cout << "\t" << _filenames.at(i) << ": " << _absolute_counts.at(xy.first).at(i) << " "
+                std::cout << "\t" << i << ": " << _absolute_counts.at(xy.first).at(i) << " "
                           << _relative_counts.at(xy.first).at(i) << std::endl;
             }std::cout << std::endl;
         }
@@ -315,11 +312,11 @@ public:
             left_hashcode = _to_hash_map.at(rhs.first);
             right_hashcode = _to_hash_map.at(rhs.second);
             hashed_rhs.push_back({left_hashcode, right_hashcode});
-            relative_counts.emplace_back(int_vect);
-            absolute_counts.emplace_back(int_vect);
+            relative_counts.emplace_back(int_vect());
+            absolute_counts.emplace_back(int_vect());
             for(int i = 0; i < _counting_samples.size(); ++i){
-                relative_counts.back().pushback(_relative_counts.at(xy.first).at(i));
-                absolute_counts.back().pushback(_absolute_counts.at(xy.second).at(i));
+                relative_counts.back().push_back(_relative_counts.at(xy.first).at(i));
+                absolute_counts.back().push_back(_absolute_counts.at(xy.first).at(i));
             }
             levels.push_back(_levels.at(xy.first));
             depths.push_back(_depths.at(xy.first));

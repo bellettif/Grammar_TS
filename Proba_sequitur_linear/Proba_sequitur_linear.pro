@@ -26,4 +26,5 @@ HEADERS += \
     proba_sequitur.h \
     element.h \
     mem_sandwich.h \
-    decision_making.h
+    decision_making.h \
+    launcher.h
