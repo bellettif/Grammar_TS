@@ -10,7 +10,8 @@
 #include "mem_sandwich.h"
 #include "decision_making.h"
 
-typedef std::vector<std::vector<int>>               int_vect_vect;
+typedef std::vector<int>                            int_vect;
+typedef std::vector<int_vect>                       int_vect_vect;
 typedef std::unordered_map<int, double>             int_double_map;
 typedef std::unordered_map<int, int_double_map>     int_int_double_map;
 typedef std::unordered_map<int, int>                int_int_map;
@@ -26,11 +27,14 @@ typedef std::vector<elt_list>                       elt_list_vect;
 typedef elt_list::iterator                          elt_list_iter;
 typedef std::vector<Mem_sandwich>                   mem_vect;
 typedef std::vector<std::string>                    string_vect;
+typedef std::vector<string_vect>                    string_vect_vect;
+typedef std::pair<std::string, std::string>         string_pair;
+typedef std::vector<string_pair>                    string_pair_vect;
+
 
 class Proba_sequitur{
 
 private:
-
     const int               _n_select;
     const int               _max_rules;
 
@@ -40,10 +44,12 @@ private:
     int_int_double_map      _relative_counts;
     int_int_int_map         _absolute_counts;
     int_int_map             _levels;
+    int_int_map             _depths;
 
     int_int_pair_map        _rules;
 
-    int_string_map          _hashcodes;
+    int_string_map          _to_hash_map;
+    string_int_map          _to_rule_index_map;
     int_double_map          _bare_lks;
 
     mem_vect                _sample_memory;
@@ -69,6 +75,8 @@ public:
         _max_rules(max_rules),
         _inference_samples(inference_samples.size()),
         _counting_samples(counting_samples.size()),
+        _to_hash_map(to_string_map),
+        _to_rule_index_map(to_index_map),
         _sample_memory(inference_samples.size()),
         _counting_memory(counting_samples.size()),
         _to_index_map(to_index_map),
@@ -76,6 +84,10 @@ public:
         _pattern_scores(10, pair_hasher),
         _filenames(filenames)
     {
+        // Initialize depth
+        for(auto xy : to_string_map){
+            _depths[xy.first] = 1;
+        }
         // Initialize inference samples
         elt_list * current_list;
         for(int i = 0; i < inference_samples.size(); ++i){
@@ -144,7 +156,6 @@ public:
     }
 
     void compute_pattern_scores(){
-        std::cout << "Computing pattern scores" << std::endl;
         decision_making::compute_pattern_counts(_sample_memory,
                                                 _pattern_scores,
                                                 _to_string_map);
@@ -152,7 +163,6 @@ public:
         decision_making::compute_pattern_divergence(_bare_lks,
                                                     _rules,
                                                     _pattern_scores);
-        std::cout << "Done" << std::endl;
     }
 
     void print_pattern_scores(){
@@ -176,8 +186,8 @@ public:
         }
     }
 
-    void replace_best_patterns(){
-        std::cout << std::endl;
+    void replace_best_patterns(int level){
+        //std::cout << std::endl;
         int_pair_vect best_pairs =
                 decision_making::pick_best_patterns(_pattern_scores,
                                                     _n_select);
@@ -198,6 +208,7 @@ public:
             }else{
                 right = std::to_string(xy.second);
             }
+            /*
             std::cout << "REPLACING PAIR "
                       << left
                       << " "
@@ -205,7 +216,13 @@ public:
                       << " by "
                       << rule_index
                       << std::endl;
+            */
             _rules[rule_index] = xy;
+            _levels[rule_index] = level;
+            _to_hash_map[rule_index] = ">" + _to_hash_map[xy.first] + "-" +
+                    _to_hash_map[xy.second] + "<";
+            _depths[rule_index] = _depths[xy.first] + _depths[xy.second];
+            _to_rule_index_map[_to_hash_map.at(rule_index)] = rule_index;
             _relative_counts.emplace(rule_index, int_double_map());
             _absolute_counts.emplace(rule_index, int_int_map());
             for(Mem_sandwich & mem : _sample_memory){
@@ -213,25 +230,25 @@ public:
             }
             for(int i = 0; i < _counting_memory.size(); ++i){
                 Mem_sandwich & mem = _counting_memory.at(i);
-                count = mem.remove_pair(xy, rule_index);
                 length = mem.get_n_symbols();
-                std::cout << i << " " << count << std::endl;
+                count = mem.remove_pair(xy, rule_index);
                 _relative_counts.at(rule_index)[i] = ((double) count) / ((double) length);
                 _absolute_counts.at(rule_index)[i] = count;
             }
         }
-        std::cout << std::endl;
+        //std::cout << std::endl;
     }
 
     void run(){
+        int current_iteration = 0;
         while(_rules.size() < _max_rules){
-            next();
+            next(++current_iteration);
         }
     }
 
-    void next(){
+    void next(int current_iteration){
         compute_pattern_scores();
-        replace_best_patterns();
+        replace_best_patterns(current_iteration);
     }
 
     void print_counts() const{
@@ -250,8 +267,11 @@ public:
             }else{
                 right = std::to_string(xy.second.second);
             }
-            std::cout << "Rule: " << xy.first << "->"
+            std::cout << "Rule (" << _levels.at(xy.first) << ", "
+                      << _depths.at(xy.first)
+                      << "): " << xy.first << "->"
                       << left << " " << right
+                      << " hash: " << _to_hash_map.at(xy.first)
                       << " counts: " << std::endl;
             for(int i = 0; i < _counting_memory.size(); ++i){
                 std::cout << "\t" << _filenames.at(i) << ": " << _absolute_counts.at(xy.first).at(i) << " "
@@ -260,6 +280,51 @@ public:
         }
     }
 
+    string_vect_vect translate_inference_samples() const{
+        string_vect_vect result(_inference_samples.size());
+        for(int i = 0; i < _inference_samples.size(); ++i){
+            for(elt x : _inference_samples.at(i)){
+                result.at(i).push_back(_to_hash_map.at(x._content));
+            }
+        }
+        return result;
+    }
+
+    string_vect_vect translate_counting_samples() const{
+        string_vect_vect result(_counting_samples.size());
+        for(int i = 0; i < _counting_samples.size(); ++i){
+            for(elt x : _counting_samples.at(i)){
+                result.at(i).push_back(_to_hash_map.at(x._content));
+            }
+        }
+        return result;
+    }
+
+    void to_hashed_vectors(string_vect & hashcodes,
+                           string_pair_vect & hashed_rhs,
+                           int_vect_vect & relative_counts,
+                           int_vect_vect & absolute_counts,
+                           int_vect & levels,
+                           int_vect & depths) const{
+        std::string left_hashcode;
+        std::string right_hashcode;
+        for(auto xy : _to_hash_map){
+            if(xy.first >= 0) continue;
+            hashcodes.push_back(xy.second);
+            const int_pair & rhs = _rules.at(xy.first);
+            left_hashcode = _to_hash_map.at(rhs.first);
+            right_hashcode = _to_hash_map.at(rhs.second);
+            hashed_rhs.push_back({left_hashcode, right_hashcode});
+            relative_counts.emplace_back(int_vect);
+            absolute_counts.emplace_back(int_vect);
+            for(int i = 0; i < _counting_samples.size(); ++i){
+                relative_counts.back().pushback(_relative_counts.at(xy.first).at(i));
+                absolute_counts.back().pushback(_absolute_counts.at(xy.second).at(i));
+            }
+            levels.push_back(_levels.at(xy.first));
+            depths.push_back(_depths.at(xy.first));
+        }
+    }
 
 };
 

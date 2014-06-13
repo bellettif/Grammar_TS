@@ -2,6 +2,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <time.h>
 
 #include "file_reader.h"
 #include "proba_sequitur.h"
@@ -49,10 +50,23 @@ int main(){
                        to_index_map,
                        to_string_map,
                        FILE_NAMES);
+
+    time_t t = clock();
     ps.run();
+    t = clock() - t;
+    std::cout << ((double) t) / ((double) CLOCKS_PER_SEC) << std::endl;
 
     ps.print_counts();
 
+    string_vect_vect result = ps.translate_inference_samples();
+
+    for(int i = 0; i < result.size(); ++i){
+        std::cout << "Result " << FILE_NAMES.at(i) << ": ";
+        for(auto x : result.at(i)){
+            std::cout << x << " ";
+        }std::cout << std::endl;
+        std::cout << std::endl;
+    }
 
     return 0;
 }

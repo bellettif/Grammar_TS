@@ -398,11 +398,11 @@ class Proba_sequitur:
         for pair, div in pair_divergence.iteritems():
             print str(pair) + ': ' + str(div)
         print '\n'
-        print "Counts: "
+        print "Counts:"
         for hashcode, count_dict in self.hashed_counts.iteritems():
             rule_name = self.hashcode_to_rule[hashcode]
-            print self.rules[rule_name]
-            print "Rule: " + str(rule_name) + " -> " + \
+            print "Rule: " + str(rule_name) + "(" + \
+                           str(self.hashed_levels[hashcode]) + ") -> " + \
                            str(self.rules[rule_name]) +  " counts:"
             for key, value in count_dict.iteritems():
                 print "\t" + self.filenames[key] + " " + str(value) + " " + str(self.hashed_relative_counts[hashcode][key])
