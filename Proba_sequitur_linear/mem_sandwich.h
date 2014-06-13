@@ -167,6 +167,9 @@ public:
                               std::next(current_pair->second)};
                 //std::cout << "\tDeleting from first " << *(current_pair->second) << " " << *(std::next(current_pair->second)) << std::endl;
                 delete_from_first(next_content, next_iters);
+                // Substitution in string
+                current_pair->first->_content = replacement;
+                _target_list->erase(current_pair->second);
                 // Insertion
                 next_content = {replacement,
                                 std::next(current_pair->second)->_content};
@@ -188,14 +191,18 @@ public:
                 _first_maps.at(next_content)[next_iters.first] = temp_next;
                 _second_maps.at(next_content)[next_iters.second] = temp_next;
                 _seen.at(next_content).insert(next_iters);
+            }else{
+                // Substitution in string
+                current_pair->first->_content = replacement;
+                _target_list->erase(current_pair->second);
             }
-            current_pair->first->_content = replacement;
-            _target_list->erase(current_pair->second);
+            // Deletion from access maps
             _first_maps.at(xy).erase(current_pair->first);
             _second_maps.at(xy).erase(current_pair->second);
             _seen.at(xy).erase(*current_pair);
             _masked.at(xy).erase(*current_pair);
         }
+        /*
         for(iter_pair & vw: _not_overlapping_anymore){
             int_pair vw_content = {vw.first->_content, vw.second->_content};
             _seen.at(vw_content).insert(vw);
@@ -215,6 +222,7 @@ public:
                 if(vw.second == _target_list->end()) break;
             }
         }
+        */
         _center_lists.erase(xy);
         _first_maps.erase(xy);
         _second_maps.erase(xy);
@@ -242,7 +250,8 @@ public:
             std::cout << "Illegal content (first) " << content.first << " " << content.second << std::endl;
         }
         iter_pair_iter to_delete = _first_maps.at(content).at(target.first);
-        lookup_forward_overlap(to_delete);
+        //std::cout << "First: " << *(to_delete->first) << " " << *(to_delete->second) << std::endl;
+        //lookup_forward_overlap(to_delete);
         _seen.at(content).erase(*to_delete);
         _masked.at(content).erase(*to_delete);
         _center_lists.at(content).erase(to_delete);
@@ -256,6 +265,7 @@ public:
             std::cout << "Illegal content (second) " << content.first << " " << content.second << std::endl;
         }
         iter_pair_iter to_delete = _second_maps.at(content).at(target.second);
+        std::cout << "Second: " << *(to_delete->first) << " " << *(to_delete->second) << std::endl;
         _seen.at(content).erase(*to_delete);
         _masked.at(content).erase(*to_delete);
         _center_lists.at(content).erase(to_delete);
