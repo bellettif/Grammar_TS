@@ -157,7 +157,16 @@ public:
                 iter_pair_iter temp_prev = std::prev(_center_lists.at(prev_content).end());
                 _first_maps.at(prev_content)[prev_iters.first] = temp_prev;
                 _second_maps.at(prev_content)[prev_iters.second] = temp_prev;
-                _seen.at(prev_content).insert(prev_iters);
+                if(_second_maps.at(prev_content).count(prev_iters.first) == 0){
+                    _seen.at(prev_content).insert(prev_iters);
+                }else{
+                    const iter_pair & previous_pair = *(_second_maps.at(prev_content).at(prev_iters.first));
+                    if(_masked.at(prev_content).count(previous_pair) == 0){
+                        _masked.at(prev_content).insert(prev_iters);
+                    }else{
+                        _seen.at(prev_content).insert(prev_iters);
+                    }
+                }
             }
             if(current_pair->second != std::prev(_target_list->end())){
                 // Deletion
@@ -190,7 +199,16 @@ public:
                 iter_pair_iter temp_next = std::prev(_center_lists.at(next_content).end());
                 _first_maps.at(next_content)[next_iters.first] = temp_next;
                 _second_maps.at(next_content)[next_iters.second] = temp_next;
-                _seen.at(next_content).insert(next_iters);
+                if(_second_maps.at(next_content).count(next_iters.first) == 0){
+                    _seen.at(next_content).insert(next_iters);
+                }else{
+                    const iter_pair & previous_pair = *(_second_maps.at(next_content).at(next_iters.first));
+                    if(_masked.at(next_content).count(previous_pair) == 0){
+                        _masked.at(next_content).insert(next_iters);
+                    }else{
+                        _seen.at(next_content).insert(next_iters);
+                    }
+                }
             }else{
                 // Substitution in string
                 current_pair->first->_content = replacement;
