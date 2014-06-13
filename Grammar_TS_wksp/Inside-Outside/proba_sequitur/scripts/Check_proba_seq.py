@@ -23,7 +23,7 @@ from assess_proba_seq_for_counts import compute_counts
 repetition_options = 'rep'
 loss_options = 'lossless'
 
-degree = 3
+degree = 6
 keep_data = 'keep_data'
 max_rules = 40
 

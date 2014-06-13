@@ -220,7 +220,6 @@ public:
             _seen.at(xy).erase(*current_pair);
             _masked.at(xy).erase(*current_pair);
         }
-        /*
         for(iter_pair & vw: _not_overlapping_anymore){
             int_pair vw_content = {vw.first->_content, vw.second->_content};
             _seen.at(vw_content).insert(vw);
@@ -240,7 +239,6 @@ public:
                 if(vw.second == _target_list->end()) break;
             }
         }
-        */
         _center_lists.erase(xy);
         _first_maps.erase(xy);
         _second_maps.erase(xy);
@@ -269,7 +267,7 @@ public:
         }
         iter_pair_iter to_delete = _first_maps.at(content).at(target.first);
         //std::cout << "First: " << *(to_delete->first) << " " << *(to_delete->second) << std::endl;
-        //lookup_forward_overlap(to_delete);
+        lookup_forward_overlap(to_delete);
         _seen.at(content).erase(*to_delete);
         _masked.at(content).erase(*to_delete);
         _center_lists.at(content).erase(to_delete);
