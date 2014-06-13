@@ -11,6 +11,8 @@
 #include "mem_sandwich.h"
 #include "decision_making.h"
 
+typedef std::vector<double>                         double_vect;
+typedef std::vector<double_vect>                    double_vect_vect;
 typedef std::vector<int>                            int_vect;
 typedef std::vector<int_vect>                       int_vect_vect;
 typedef std::unordered_map<int, double>             int_double_map;
@@ -264,11 +266,7 @@ public:
             }else{
                 right = std::to_string(xy.second.second);
             }
-            std::cout << "Rule (" << _levels.at(xy.first) << ", "
-                      << _depths.at(xy.first)
-                      << "): " << xy.first << "->"
-                      << left << " " << right
-                      << " hash: " << _to_hash_map.at(xy.first)
+            std::cout << _to_hash_map.at(xy.first)
                       << " counts: " << std::endl;
             for(int i = 0; i < _counting_memory.size(); ++i){
                 std::cout << "\t" << i << ": " << _absolute_counts.at(xy.first).at(i) << " "
@@ -299,7 +297,7 @@ public:
 
     void to_hashed_vectors(string_vect & hashcodes,
                            string_pair_vect & hashed_rhs,
-                           int_vect_vect & relative_counts,
+                           double_vect_vect & relative_counts,
                            int_vect_vect & absolute_counts,
                            int_vect & levels,
                            int_vect & depths) const{
@@ -312,7 +310,7 @@ public:
             left_hashcode = _to_hash_map.at(rhs.first);
             right_hashcode = _to_hash_map.at(rhs.second);
             hashed_rhs.push_back({left_hashcode, right_hashcode});
-            relative_counts.emplace_back(int_vect());
+            relative_counts.emplace_back(double_vect());
             absolute_counts.emplace_back(int_vect());
             for(int i = 0; i < _counting_samples.size(); ++i){
                 relative_counts.back().push_back(_relative_counts.at(xy.first).at(i));

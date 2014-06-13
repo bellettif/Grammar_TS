@@ -90,7 +90,7 @@ int main(){
 
     Proba_sequitur ps (6,
                        40,
-                       oldo_translation_result,
+                       achu_oldo_translation_result,
                        achu_oldo_translation_result,
                        to_index_map,
                        to_string_map);

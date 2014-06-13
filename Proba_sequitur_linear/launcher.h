@@ -11,7 +11,7 @@ void launch_proba_sequitur(const string_vect_vect & inference_content,
                            string_vect_vect & counts_parsed,
                            string_vect & hashcodes,
                            string_pair_vect & hashed_rhs,
-                           int_vect_vect & relative_counts,
+                           double_vect_vect & relative_counts,
                            int_vect_vect & absolute_counts,
                            int_vect & levels,
                            int_vect & depths){

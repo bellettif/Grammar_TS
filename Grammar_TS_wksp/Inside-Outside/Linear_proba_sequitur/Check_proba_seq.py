@@ -17,36 +17,18 @@ f_achu_data_set = load_data.filtered_achu_file_contents.values()
 oldo_data_set = load_data.oldo_file_contents.values()
 f_oldo_data_set = load_data.filtered_oldo_file_contents.values()
 
+from Proba_sequitur_linear_c import run_proba_sequitur as proba_seq
 
-from assess_proba_seq_for_counts import compute_counts
+inference_content = [x.split(' ') for x in achu_data_set] + \
+                    [x.split(' ') for x in oldo_data_set]
+count_content = copy.deepcopy(inference_content)
 
-repetition_options = 'rep'
-loss_options = 'lossless'
+result = proba_seq(inference_content,
+                   count_content,
+                   6,
+                   40)
 
-degree = 6
-keep_data = 'keep_data'
-max_rules = 40
-
-keep_data_bool = (keep_data == 'keep_data')
-
-selected_achu_data_set = achu_data_set
-selected_oldo_data_set = oldo_data_set
-
-filenames = load_data.achu_file_contents.keys() + \
-            load_data.oldo_file_contents.keys()
-
-both_data_sets = copy.deepcopy(selected_achu_data_set) + \
-                 copy.deepcopy(selected_oldo_data_set)
-
-ps = Proba_sequitur(build_samples = both_data_sets,
-                    count_samples = both_data_sets,
-                    repetitions = True,
-                    keep_data = keep_data_bool,
-                    degree = degree,
-                    max_rules = max_rules,
-                    filenames = filenames)
-ps.infer_grammar()
-
-for term_char in ps.terminal_chars:
-    print '%s : %f' % (term_char, ps.barelk_table[term_char])
-
+for key, count_dict in result['relative_counts'].iteritems():
+    print "Counts of " + key
+    for file_index, rela_count in count_dict.iteritems():
+        print "\t" + str(file_index) + ": " + str(rela_count)

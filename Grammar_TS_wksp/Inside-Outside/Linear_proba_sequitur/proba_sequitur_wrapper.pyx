@@ -26,7 +26,7 @@ cdef extern from "launcher.h":
 		                         	vector[vector[string]] & counts_parsed,
 		                          	vector[string] & hashcodes,
 		                           	vector[pair[string, string]] & hashed_rhs,
-		                    	   	vector[vector[int]] & relative_counts,
+		                    	   	vector[vector[double]] & relative_counts,
 		                         	vector[vector[int]] & absolute_counts,
 		                          	vector[int] & levels,
 		                           	vector[int] & depths)
@@ -39,7 +39,7 @@ def run_proba_sequitur(inference_content,
 	cdef vector[vector[string]] cou_parsed
 	cdef vector[string] codes
 	cdef vector[pair[string, string]] rhs_codes
-	cdef vector[vector[int]] rel_counts
+	cdef vector[vector[double]] rel_counts
 	cdef vector[vector[int]] abs_counts
 	cdef vector[int] levs
 	cdef vector[int] deps
