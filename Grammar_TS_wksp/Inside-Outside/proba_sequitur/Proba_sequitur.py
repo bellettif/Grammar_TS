@@ -25,7 +25,8 @@ class Proba_sequitur:
                  stochastic = False,
                  init_T = 0,
                  T_decay = 0,
-                 p_deletion = 0):
+                 p_deletion = 0,
+                 filenames = []):
         self.current_rule_index = 1
         #
         if p_deletion == 0:
@@ -92,6 +93,8 @@ class Proba_sequitur:
         self.init_T = init_T
         self.T = init_T
         self.T_decay = T_decay
+        #
+        self.filenames = filenames
 
     def reduce_counts(self,
                       list_of_dicts):
@@ -175,10 +178,6 @@ class Proba_sequitur:
         pair_probas = {}
         for key, value in pair_counts.iteritems():
             pair_probas[key] = value / total
-        print '\n'
-        for key, value in pair_counts.iteritems():
-            print str(key) + ' ' + str(value)
-        print '\n'
         divergences = {}
         for key in pair_probas:
             left, right = key.split('-')
@@ -252,21 +251,6 @@ class Proba_sequitur:
             target_chars = filter(lambda x : x!= ' ' and x != '', target_chars)
             pair_divergence = self.compute_pair_divergence(target_sequences,
                                                            target_chars)
-            #
-            #
-            #
-            print "Divergences:"
-            for pair, div in pair_divergence.iteritems():
-                print str(pair) + ': ' + str(div)
-            print '\n'
-            if self.level == 3:
-                for target_sequence in target_sequences:
-                    print target_sequence
-                    print ''
-                return
-            #
-            #
-            #
             items = pair_divergence.items()
             items.sort(key = (lambda x : -x[1]))
             labels = [x[0] for x in items]
@@ -337,7 +321,6 @@ class Proba_sequitur:
                     print 'Key already in counts'
                 self.all_counts[key] = value
                 self.hashed_relative_counts[self.hashcodes[key]] = value
-                print value
             for i, seq in enumerate(target_for_counts):
                 if seq == '': continue
                 #to_delete = (len(filter(lambda x : x[0] == 'r' and x[-1] == '_', seq.split(' '))) == 0)
@@ -408,13 +391,29 @@ class Proba_sequitur:
             self.terminal_parsing[i] = seq
         for rule_name, count_dict in self.all_counts.iteritems():
             self.cumulated_counts[rule_name] = sum(count_dict.values())
-        """
-        if len(target_sequences) == 0:
-            print '\tNo target sequence remaining'
-        else:
-            print '\tMaximum number of rules (%d) reached' % self.max_rules
+        #
+        #
+        #
+        print "Divergences:"
+        for pair, div in pair_divergence.iteritems():
+            print str(pair) + ': ' + str(div)
         print '\n'
-        """
+        print "Counts: "
+        for hashcode, count_dict in self.hashed_counts.iteritems():
+            rule_name = self.hashcode_to_rule[hashcode]
+            print self.rules[rule_name]
+            print "Rule: " + str(rule_name) + " -> " + \
+                           str(self.rules[rule_name]) +  " counts:"
+            for key, value in count_dict.iteritems():
+                print "\t" + self.filenames[key] + " " + str(value) + " " + str(self.hashed_relative_counts[hashcode][key])
+        print '\n'
+        for i, target_sequence in enumerate(target_sequences):
+            print self.filenames[i] + ": " + target_sequence
+            print ''
+        print '\n'
+        #
+        #
+        #
             
     
     def print_result(self):

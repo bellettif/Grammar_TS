@@ -43,22 +43,15 @@ int main(){
                                    translation_result);
 
     Proba_sequitur ps (6,
+                       40,
                        translation_result,
                        translation_result,
                        to_index_map,
-                       to_string_map);
-    ps.print_bare_lks();
-    ps.compute_pattern_scores();
-    //ps.print_pattern_scores();
+                       to_string_map,
+                       FILE_NAMES);
+    ps.run();
 
-    ps.replace_best_patterns();
-    ps.compute_pattern_scores();
-
-    ps.print_pattern_scores();
-
-    ps.replace_best_patterns();
-    ps.compute_pattern_scores();
-    ps.print_pattern_scores();
+    ps.print_counts();
 
 
     return 0;

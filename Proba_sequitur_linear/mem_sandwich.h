@@ -333,6 +333,10 @@ public:
         return _seen;
     }
 
+    int get_n_symbols() const{
+        return _target_list->size();
+    }
+
     void print_center_lists(const int_string_map & translation_map) const{
         for(auto x : *(_target_list)){
             if(x._content >= 0){
@@ -342,7 +346,6 @@ public:
             }
         }std::cout << std::endl;
     }
-
 };
 
 

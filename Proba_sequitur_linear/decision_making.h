@@ -34,8 +34,9 @@ inline static void compute_pattern_counts(const mem_vect & memory_vector,
             total += xy.second.size();
         }
     }
-    std::cout << "Counts:" << std::endl;
+    //std::cout << "Counts:" << std::endl;
     for(auto xy : counts){
+        /*
         if(xy.first.first >= 0){
             std::cout << translation.at(xy.first.first);
         }else{
@@ -48,9 +49,10 @@ inline static void compute_pattern_counts(const mem_vect & memory_vector,
             std::cout << xy.first.second;
         }
         std::cout << ": " << xy.second << std::endl;
+        */
         counts[xy.first] /= total;
     }
-    std::cout << std::endl;
+    //std::cout << std::endl;
 }
 
 inline static void delete_zeros(int_pair_double_map & counts){
