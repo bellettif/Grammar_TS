@@ -28,7 +28,18 @@ result = proba_seq(inference_content,
                    6,
                    40)
 
+rule_names = result['rule_names']
+
+for terminal_parse in result['count_parsed']:
+    print ' '.join([rule_names[x] if x in rule_names else x for x in terminal_parse])
+    print ''
+
+plt.plot(result['divergences'])
+plt.show()
+
+"""
 for key, count_dict in result['relative_counts'].iteritems():
     print "Counts of " + key
     for file_index, rela_count in count_dict.iteritems():
         print "\t" + str(file_index) + ": " + str(rela_count)
+"""

@@ -62,7 +62,7 @@ private:
     const int_string_map &  _to_string_map;
 
     int_pair_double_map     _pattern_scores;
-
+    double_vect             _divergences;
 
 public:
     Proba_sequitur(const int & n_select,
@@ -190,6 +190,11 @@ public:
         int_pair_vect best_pairs =
                 decision_making::pick_best_patterns(_pattern_scores,
                                                     _n_select);
+        double tot_div = 0;
+        for(auto xy : best_pairs){
+            tot_div += _pattern_scores.at(xy);
+        }
+        _divergences.push_back(tot_div);
         int rule_index;
         int count;
         int length;
@@ -207,15 +212,6 @@ public:
             }else{
                 right = std::to_string(xy.second);
             }
-            /*
-            std::cout << "REPLACING PAIR "
-                      << left
-                      << " "
-                      << right
-                      << " by "
-                      << rule_index
-                      << std::endl;
-            */
             _rules[rule_index] = xy;
             _levels[rule_index] = level;
             _to_hash_map[rule_index] = ">" + _to_hash_map[xy.first] + "-" +
@@ -234,6 +230,7 @@ public:
                 _relative_counts.at(rule_index)[i] = ((double) count) / ((double) length);
                 _absolute_counts.at(rule_index)[i] = count;
             }
+            _pattern_scores.erase(xy);
         }
         //std::cout << std::endl;
     }
@@ -296,16 +293,19 @@ public:
     }
 
     void to_hashed_vectors(string_vect & hashcodes,
+                           string_vect & rule_names,
                            string_pair_vect & hashed_rhs,
                            double_vect_vect & relative_counts,
                            int_vect_vect & absolute_counts,
                            int_vect & levels,
-                           int_vect & depths) const{
+                           int_vect & depths,
+                           double_vect & divergences) const{
         std::string left_hashcode;
         std::string right_hashcode;
         for(auto xy : _to_hash_map){
             if(xy.first >= 0) continue;
             hashcodes.push_back(xy.second);
+            rule_names.push_back("r" + std::to_string(-xy.first) + "_");
             const int_pair & rhs = _rules.at(xy.first);
             left_hashcode = _to_hash_map.at(rhs.first);
             right_hashcode = _to_hash_map.at(rhs.second);
@@ -319,6 +319,7 @@ public:
             levels.push_back(_levels.at(xy.first));
             depths.push_back(_depths.at(xy.first));
         }
+        divergences = _divergences;
     }
 
 };

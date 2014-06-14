@@ -47,6 +47,11 @@ ps = Proba_sequitur(build_samples = both_data_sets,
                     filenames = filenames)
 ps.infer_grammar()
 
+print 'Coucou'
+
+plt.plot(ps.total_divs)
+plt.show()
+
 for term_char in ps.terminal_chars:
     print '%s : %f' % (term_char, ps.barelk_table[term_char])
 

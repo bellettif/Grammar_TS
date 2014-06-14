@@ -10,11 +10,13 @@ void launch_proba_sequitur(const string_vect_vect & inference_content,
                            string_vect_vect & inference_parsed,
                            string_vect_vect & counts_parsed,
                            string_vect & hashcodes,
+                           string_vect & rule_names,
                            string_pair_vect & hashed_rhs,
                            double_vect_vect & relative_counts,
                            int_vect_vect & absolute_counts,
                            int_vect & levels,
-                           int_vect & depths){
+                           int_vect & depths,
+                           double_vect & divergences){
 
     string_int_map to_index_map;
     int_string_map to_string_map;
@@ -42,11 +44,13 @@ void launch_proba_sequitur(const string_vect_vect & inference_content,
     counts_parsed = ps.translate_counting_samples();
 
     ps.to_hashed_vectors(hashcodes,
-                      hashed_rhs,
-                      relative_counts,
-                      absolute_counts,
-                      levels,
-                      depths);
+                         rule_names,
+                         hashed_rhs,
+                         relative_counts,
+                         absolute_counts,
+                         levels,
+                         depths,
+                         divergences);
 }
 
 
