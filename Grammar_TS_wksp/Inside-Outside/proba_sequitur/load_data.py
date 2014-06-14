@@ -56,10 +56,10 @@ filtered_oldo_file_contents = {}
 
 for key, value in file_contents.iteritems():
     if('achu' in key):
-        achu_file_contents[key] = ' '.join(list(value))
+        achu_file_contents[key] = list(value)
         filtered_achu_file_contents[key] = prefilter(value)
     if('oldo' in key):
-        oldo_file_contents[key] = ' '.join(list(value))
+        oldo_file_contents[key] = list(value)
         filtered_oldo_file_contents[key] = prefilter(value)
         
         
