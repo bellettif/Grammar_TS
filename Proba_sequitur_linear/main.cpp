@@ -90,10 +90,13 @@ int main(){
 
     Proba_sequitur ps (6,
                        40,
+                       true,
                        achu_oldo_translation_result,
                        achu_oldo_translation_result,
                        to_index_map,
-                       to_string_map);
+                       to_string_map,
+                       0.1,
+                       0.1);
 
     time_t t = clock();
     ps.run();

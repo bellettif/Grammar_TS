@@ -7,6 +7,7 @@ Created on 29 mai 2014
 import numpy as np
 from matplotlib import pyplot as plt
 import copy
+import time
 
 from proba_sequitur.Proba_sequitur import Proba_sequitur
 
@@ -38,6 +39,7 @@ filenames = load_data.achu_file_contents.keys() + \
 both_data_sets = copy.deepcopy(selected_achu_data_set) + \
                  copy.deepcopy(selected_oldo_data_set)
 
+begin = time.clock()
 ps = Proba_sequitur(build_samples = both_data_sets,
                     count_samples = both_data_sets,
                     repetitions = True,
@@ -46,8 +48,7 @@ ps = Proba_sequitur(build_samples = both_data_sets,
                     max_rules = max_rules,
                     filenames = filenames)
 ps.infer_grammar()
-
-print 'Coucou'
+print time.clock() - begin
 
 plt.plot(ps.total_divs)
 plt.show()

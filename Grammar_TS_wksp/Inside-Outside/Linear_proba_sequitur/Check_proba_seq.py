@@ -7,6 +7,7 @@ Created on 29 mai 2014
 import numpy as np
 from matplotlib import pyplot as plt
 import copy
+import time
 
 from proba_sequitur.Proba_sequitur import Proba_sequitur
 
@@ -23,10 +24,17 @@ inference_content = [x.split(' ') for x in achu_data_set] + \
                     [x.split(' ') for x in oldo_data_set]
 count_content = copy.deepcopy(inference_content)
 
+begin = time.clock()
 result = proba_seq(inference_content,
                    count_content,
                    6,
-                   40)
+                   40,
+                   True,
+                   0.0,
+                   0.1,
+                   0.10)
+print time.clock() - begin
+
 
 rule_names = result['rule_names']
 

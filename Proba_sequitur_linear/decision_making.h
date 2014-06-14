@@ -19,13 +19,19 @@ typedef std::unordered_map<int, double>                 int_double_map;
 typedef std::vector<Mem_sandwich>                       mem_vect;
 typedef std::unordered_map<int, int_pair>       int_int_pair_map;
 
+
 typedef std::mt19937                                    RNG;
+
+static auto duration =  std::chrono::system_clock::now().time_since_epoch();
+static auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
+static RNG core_rng (millis);
+
+
 
 namespace decision_making{
 
 inline static void compute_pattern_counts(const mem_vect & memory_vector,
-                                          int_pair_double_map & counts,
-                                          const int_string_map & translation){
+                                          int_pair_double_map & counts){
     counts.clear();
     double total = 0;
     for(const Mem_sandwich & mem : memory_vector){
@@ -34,25 +40,9 @@ inline static void compute_pattern_counts(const mem_vect & memory_vector,
             total += xy.second.size();
         }
     }
-    //std::cout << "Counts:" << std::endl;
     for(auto xy : counts){
-        /*
-        if(xy.first.first >= 0){
-            std::cout << translation.at(xy.first.first);
-        }else{
-            std::cout << xy.first.first;
-        }
-        std::cout << " ";
-        if(xy.first.second >= 0){
-            std::cout << translation.at(xy.first.second);
-        }else{
-            std::cout << xy.first.second;
-        }
-        std::cout << ": " << xy.second << std::endl;
-        */
         counts[xy.first] /= total;
     }
-    //std::cout << std::endl;
 }
 
 inline static void delete_zeros(int_pair_double_map & counts){
@@ -124,7 +114,7 @@ inline static int_pair_vect pick_best_patterns(const int_pair_double_map & patte
 inline static int_pair_vect pick_sto_patterns(const int_pair_double_map & pattern_scores,
                                                 int n_selected,
                                                 const double & T,
-                                                RNG & rng){
+                                                RNG & rng = core_rng){
 
     if(pattern_scores.size() > n_selected){
         int_pair_set chosen_rules(0, pair_hasher);

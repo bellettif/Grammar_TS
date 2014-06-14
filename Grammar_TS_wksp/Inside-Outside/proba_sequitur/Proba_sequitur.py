@@ -394,6 +394,7 @@ class Proba_sequitur:
         #
         #
         #
+        """
         print "Divergences:"
         for pair, div in pair_divergence.iteritems():
             print str(pair) + ': ' + str(div)
@@ -411,6 +412,7 @@ class Proba_sequitur:
             print self.filenames[i] + ": " + target_sequence
             print ''
         print '\n'
+        """
         #
         #
         #

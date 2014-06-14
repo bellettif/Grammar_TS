@@ -6,7 +6,7 @@
 
 void launch_proba_sequitur(const string_vect_vect & inference_content,
                            const string_vect_vect & count_content,
-                           int degree, int max_rules,
+                           int degree, int max_rules, int random,
                            string_vect_vect & inference_parsed,
                            string_vect_vect & counts_parsed,
                            string_vect & hashcodes,
@@ -16,7 +16,10 @@ void launch_proba_sequitur(const string_vect_vect & inference_content,
                            int_vect_vect & absolute_counts,
                            int_vect & levels,
                            int_vect & depths,
-                           double_vect & divergences){
+                           double_vect & divergences,
+                           const double & init_T = 0,
+                           const double & T_decay = 0,
+                           const double & p_deletion = 0){
 
     string_int_map to_index_map;
     int_string_map to_string_map;
@@ -32,25 +35,62 @@ void launch_proba_sequitur(const string_vect_vect & inference_content,
                                    to_string_map,
                                    translated_count_content);
 
-    Proba_sequitur ps (degree,
-                       max_rules,
-                       translated_inference_content,
-                       translated_count_content,
-                       to_index_map,
-                       to_string_map);
-    ps.run();
+    if(p_deletion > 0){
+        for(int i = 0; i < translated_inference_content.size(); ++i){
+            translated_inference_content[i] =
+                    file_reader::sub_selection(translated_inference_content[i],
+                                               p_deletion);
+        }
+        for(int i = 0; i < translated_count_content.size(); ++i){
+            translated_count_content[i] =
+                    file_reader::sub_selection(translated_count_content[i],
+                                               p_deletion);
+        }
+    }
 
-    inference_parsed = ps.translate_inference_samples();
-    counts_parsed = ps.translate_counting_samples();
-
-    ps.to_hashed_vectors(hashcodes,
-                         rule_names,
-                         hashed_rhs,
-                         relative_counts,
-                         absolute_counts,
-                         levels,
-                         depths,
-                         divergences);
+    if(random == 0 || init_T == 0.0){
+        Proba_sequitur ps (degree,
+                           max_rules,
+                           false,
+                           translated_inference_content,
+                           translated_count_content,
+                           to_index_map,
+                           to_string_map,
+                           init_T,
+                           T_decay);
+        ps.run();
+        inference_parsed = ps.translate_inference_samples();
+        counts_parsed = ps.translate_counting_samples();
+        ps.to_hashed_vectors(hashcodes,
+                             rule_names,
+                             hashed_rhs,
+                             relative_counts,
+                             absolute_counts,
+                             levels,
+                             depths,
+                             divergences);
+    }else{
+        Proba_sequitur ps (degree,
+                           max_rules,
+                           true,
+                           translated_inference_content,
+                           translated_count_content,
+                           to_index_map,
+                           to_string_map,
+                           init_T,
+                           T_decay);
+        ps.run();
+        inference_parsed = ps.translate_inference_samples();
+        counts_parsed = ps.translate_counting_samples();
+        ps.to_hashed_vectors(hashcodes,
+                             rule_names,
+                             hashed_rhs,
+                             relative_counts,
+                             absolute_counts,
+                             levels,
+                             depths,
+                             divergences);
+    }
 }
 
 

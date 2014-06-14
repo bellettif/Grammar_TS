@@ -40,6 +40,11 @@ class Proba_sequitur{
 private:
     const int               _n_select;
     const int               _max_rules;
+    const bool              _random;
+    const double            _init_T;
+    const double            _T_decay;
+
+    double                  _T;
 
     elt_list_vect           _inference_samples;
     elt_list_vect           _counting_samples;
@@ -64,15 +69,23 @@ private:
     int_pair_double_map     _pattern_scores;
     double_vect             _divergences;
 
+
 public:
     Proba_sequitur(const int & n_select,
                    const int & max_rules,
+                   bool random,
                    const int_vect_vect & inference_samples,
                    const int_vect_vect & counting_samples,
                    const string_int_map & to_index_map,
-                   const int_string_map & to_string_map):
+                   const int_string_map & to_string_map,
+                   const double & init_T = 0,
+                   const double & T_decay = 0):
         _n_select(n_select),
         _max_rules(max_rules),
+        _random(random),
+        _init_T(init_T),
+        _T(init_T),
+        _T_decay(T_decay),
         _inference_samples(inference_samples.size()),
         _counting_samples(counting_samples.size()),
         _to_hash_map(to_string_map),
@@ -156,8 +169,7 @@ public:
 
     void compute_pattern_scores(){
         decision_making::compute_pattern_counts(_sample_memory,
-                                                _pattern_scores,
-                                                _to_string_map);
+                                                _pattern_scores);
         decision_making::delete_zeros(_pattern_scores);
         decision_making::compute_pattern_divergence(_bare_lks,
                                                     _rules,
@@ -187,9 +199,16 @@ public:
 
     void replace_best_patterns(int level){
         //std::cout << std::endl;
-        int_pair_vect best_pairs =
-                decision_making::pick_best_patterns(_pattern_scores,
-                                                    _n_select);
+        int_pair_vect best_pairs;
+        if(!_random){
+            best_pairs = decision_making::pick_best_patterns(_pattern_scores,
+                                                _n_select);
+        }else{
+            best_pairs = decision_making::pick_sto_patterns(_pattern_scores,
+                                               _n_select,
+                                               _T);
+            _T *= (1.0 - _T_decay);
+        }
         double tot_div = 0;
         for(auto xy : best_pairs){
             tot_div += _pattern_scores.at(xy);

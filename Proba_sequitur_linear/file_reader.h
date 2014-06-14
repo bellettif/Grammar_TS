@@ -8,9 +8,10 @@
 #include<unordered_map>
 
 #include "string_utils.h"
-
+#include "decision_making.h"
 
 typedef std::vector<char> char_vector;
+typedef std::vector<int>  int_vect;
 
 namespace file_reader{
 
@@ -89,6 +90,19 @@ static void translate_to_ints(const std::vector<std::vector<std::string>> & inpu
                           to_index_map,
                           translation_result[i]);
     }
+}
+
+static int_vect sub_selection(const int_vect & input,
+                              const double & proba,
+                              RNG & rng = core_rng){
+    std::bernoulli_distribution distrib(1.0 - proba);
+    int_vect result;
+    for(auto x : input){
+        if(distrib(rng)){
+            result.push_back(x);
+        }
+    }
+    return result;
 }
 
 }

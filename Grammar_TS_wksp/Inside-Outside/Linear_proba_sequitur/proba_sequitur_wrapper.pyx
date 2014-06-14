@@ -21,7 +21,7 @@ from cython.operator cimport dereference as deref
 cdef extern from "launcher.h":
 	cdef void launch_proba_sequitur(const vector[vector[string]] & inference_content,
 		                        	const vector[vector[string]] & count_content,
-		                        	int degree, int max_rules,
+		                        	int degree, int max_rules, int random,
 		                         	vector[vector[string]] & inference_parsed,
 		                         	vector[vector[string]] & counts_parsed,
 		                          	vector[string] & hashcodes,
@@ -31,12 +31,23 @@ cdef extern from "launcher.h":
 		                         	vector[vector[int]] & absolute_counts,
 		                          	vector[int] & levels,
 		                           	vector[int] & depths,
-		                           	vector[double] & divergences)
+		                           	vector[double] & divergences,
+		                           	const double & init_T,
+		                           	const double & T_decay,
+		                           	const double & p_deletion)
 	
 def run_proba_sequitur(inference_content,
 					   count_content,
 					   deg,
-					   max):
+					   max,
+					   random,
+					   init_T = 0,
+					   T_decay = 0,
+					   p_deletion = 0):
+	if random:
+		random_bool = 1
+	else:
+		random_bool = 0
 	cdef vector[vector[string]] inf_parsed
 	cdef vector[vector[string]] cou_parsed
 	cdef vector[string] codes
@@ -51,6 +62,7 @@ def run_proba_sequitur(inference_content,
 						  count_content,
 						  deg,
 						  max,
+						  random_bool,
 						  inf_parsed,
 						  cou_parsed,
 						  codes,
@@ -60,7 +72,10 @@ def run_proba_sequitur(inference_content,
 						  abs_counts,
 						  levs,
 						  deps,
-						  divs)
+						  divs,
+						  init_T,
+						  T_decay,
+						  p_deletion)
 	count_indices = range(len(count_content))
 	rules = {}
 	rule_names = {}
