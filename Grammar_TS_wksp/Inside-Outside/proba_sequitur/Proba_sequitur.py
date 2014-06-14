@@ -26,6 +26,7 @@ class Proba_sequitur:
                  init_T = 0,
                  T_decay = 0,
                  p_deletion = 0):
+        #
         self.inference_samples = inference_samples
         self.count_samples = count_samples
         #

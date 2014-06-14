@@ -20,6 +20,7 @@ f_oldo_data_set = load_data.filtered_oldo_file_contents.values()
 inference_content = achu_data_set + oldo_data_set
 count_content = copy.deepcopy(inference_content)
 
+begin = time.clock()
 ps = Proba_sequitur(inference_content,
                     count_content,
                     6,
@@ -28,8 +29,6 @@ ps = Proba_sequitur(inference_content,
                     0.0,
                     0.1,
                     0.1)
-
-begin = time.clock()
 ps.run()
 print time.clock() - begin
 

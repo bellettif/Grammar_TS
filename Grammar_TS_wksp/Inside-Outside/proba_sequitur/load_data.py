@@ -38,7 +38,7 @@ def prefilter(seq):
     #seq = re.subn('g', '', ''.join(seq))[0]
     for target_char in ['a']:
         seq = re.subn(target_char + '+', target_char, ''.join(seq))[0]
-    seq = ' '.join(list(seq))
+    seq = list(seq)
     return seq
 
 for x in list_of_files:
