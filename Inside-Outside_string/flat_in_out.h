@@ -118,7 +118,7 @@ public:
         int length = sample.size();
         double* E = new double[_N * length * length];
         compute_inside_probas_flat(E, sample);
-        double result = E[_root_index*length*length + _root_index*length + length - 1];
+        double result = E[_root_index*length*length + 0*length + length - 1];
         delete[] E;
         return result;
     }

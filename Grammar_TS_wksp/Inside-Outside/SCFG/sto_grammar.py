@@ -100,6 +100,11 @@ def compute_KL_signature(first_sign, second_sign):
             result += p * np.log(p / q) + q * np.log(q / p)
         return result
 
+
+
+
+
+
 class SCFG:
     
     def __init__(self, root_index = 0):
@@ -291,7 +296,7 @@ class SCFG:
                 self.A += noise_source_A(param_1_A, param_2_A, (self.N, self.N, self.N))
                 self.A = np.maximum(self.A, epsilon_A * np.ones((self.N, self.N, self.N)))
             if noise_source_B != 0:
-                self.B = noise_source_B(param_1_B, param_2_B, (self.N, self.M))
+                self.B += noise_source_B(param_1_B, param_2_B, (self.N, self.M))
                 self.B = np.maximum(self.B, epsilon_B * np.ones((self.N, self.M)))
             self.A[A_zeros] = 0
             self.B[B_zeros] = 0
@@ -302,7 +307,7 @@ class SCFG:
                 self.A += noise_source_A(param_1_A, param_2_A, (self.N, self.N, self.N))
                 self.A = np.maximum(self.A, epsilon_A * np.ones((self.N, self.N, self.N)))
             if noise_source_B != 0:
-                self.B = noise_source_B(param_1_B, param_2_B, (self.N, self.M))
+                self.B += noise_source_B(param_1_B, param_2_B, (self.N, self.M))
                 self.B = np.maximum(self.B, epsilon_B * np.ones((self.N, self.M)))
             self.A[A_zeros] = 0
             normalize_slices(self.A, self.B)
@@ -312,7 +317,7 @@ class SCFG:
                 self.A += noise_source_A(param_1_A, param_2_A, (self.N, self.N, self.N))
                 self.A = np.maximum(self.A, epsilon_A * np.ones((self.N, self.N, self.N)))
             if noise_source_B != 0:
-                self.B = noise_source_B(param_1_B, param_2_B, (self.N, self.M))
+                self.B += noise_source_B(param_1_B, param_2_B, (self.N, self.M))
                 self.B = np.maximum(self.B, epsilon_B * np.ones((self.N, self.M)))
             self.B[B_zeros] = 0
             normalize_slices(self.A, self.B)

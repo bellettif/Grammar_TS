@@ -19,7 +19,7 @@ f_achu_data_set = load_data.filtered_achu_file_contents.values()
 oldo_data_set = load_data.oldo_file_contents.values()
 f_oldo_data_set = load_data.filtered_oldo_file_contents.values()
 
-n_trials = 1000
+n_trials = 100
 
 max_represented = 400
 
@@ -31,7 +31,7 @@ max_rules_set = [30, 60, 80]
 T_set = [0.0, 0.1, 0.5, 1.0]
 T_decay_set = [0.0, 0.1, 0.2]
 p_deletion = 0.05
-filter_option_set = [('not_filtered', achu_data_set, oldo_data_set),
+filter_option_set = [('not-filtered', achu_data_set, oldo_data_set),
                      ('filtered', f_achu_data_set, f_oldo_data_set)]
 
 target_depths = range(2, 10)
@@ -145,5 +145,5 @@ instruction_set = [(x[0], x[1], x[2],
                    for T in T_set
                    for T_decay in T_decay_set]
 
-p = multi.Pool(processes = 8)
+p = multi.Pool(processes = 4)
 p.map(run_algo_tuple, instruction_set)

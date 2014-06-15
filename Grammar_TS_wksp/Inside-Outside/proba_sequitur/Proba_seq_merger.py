@@ -8,6 +8,7 @@ import copy
 import numpy as np
 from matplotlib import pyplot as plt
 import os
+import cPickle as pickle
 
 class Proba_seq_merger:
     
@@ -93,6 +94,32 @@ class Proba_seq_merger:
             first_count_distribs[self.rule_to_hashcode[rule_name]] = first_distrib
             second_count_distribs[self.rule_to_hashcode[rule_name]] = second_distrib
         return first_count_distribs, second_count_distribs, copy.deepcopy(self.depths), sorted_hashcodes
+    
+    def get_rel_count_distribs_zeros(self, first_indices, 
+                                     second_indices,
+                                     target_depth):
+        if not self.scores_computed:
+            for key, value in self.tot_relative_counts.iteritems():
+                self.tot_relative_counts[key] = value * self.depths[key]
+            self.scores_computed = True
+        first_count_distribs = {}
+        second_count_distribs = {}
+        tot_rel_counts_items = self.tot_relative_counts.items()
+        tot_rel_counts_items = filter(lambda x : self.depths[x[0]] == target_depth,
+                                      tot_rel_counts_items)
+        tot_rel_counts_items.sort(key = (lambda x : -x[1]))
+        sorted_rule_names = [x[0] for x in tot_rel_counts_items]
+        sorted_hashcodes = [self.rule_to_hashcode[x[0]] for x in tot_rel_counts_items]
+        for rule_name in sorted_rule_names:
+            count_list = self.relative_counts[rule_name]
+            first_distrib = []
+            second_distrib = []
+            for counts in count_list:
+                first_distrib.extend([counts[i] for i in first_indices])
+                second_distrib.extend([counts[i] for i in second_indices])
+            first_count_distribs[self.rule_to_hashcode[rule_name]] = first_distrib
+            second_count_distribs[self.rule_to_hashcode[rule_name]] = second_distrib
+        return first_count_distribs, second_count_distribs, copy.deepcopy(self.depths), sorted_hashcodes
 
     def get_rel_count_avgs(self, first_indices, 
                            second_indices,
@@ -118,8 +145,8 @@ class Proba_seq_merger:
                 second_distrib.append([counts[i] for i in second_indices])
             first_distrib = np.asanyarray(first_distrib, dtype = np.double)
             second_distrib = np.asanyarray(second_distrib, dtype = np.double)
-            first_count_distribs[self.rule_to_hashcode[rule_name]] = np.mean(first_distrib, axis = 1)
-            second_count_distribs[self.rule_to_hashcode[rule_name]] = np.mean(second_distrib, axis = 1)
+            first_count_distribs[self.rule_to_hashcode[rule_name]] = np.mean(first_distrib, axis = 0)
+            second_count_distribs[self.rule_to_hashcode[rule_name]] = np.mean(second_distrib, axis = 0)
         return first_count_distribs, second_count_distribs, copy.deepcopy(self.depths), sorted_hashcodes
         
     def compare_data_sets(self, 
@@ -129,108 +156,149 @@ class Proba_seq_merger:
                           max_represented,
                           target_depths):
         os.mkdir(prefix)
+        pickle.dump(self, 
+                    open('Saved_results_%s.pi' 
+                                % (prefix), 'wb'))     
         print "Comparing data sets with parameters %s" % prefix
         for target_depth in target_depths:
-            achu_counts_dict, oldo_counts_dict, depths_dict, sorted_rule_names = \
-                self.get_rel_count_avgs(achu_indices,
-                                           oldo_indices,
-                                           target_depth)
-            achu_counts = []
-            oldo_counts = []
-            if len(achu_counts) == 0 or len(oldo_counts) == 0: continue
-            for x in sorted_rule_names:
-                achu_counts.append(achu_counts_dict[x])
-                achu_counts.append([])
-                oldo_counts.append(oldo_counts_dict[x])
-                oldo_counts.append([])
-            x_ticks = []
-            for x in sorted_rule_names:
-                x_ticks.append(x + 
-                               (' (%d)' % depths_dict[self.hashcode_to_rule[x]]) )
-                x_ticks.append('')
-            achu_counts = achu_counts[:max_represented]
-            oldo_counts = oldo_counts[:max_represented]
-            x_ticks = x_ticks[:max_represented]
-            bp = plt.boxplot(achu_counts,
-                             notch=0,
-                             sym='+',
-                             vert=1,
-                             whis=1.5,
-                             patch_artist = True)
-            plt.setp(bp['boxes'], color = 'r', facecolor = 'r', alpha = 0.25)
-            plt.setp(bp['whiskers'], color='r')
-            plt.setp(bp['fliers'], color='r', marker='+')
-            bp = plt.boxplot(oldo_counts,
-                             notch=0,
-                             sym='+',
-                             vert=1,
-                             whis=1.5,
-                             patch_artist = True)
-            plt.setp(bp['boxes'], color = 'b', facecolor = 'b', alpha = 0.25)
-            plt.setp(bp['whiskers'], color='b')
-            plt.setp(bp['fliers'], color='b', marker='+')
-            
-            plt.xticks(range(1, len(x_ticks) + 1),
-                       x_ticks,
-                       rotation = 'vertical',
-                       fontsize = 4)
-            plt.ylabel('Relative counts')
-            plt.yscale('log')
-            plt.title('Relative count averages (Achu in red, Oldo in blue)')
-            fig = plt.gcf()
-            fig.set_size_inches((60, 8))
-            plt.savefig('%s/Merged_results_%s_avg_%d.png' % 
-                        (prefix, prefix, target_depth), dpi = 300)
-            plt.close()
-            #
-            achu_counts_dict, oldo_counts_dict, depths_dict, sorted_rule_names = \
-                self.get_rel_count_distribs(achu_indices,
+            try:
+                achu_counts_dict, oldo_counts_dict, depths_dict, sorted_rule_names = \
+                    self.get_rel_count_distribs_zeros(achu_indices,
                                                oldo_indices,
                                                target_depth)
-            achu_counts = []
-            oldo_counts = []
-            for x in sorted_rule_names:
-                achu_counts.append(achu_counts_dict[x])
-                achu_counts.append([])
-                oldo_counts.append(oldo_counts_dict[x])
-                oldo_counts.append([])
-            x_ticks = []
-            for x in sorted_rule_names:
-                x_ticks.append(x + 
-                               (' (%d)' % depths_dict[self.hashcode_to_rule[x]]) )
-                x_ticks.append('')
-            achu_counts = achu_counts[:max_represented]
-            oldo_counts = oldo_counts[:max_represented]
-            x_ticks = x_ticks[:max_represented]
-            bp = plt.boxplot(achu_counts,
-                             notch=0,
-                             sym='+',
-                             vert=1,
-                             whis=1.5,
-                             patch_artist = True)
-            plt.setp(bp['boxes'], color = 'r', facecolor = 'r', alpha = 0.25)
-            plt.setp(bp['whiskers'], color='r')
-            plt.setp(bp['fliers'], color='r', marker='+')
-            bp = plt.boxplot(oldo_counts,
-                             notch=0,
-                             sym='+',
-                             vert=1,
-                             whis=1.5,
-                             patch_artist = True)
-            plt.setp(bp['boxes'], color = 'b', facecolor = 'b', alpha = 0.25)
-            plt.setp(bp['whiskers'], color='b')
-            plt.setp(bp['fliers'], color='b', marker='+') 
-            plt.xticks(range(1, len(x_ticks) + 1),
-                       x_ticks,
-                       rotation = 'vertical',
-                       fontsize = 4)
-            plt.ylabel('Relative counts')
-            plt.yscale('log')
-            plt.title('Relative count distributions (Achu in red, Oldo in blue)')
-            fig = plt.gcf()
-            fig.set_size_inches((60, 8))
-            plt.savefig('%s/Merged_results_%s_distribs_%d.png' 
-                        % (prefix, prefix, target_depth), dpi = 300)
-            plt.close()
+                achu_counts_array = []
+                for x in sorted_rule_names[:max_represented]:
+                    achu_counts_array.extend(achu_counts_dict[x])
+                oldo_counts_array = []
+                for x in sorted_rule_names[:max_represented]:
+                    oldo_counts_array.extend(oldo_counts_dict[x])
+                plt.scatter(oldo_counts_array,
+                            achu_counts_array, 
+                            marker = 'x')
+                plt.xlabel('Oldo avg relative count')
+                plt.ylabel('Achu avg relative count')
+                plt.title('Relative count comparison, depth %d' % target_depth)
+                fig = plt.gcf()
+                fig.set_size_inches((12, 12))
+                plt.savefig('%s/Comparison_%s_distribs_%d.png' % 
+                            (prefix, prefix, target_depth), dpi = 600)
+                plt.close()
+                achu_counts_dict, oldo_counts_dict, depths_dict, sorted_rule_names = \
+                    self.get_rel_count_avgs(achu_indices,
+                                               oldo_indices,
+                                               target_depth)
+                achu_counts_array = [achu_counts_dict[x] for x in sorted_rule_names[:max_represented]]
+                oldo_counts_array = [oldo_counts_dict[x] for x in sorted_rule_names[:max_represented]]
+                achu_counts_array = np.asanyarray(achu_counts_array, dtype = np.double)
+                oldo_counts_array = np.asanyarray(oldo_counts_array, dtype = np.double)
+                plt.scatter(np.ravel(oldo_counts_array),
+                            np.ravel(achu_counts_array),
+                            marker = 'x')
+                plt.xlabel('Oldo avg relative count')
+                plt.ylabel('Achu avg relative count')
+                plt.title('Relative count comparison, depth %d' % target_depth)
+                fig = plt.gcf()
+                fig.set_size_inches((12, 12))
+                plt.savefig('%s/Comparison_%s_avg_%d.png' % 
+                            (prefix, prefix, target_depth), dpi = 600)
+                plt.close()
+                achu_counts = []
+                oldo_counts = []
+                if len(achu_counts_dict) == 0 or len(oldo_counts_dict) == 0: continue
+                for x in sorted_rule_names:
+                    achu_counts.append(achu_counts_dict[x])
+                    achu_counts.append([])
+                    oldo_counts.append(oldo_counts_dict[x])
+                    oldo_counts.append([])
+                x_ticks = []
+                for x in sorted_rule_names:
+                    x_ticks.append(x + 
+                                   (' (%d)' % depths_dict[self.hashcode_to_rule[x]]) )
+                    x_ticks.append('')
+                achu_counts = achu_counts[:max_represented]
+                oldo_counts = oldo_counts[:max_represented]
+                x_ticks = x_ticks[:max_represented]
+                bp = plt.boxplot(achu_counts,
+                                 notch=0,
+                                 sym='+',
+                                 vert=1,
+                                 whis=1.5,
+                                 patch_artist = True)
+                plt.setp(bp['boxes'], color = 'r', facecolor = 'r', alpha = 0.25)
+                plt.setp(bp['whiskers'], color='r')
+                plt.setp(bp['fliers'], color='r', marker='+')
+                bp = plt.boxplot(oldo_counts,
+                                 notch=0,
+                                 sym='+',
+                                 vert=1,
+                                 whis=1.5,
+                                 patch_artist = True)
+                plt.setp(bp['boxes'], color = 'b', facecolor = 'b', alpha = 0.25)
+                plt.setp(bp['whiskers'], color='b')
+                plt.setp(bp['fliers'], color='b', marker='+')
+                plt.xticks(range(1, len(x_ticks) + 1),
+                           x_ticks,
+                           rotation = 'vertical',
+                           fontsize = 4)
+                plt.ylabel('Relative counts')
+                plt.yscale('log')
+                plt.title('Relative count averages, depth %d (Achu in red, Oldo in blue)' % target_depth)
+                fig = plt.gcf()
+                fig.set_size_inches((60, 8))
+                plt.savefig('%s/Merged_results_%s_avg_%d.png' % 
+                            (prefix, prefix, target_depth), dpi = 300)
+                plt.close()
+                #
+                achu_counts_dict, oldo_counts_dict, depths_dict, sorted_rule_names = \
+                    self.get_rel_count_distribs(achu_indices,
+                                                   oldo_indices,
+                                                   target_depth)
+                achu_counts = []
+                oldo_counts = []
+                for x in sorted_rule_names:
+                    achu_counts.append(achu_counts_dict[x])
+                    achu_counts.append([])
+                    oldo_counts.append(oldo_counts_dict[x])
+                    oldo_counts.append([])
+                x_ticks = []
+                for x in sorted_rule_names:
+                    x_ticks.append(x + 
+                                   (' (%d)' % depths_dict[self.hashcode_to_rule[x]]) )
+                    x_ticks.append('')
+                achu_counts = achu_counts[:max_represented]
+                oldo_counts = oldo_counts[:max_represented]
+                x_ticks = x_ticks[:max_represented]
+                bp = plt.boxplot(achu_counts,
+                                 notch=0,
+                                 sym='+',
+                                 vert=1,
+                                 whis=1.5,
+                                 patch_artist = True)
+                plt.setp(bp['boxes'], color = 'r', facecolor = 'r', alpha = 0.25)
+                plt.setp(bp['whiskers'], color='r')
+                plt.setp(bp['fliers'], color='r', marker='+')
+                bp = plt.boxplot(oldo_counts,
+                                 notch=0,
+                                 sym='+',
+                                 vert=1,
+                                 whis=1.5,
+                                 patch_artist = True)
+                plt.setp(bp['boxes'], color = 'b', facecolor = 'b', alpha = 0.25)
+                plt.setp(bp['whiskers'], color='b')
+                plt.setp(bp['fliers'], color='b', marker='+') 
+                plt.xticks(range(1, len(x_ticks) + 1),
+                           x_ticks,
+                           rotation = 'vertical',
+                           fontsize = 4)
+                plt.ylabel('Relative counts')
+                plt.yscale('log')
+                plt.title('Relative count distributions %d (Achu in red, Oldo in blue)' % target_depth)
+                fig = plt.gcf()
+                fig.set_size_inches((60, 8))
+                plt.savefig('%s/Merged_results_%s_distribs_%d.png' 
+                            % (prefix, prefix, target_depth), dpi = 300)
+                plt.close()
+            except:
+                pass
         
         
