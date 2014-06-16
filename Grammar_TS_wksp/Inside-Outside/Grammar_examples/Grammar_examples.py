@@ -359,9 +359,15 @@ action_grammar_2 = SCFG()
 action_grammar_2.init_from_rule_dict(action_grammar_2_rules)
 
 # 1 is the wildcard symbol
-e_f = 0.05
+#
+#    Example: e_f = 0.05, r_w = 0.01, r_r = 0.44
+#             e_f = 0.01, r_w = 0.01, r_r = 0.475
+#             e_f = 0.10, r_w = 0.01, r_r = 0.39
+#
+
+e_f = 0.10
 r_w = 0.01
-r_r = 0.44
+r_r = 0.39
 noisy_grammar_rules = {0 : ([[1, 0], [0, 1], [0, 0], [2, 3]],
                             [e_f, e_f, r_r, 1.0 - 2*e_f - r_r],
                             [],

@@ -11,10 +11,10 @@ from Grammar_examples.Grammar_examples import noisy_grammar
 
 
 samples = noisy_grammar.produce_sentences(1000)
-#samples = filter(lambda x : len(x) > 600, samples)
+samples = filter(lambda x : len(x) > 600, samples)
 
 print len(samples)
-print np.mean([len(x) for x in samples])
+print [len(x) for x in samples]
 
 
 ps = Proba_sequitur(samples,
