@@ -17,6 +17,7 @@ from Grammar_examples.Grammar_examples import palindrom_grammar_1, \
                                               name_grammar_2
 
 from SCFG.sto_grammar import compute_KL_signature
+from SCFG.sto_grammar import SCFG
 
 N_PROCESSES = 4
 
@@ -118,6 +119,8 @@ def compute_internal_distance_matrix_MC(left_grammar, right_grammar, n_samples, 
     distances = np.reshape(distances, (n_rules_left, n_rules_right))
     return distances
 
+
+"""
 palindrom_grammar_1.blur_A_B('keep_zeros_A', 
                              np.random.uniform, 
                              0, 
@@ -149,6 +152,69 @@ plt.imshow(distances_lk, interpolation = 'none')
 plt.clim(0, 1.0)
 plt.title('Likelihood (%f seconds)' % (time_taken))
 plt.show()
+"""
 
+palindrom_grammar_1_estim = copy.deepcopy(palindrom_grammar_1)
+
+samples = palindrom_grammar_1.produce_sentences(1000)
+
+
+distances = []
+likelihoods = []
+
+print palindrom_grammar_1.A
+print palindrom_grammar_1.B
+
+for i in xrange(10):
+    new_A, new_B, lks = palindrom_grammar_1_estim.estimate_A_B(samples = samples,
+                                                                       n_iterations = 100,
+                                                                       init_option = 'perturbated_keep_zeros',
+                                                                       noise_source_A = np.random.uniform,
+                                                                       param_1_A = 0.0,
+                                                                       param_2_A = 0.1,
+                                                                       epsilon_A = 0.0,
+                                                                       noise_source_B = np.random.uniform,
+                                                                       param_1_B = 0.0,
+                                                                       param_2_B = 0.1,
+                                                                       epsilon_B = 0.1)
+    print new_A
+    print ''
+    print new_B
+    palindrom_grammar_1_estim.init_from_A_B(new_A, new_B, palindrom_grammar_1.term_chars)
+    distances.append(compute_distance(palindrom_grammar_1, 
+                                      palindrom_grammar_1_estim,
+                                      n_samples = 1e3))
+    likelihoods.append(np.copy(lks[-1]))
+    print '%d done' % i
+    print '\n'
+
+likelihoods = np.asanyarray(likelihoods)
+
+print likelihoods
+print distances
+
+for i in xrange(likelihoods.shape[1]):
+    plt.plot(distances, np.log(likelihoods[:,i]), linestyle = 'None', marker = 'x')
+plt.show()
+
+
+"""
+
+palindrom_grammar_1_estim.init_from_A_B(new_A, 
+                                        new_B, 
+                                        palindrom_grammar_1_estim.term_chars)
+
+begin = time.clock()
+distances_lk = compute_distance_matrix(palindrom_grammar_1,
+                                       palindrom_grammar_1,
+                                       1e3)
+
+print distances_lk
+time_taken = time.clock() - begin
+plt.imshow(distances_lk, interpolation = 'none')
+#plt.clim(0, 1.0)
+plt.title('Likelihood (%f seconds)' % (time_taken))
+plt.show()
+"""
         
         
