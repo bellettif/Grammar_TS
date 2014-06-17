@@ -403,4 +403,43 @@ noisy_grammar_rules = {0 : ([[1, 0], [0, 1], [0, 0], [2, 3]],
 noisy_grammar = SCFG()
 noisy_grammar.init_from_rule_dict(noisy_grammar_rules)
                        
-                       
+word_grammar_rules = {0 : ([[1, 2]],
+                         [1.0],
+                         [],
+                         []),
+                    1 : ([[3, 4], [3, 5]],
+                         [0.5, 0.5],
+                         [],
+                         []),
+                    2 : ([[7, 1]],
+                         [1.0],
+                         [],
+                         []),
+                    3 : ([],
+                         [],
+                         ['the', 'a'],
+                         [0.5, 0.5]),
+                    4 : ([],
+                         [],
+                         ['mouse', 'cat', 'dog'],
+                         [0.3, 0.3, 0.3]),
+                    5 : ([[6, 4], [6, 5]],
+                          [0.5, 0.5],
+                          [],
+                          []),
+                    6 : ([],
+                         [],
+                         ['big', 'black'],
+                         [0.5, 0.5]),
+                    7 : ([],
+                         [],
+                         ['chased', 'ate'],
+                         [0.5, 0.5])}
+word_grammar = SCFG()
+word_grammar.init_from_rule_dict(word_grammar_rules)
+
+sentences = word_grammar.produce_sentences(100)
+for sentence in sentences:
+    print sentence
+
+
