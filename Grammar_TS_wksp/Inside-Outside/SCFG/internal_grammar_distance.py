@@ -167,7 +167,7 @@ print palindrom_grammar_1.B
 
 for i in xrange(10):
     new_A, new_B, lks = palindrom_grammar_1_estim.estimate_A_B(samples = samples,
-                                                                       n_iterations = 10,
+                                                                       n_iterations = 100,
                                                                        init_option = 'perturbated_keep_zeros',
                                                                        noise_source_A = np.random.uniform,
                                                                        param_1_A = 0.0,

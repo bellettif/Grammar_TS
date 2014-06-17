@@ -346,7 +346,8 @@ class SCFG:
                                'perturbated',
                                'perturbated_keep_zeros',
                                'explicit',
-                               'explicit_keep_zeros'])
+                               'explicit_keep_zeros',
+                               'random'])
         assert(n_iterations > 0)
         assert(len(samples) > 0)
         if init_option == 'exact':
@@ -430,6 +431,44 @@ class SCFG:
                                              samples,
                                              n_iterations,
                                              self.root_index)
+        if init_option == 'random':
+            assert(A_proposal.ndim != 0)
+            assert(B_proposal.ndim != 0)
+            assert(noise_source_A == 0)
+            assert(param_1_A != 0)
+            assert(param_2_A != 0)
+            assert(epsilon_A == 0)
+            assert(noise_source_B == 0)
+            assert(param_1_B != 0)
+            assert(param_2_B == 0)
+            assert(epsilon_B == 0)
+            if len(term_chars) == 0:
+                term_chars = self.term_chars
+            assert(A_proposal.ndim == 3)
+            assert(B_proposal.ndim == 2)
+            assert(A_proposal.shape[0] == A_proposal.shape[1] == A_proposal.shape[2] == B_proposal.shape[0])
+            assert(B_proposal.shape[1] == len(term_chars))
+            N = A_proposal.shape[0]
+            M = len(term_chars)
+            n_D = N - M
+            alpha_1_D = param_1_A
+            alpha_2_D = param_2_A
+            alpha_T = param_1_B
+            for i in xrange(n_D):
+                beta = np.random.dirichlet(alpha_1_D * np.ones(N))
+                beta_beta = np.outer(beta, beta)
+                weights = np.random.dirichlet(alpha_2_D * np.ones(N ** 2))
+                A_proposal[i, :, :] = np.reshape(weights, (N, N)) * beta_beta
+            for i in xrange(n_D, N):
+                B_proposal[i, :] = np.random.dirichlet(alpha_T * np.ones(M))
+            normalize_slices(A_proposal, B_proposal)
+            return SCFG_c.iterate_estimation(A_proposal,
+                                             B_proposal,
+                                             term_chars,
+                                             samples,
+                                             n_iterations,
+                                             self.root_index)
+            
             
     def plot_grammar_matrices(self,
                               folder_path,

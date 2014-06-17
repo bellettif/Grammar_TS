@@ -438,8 +438,43 @@ word_grammar_rules = {0 : ([[1, 2]],
 word_grammar = SCFG()
 word_grammar.init_from_rule_dict(word_grammar_rules)
 
-sentences = word_grammar.produce_sentences(100)
-for sentence in sentences:
-    print sentence
+word_grammar_noisy_rules = {0 : ([[1, 2]],
+                                 [1.0],
+                                 [],
+                                 []),
+                            1 : ([[3, 4], [3, 5]],
+                                 [0.5, 0.5],
+                                 [],
+                                 []),
+                            2 : ([[7, 1]],
+                                 [1.0],
+                                 [],
+                                 []),
+                            3 : ([[8, 3], [8, 3]],
+                                 [0.05, 0.05],
+                                 ['the', 'a'],
+                                 [0.5, 0.5]),
+                            4 : ([[8, 4], [8, 4]],
+                                 [0.05, 0.05],
+                                 ['mouse', 'cat', 'dog'],
+                                 [0.3, 0.3, 0.3]),
+                            5 : ([[6, 4], [6, 5]],
+                                  [0.5, 0.5],
+                                  [],
+                                  []),
+                            6 : ([[8, 6], [6, 8]],
+                                 [0.05, 0.05],
+                                 ['big', 'black'],
+                                 [0.5, 0.5]),
+                            7 : ([[8, 7], [7, 8]],
+                                 [0.05, 0.05],
+                                 ['chased', 'ate'],
+                                 [0.5, 0.5]),
+                            8 : ([[8, 8]],
+                                 [0.2],
+                                 ['*'],
+                                 [0.8])}
+word_grammar_noisy = SCFG()
+word_grammar_noisy.init_from_rule_dict(word_grammar_rules)
 
 
