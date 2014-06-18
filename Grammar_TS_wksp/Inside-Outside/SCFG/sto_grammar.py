@@ -6,6 +6,8 @@ Created on 20 mai 2014
 
 import SCFG_c
 
+from internal_grammar_distance import compute_distance_matrix
+
 import numpy as np
 from matplotlib import pyplot as plt
 
@@ -100,11 +102,6 @@ def compute_KL_signature(first_sign, second_sign):
             result += p * np.log(p / q) + q * np.log(q / p)
         return result
 
-
-
-
-
-
 class SCFG:
     
     def __init__(self, root_index = 0):
@@ -119,6 +116,9 @@ class SCFG:
         self.rules = {}
         #
         self.root_index = root_index
+        #
+        self.internal_distances = np.zeros((0, 0))
+        self.ranked_internal_distances = []
         
     # Rule_dict[int] = (list of int pairs, list of weights, list of terms, list_of_weights)
     def init_from_rule_dict(self, rule_dict):
@@ -218,6 +218,10 @@ class SCFG:
         self.N = self.A.shape[0]
         self.rules_mapped = False
         self.rules = {}
+        #
+        self.internal_distances = np.zeros((0, 0))
+        self.ranked_internal_distances = []
+        
         
     def expand(self, target_index):
         self.A, self.B = expand_rule(self.A,
@@ -488,7 +492,7 @@ class SCFG:
         for i in xrange(N):
             plt.subplot(211)
             plt.title('A %d' % i)
-            plt.imshow(A_matrix[i])
+            plt.imshow(A_matrix[i], interpolation = 'None')
             plt.clim(0, 1.0)
             plt.subplot(212)
             plt.plot(range(len(B_matrix[i])), B_matrix[i], linestyle = 'None', marker = 'o')
@@ -705,3 +709,24 @@ class SCFG:
                 edge.set_color(emission_color)
                 graph.add_edge(edge)
         graph.write_png(file_path)
+        
+    def compute_internal_distance_matrix(self, n_samples):
+        self.internal_distances = compute_distance_matrix(self, 
+                                                          self, 
+                                                          n_samples)
+        self.ranked_internal_distances = [[(i, j), self.internal_distances[i, j]]
+                                          if i != j else [(i, j), np.inf]
+                                          for i in xrange(self.N)
+                                          for j in xrange(self.N)]
+        self.ranked_internal_distances.sort(key = (lambda x : x[1]))
+        return self.internal_distances
+    
+    def merge_on_closest(self):
+        assert(len(self.internal_distances) > 0)
+        [(first_index, second_index), dist] = self.ranked_internal_distances[0]
+        print '\n'
+        print '---------- MERGING %d and %d -----------' % (first_index, second_index)
+        print self.ranked_internal_distances
+        print '\n'
+        self.merge(first_index, second_index)
+        
