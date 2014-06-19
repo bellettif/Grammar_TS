@@ -726,6 +726,8 @@ class SCFG:
         [(first_index, second_index), dist] = self.ranked_internal_distances[0]
         print '\n'
         print '---------- MERGING %d and %d -----------' % (first_index, second_index)
+        print self.A.shape
+        print self.B.shape
         print self.ranked_internal_distances
         print '\n'
         self.merge(first_index, second_index)

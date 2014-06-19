@@ -22,7 +22,7 @@ def compute_KL_signature(first_sign, second_sign):
             result += p * np.log(p / q) + q * np.log(q / p)
         return result
 
-N_PROCESSES = 8
+N_PROCESSES = 6
 
 def compute_distance(left_grammar,
                      right_grammar,
