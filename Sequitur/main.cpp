@@ -20,13 +20,8 @@ int main(){
 
     std::string file_path = "/Users/francois/Grammar_TS/Sequitur/data/achuSeq_1.csv";
 
-    //std::string * content;
     int * content;
     int n_elts;
-
-    //std::string content [13] =
-    //    {"ii", "j", "aa", "bb", "e", "f", "a", "b", "aa", "bb", "a", "b", "d"};
-    //int n_elts = 13;
 
 
     read_csv(file_path, content, n_elts);
@@ -35,7 +30,6 @@ int main(){
 
     int root_symbol = 0;
 
-    //Sequitur<std::string> seq(content, n_elts, "Root", Name_generator<std::string>(alphabets::ascii_upper_string));
     Sequitur<int> seq(content, n_elts, 0, Name_generator<int>(0));
 
     for(int i = 0; i < n_elts; ++i){

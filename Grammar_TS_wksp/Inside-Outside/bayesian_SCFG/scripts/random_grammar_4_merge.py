@@ -30,6 +30,8 @@ def plot_lks(left_grammar,
 
 model_gram = word_grammar
 
+model_gram.draw_grammar('Model_grammar.png')
+
 n_sentences = 100
 
 sentences = model_gram.produce_sentences(n_sentences)
@@ -90,8 +92,8 @@ while iteration < n_trials:
             print estim_gram.B.shape
             N = estim_gram.A.shape[0]
             M = estim_gram.B.shape[1]
-            estim_gram.A = np.maximum(estim_gram.A, 1e-5 * np.ones((N, N, N)))
-            estim_gram.B = np.maximum(estim_gram.B, 1e-5 * np.ones((N, M)))
+            estim_gram.A = np.maximum(estim_gram.A, 1e-6 * np.ones((N, N, N)))
+            estim_gram.B = np.maximum(estim_gram.B, 1e-6 * np.ones((N, M)))
             new_A, new_B, likelihoods = word_grammar.estimate_A_B(samples = sentences, 
                                                                   n_iterations = 50, 
                                                                   init_option = 'explicit',
@@ -137,12 +139,12 @@ while iteration < n_trials:
         #
         estim_gram.plot_grammar_matrices(folder_path,
                                          'Estim_%d' % iteration)
-        estim_gram.draw_grammar('Estimated_grammar_%d.pnt')
+        estim_gram.draw_grammar('Estimated_grammar_%d.png' % iteration)
         #
         #    Folding
         #
         estim_gram.merge_on_closest()
-        estim_gram.draw_grammar('Estimated_grammar_folded_%d.pnt')
+        estim_gram.draw_grammar('Estimated_grammar_folded_%d.png' % iteration)
         #
         distance_matrix_estim_folded = estim_gram.compute_internal_distance_matrix(n_samples)
         
@@ -167,9 +169,10 @@ while iteration < n_trials:
         print e
         print '\n\n\n'
         estim_gram = saved_estim_gram
-    except:
-        break
     
 pickle.dump(saved_estim_gram, open('Final_grammar.pi', 'wb'))
 
 saved_estim_gram.draw_grammar('Final_grammar_draw.png')
+saved_estim_gram.draw_grammar('Final_grammar_draw_3.png', 1e-3)
+saved_estim_gram.draw_grammar('Final_grammar_draw_6.png', 1e-6)
+

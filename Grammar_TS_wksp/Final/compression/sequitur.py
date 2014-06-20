@@ -1,0 +1,68 @@
+'''
+Created on 20 juin 2014
+
+@author: francois
+'''
+
+import sequitur_c
+import numpy as np
+
+class Sequitur():
+    
+    #
+    #    Input sequence must be a list of chars
+    #
+    def __init__(self, input_sequence):
+        if(len(input_sequence) == 0):
+            raise Exception('Input sequence length in sequitur is 0')
+        #
+        #    Store input and output
+        #
+        self.input_sequence = input_sequence
+        self.compressed_sequence = []
+        self.initial_length = len(input_sequence)
+        self.post_compression_length = 0
+        #
+        #    Conversion dictionaries
+        #
+        self.int_to_char = list(set(input_sequence))
+        self.char_to_int = dict(zip(self.int_to_char, range(len(self.int_to_char))))
+        self.int_to_char = dict(zip(range(len(self.int_to_char)), self.int_to_char))
+        #
+        #    Grammar
+        #
+        self.grammar = {}
+        self.ref_counts = {}
+        self.hashcode_to_rule = {}
+        self.rule_to_hashcode = {}
+        
+    def run(self):
+        temp_grammar = sequitur_c.run(np.asarray([self.char_to_int[x] 
+                                                  for x in self.input_sequence],
+                                                 dtype = np.int32))
+        rule_indices = temp_grammar.keys()
+        rule_indices.sort(key = (lambda x : -x))
+        for lhs in rule_indices:
+            [rhs_array, ref_count] = temp_grammar[lhs]
+            if lhs == 0:
+                self.compressed_sequence = [self.int_to_char[x] 
+                                            if x in self.int_to_char
+                                            else 'r%d' % (-x)
+                                            for x in rhs_array]
+                self.post_compression_length = len(self.compressed_sequence)
+                continue
+            rhs_transformed = [self.int_to_char[x] if x in self.int_to_char
+                                else 'r%d' % (-x)
+                                for x in rhs_array]
+            rhs_hashcode = [self.int_to_char[x] if x in self.int_to_char
+                            else
+                            self.rule_to_hashcode['r%d' % (-x)]
+                            for x in rhs_array]
+            lhs_hashcode = '>' + '-'.join(rhs_hashcode) + '<'
+            rule_name = 'r%d' % (-lhs)
+            self.grammar[rule_name] = rhs_transformed
+            self.ref_counts[rule_name] = ref_count
+            self.hashcode_to_rule[lhs_hashcode] = rule_name
+            self.rule_to_hashcode[rule_name] = lhs_hashcode
+            
+        

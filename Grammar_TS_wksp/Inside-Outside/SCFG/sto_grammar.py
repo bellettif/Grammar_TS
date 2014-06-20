@@ -33,6 +33,10 @@ def normalize_slices(A, B):
 def merge_rules(A, B,
                 first_index,
                 second_index):
+    if first_index > second_index:
+        temp = first_index
+        first_index = second_index
+        second_index = temp
     assert(A.ndim == 3)
     assert(B.ndim == 2)
     assert(A.shape[0] == A.shape[1] == A.shape[2] == B.shape[0])
@@ -49,7 +53,7 @@ def merge_rules(A, B,
     new_A = new_A[np.ix_(sub_selection, sub_selection, sub_selection)]
     old_B = np.copy(B)
     new_B = old_B[sub_selection]
-    new_B[first_index] = 0.5 * old_B[first_index] + 0.5*old_B[second_index]
+    new_B[first_index] = 0.5 * old_B[first_index] + 0.5 * old_B[second_index]
     return new_A, new_B
 
 def expand_rule(A, B,
