@@ -24,6 +24,8 @@ static auto duration =  std::chrono::system_clock::now().time_since_epoch();
 static auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
 static RNG core_rng (millis);
 
+static const int MAX_ITER_IN_DERIVATION = 10000;
+
 
 class Rule{
     int                             _N;
@@ -346,24 +348,38 @@ public:
         delete[] sample_lengths;
     }
 
-    string_vect_vect inline produce_sentences(int n_sentences){
-        return produce_sentences(n_sentences, core_rng);
+    string_vect_vect inline produce_sentences(int n_sentences,
+                                              bool & does_not_terminate){
+        return produce_sentences(n_sentences,
+                                 does_not_terminate,
+                                 core_rng);
     }
 
     string_vect_vect inline produce_sentences(int n_sentences,
+                                              bool & does_not_terminate,
                                               RNG & rng){
         string_vect_vect result (n_sentences);
         for(int i = 0; i < n_sentences; ++i){
-            produce_sentence(result.at(i), rng);
+            if(!produce_sentence(result.at(i), rng)){
+                result.clear();
+                does_not_terminate = true;
+                return result;
+            }
         }
+        does_not_terminate = false;
         return result;
     }
 
     void inline compute_frequences(int n_sentences,
                                     int_vect & freqs,
                                     string_vect & strings,
+                                    bool & does_not_terminate,
                                     int max_length = 0){
-        string_vect_vect samples = produce_sentences(n_sentences);
+        string_vect_vect samples = produce_sentences(n_sentences,
+                                                     does_not_terminate);
+        if(does_not_terminate){
+            return;
+        }
         string_int_map counts;
         std::string temp;
         int length;
@@ -388,7 +404,7 @@ public:
         }
     }
 
-    void inline produce_sentence(string_vect & result, RNG & rng){
+    inline bool produce_sentence(string_vect & result, RNG & rng){
         if(!_built_rule_map){
             build_rule_map();
         }
@@ -419,10 +435,15 @@ public:
             }
             index_to_do.swap(next_index_to_do);
             next_index_to_do.clear();
+            ++ current_iter;
+            if(current_iter == MAX_ITER_IN_DERIVATION){
+                return false;
+            }
         }
         for(auto x : temp_result){
             result.push_back(_terminals.at(x));
         }
+        return true;
     }
 
     void inline build_rule_map(){

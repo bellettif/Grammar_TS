@@ -5,6 +5,7 @@ Created on 20 mai 2014
 '''
 
 import SCFG_c
+from SCFG_c import Looping_der_except
 
 from internal_grammar_distance import compute_distance_matrix
 

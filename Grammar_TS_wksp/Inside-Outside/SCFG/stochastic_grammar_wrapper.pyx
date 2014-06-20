@@ -4,6 +4,12 @@ np.import_array()
 cimport libc.stdlib
 import ctypes
 
+class Looping_der_except(Exception):
+	def __init__(self, code):
+		self.code = code
+	def __str__(self):
+		return repr(self.code)
+
 from datetime import datetime
 from time import mktime
 
@@ -16,6 +22,7 @@ from libcpp.vector cimport vector
 from libcpp.pair cimport pair
 from libcpp.string cimport string
 from libcpp.list cimport list
+from libcpp cimport bool
 from cython.operator cimport dereference as deref
 
 cdef extern from "<random>" namespace "std":
@@ -40,10 +47,12 @@ cdef extern from "flat_in_out.h":
 						  double * sample_probas,
 						  double * new_A,
 						  double * new_B)
-		vector[vector[string]] produce_sentences(int n_sentences)
+		vector[vector[string]] produce_sentences(int n_sentences,
+												 bool & does_not_terminate)
 		void compute_frequences(int n_sentences,
                                  vector[int] & freqs,
                                  vector[string] & strings,
+                                 bool & does_not_terminate,
                                  int max_length)
 	
 def estimate_likelihoods(np.ndarray A_proposal,
@@ -85,7 +94,11 @@ def produce_sentences(np.ndarray A_proposal,
 	               							N, M,
 	               		     				terminals,
 	               		     				root_index)
-	cdef vector[vector[string]] sentences = fio.produce_sentences(n_sentences)
+	cdef bool does_not_terminate
+	cdef vector[vector[string]] sentences = fio.produce_sentences(n_sentences,
+																does_not_terminate)
+	if does_not_terminate:
+		raise Looping_der_except('Derivation does not terminate in produce sentences')
 	del fio
 	return sentences
 
@@ -291,7 +304,14 @@ def compute_stats(np.ndarray A_proposal,
 	               		     				root_index)
 	cdef vector[string] strings
 	cdef vector[int] freqs
-	fio.compute_frequences(n_sentences, freqs, strings, max_length)
+	cdef bool does_not_terminate
+	fio.compute_frequences(n_sentences, 
+						   freqs,
+						   strings, 
+						   max_length,
+						   does_not_terminate)
+	if does_not_terminate:
+		raise Looping_der_except('Derivation does not terminate in compute stats')
 	del fio
 	return freqs, strings
 	
