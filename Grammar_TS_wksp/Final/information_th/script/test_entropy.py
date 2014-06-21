@@ -7,7 +7,7 @@ Created on 21 juin 2014
 import numpy as np
 from matplotlib import pyplot as plt
 
-import information_th.core as inf_th
+import information_th.measures as inf_th
                             
 n_symbols = 10000
 
@@ -16,7 +16,15 @@ def build_random_bits(length,
     return np.asarray(np.random.choice([0, 1], length, p = [1.0 - p, p]),
                       dtype = np.int32)
 
+def build_random_words(length,
+                       words = ['car', 'house', 'office'],
+                       p_scheme = np.ones(3)):
+    p_scheme = np.asarray(p_scheme, dtype = np.double)
+    p_scheme /= np.sum(p_scheme)
+    return np.random.choice(words, length, p = p_scheme)
+
 print build_random_bits(1000, 0.8)
+print build_random_words(1000)
 
 print inf_th.compute_entropy(build_random_bits(1000, 0.8))
 
@@ -64,3 +72,7 @@ sequence = np.asarray(list(build_random_bits(10000, 0.5)) +
 rolling_entropy_values = inf_th.compute_rolling_entropy(sequence, k = 100)
 plt.plot(rolling_entropy_values)
 plt.show()
+
+print inf_th.compute_entropy(build_random_words(1000,
+                                                ['bla', 'abl', 'bla'],
+                                                [0.25, 0.5, 0.25]))

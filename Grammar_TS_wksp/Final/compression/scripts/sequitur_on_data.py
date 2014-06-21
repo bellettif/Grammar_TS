@@ -16,6 +16,7 @@ from load_data import achu_file_names, \
                         oldo_file_names
 
 from compression.sequitur import Sequitur
+from information_th.measures import compute_entropy
 
 repetition_data_set = [(x, load_data.achu_file_contents[x])
                        for x in achu_file_names] + \
