@@ -28,11 +28,9 @@ int main(){
 
     std::cout << "N elements: " << length << std::endl;
 
-    /*
     for(int i =  0; i < length; ++i){
         std::cout << raw_input[i];
     }std::cout << std::endl;
-    */
 
     int cut = length;
     int k = 3;
@@ -72,10 +70,11 @@ int main(){
                               barcode_array, barcode_lengths,
                               ref_count_array, pop_count_array);
 
-    //k_sequitur.print_input();
-    //k_sequitur.reconstruct_input();
+    std::cout << std::endl;
+    k_sequitur.print_input();
+    std::cout << std::endl;
+    k_sequitur.reconstruct_input();
 
-    /*
     std::cout << std::endl;
     for(int i = 0; i < n_lhs; ++i){
         std::cout << "Rule: " << lhs_array[i]
@@ -91,7 +90,6 @@ int main(){
         }
         std::cout << std::endl;
     }
-    */
 
     return 0;
 }

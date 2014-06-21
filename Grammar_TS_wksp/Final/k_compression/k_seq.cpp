@@ -1,7 +1,7 @@
 #include <iostream>
 #include <string>
 
-#include "k_sequitur_lk/k_sequitur.h"
+#include "k_sequitur.h"
 
 static void cpp_exec_k_seq(int * raw_input,
 					int input_length,

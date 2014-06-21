@@ -263,68 +263,6 @@ public:
         _order_of_creation.reverse();
     }
 
-
-    /*
-    void compute_ref_counts(){
-        T_set next;
-        T_set next_next;
-        T_set already_done;
-        for(auto xy : _ref_counts){
-            _ref_counts[xy.first] = 0;
-            _pop_counts[xy.first] = 0;
-        }
-        _ref_graph.clear();
-        for(iter x = _input.begin(); x != _input.end(); ++ x){
-            if(_ref_counts.count(*x) != 0){
-                ++ _ref_counts[*x];
-                ++ _pop_counts[*x];
-                next.insert(*x);
-                if(_ref_graph.count(*x) == 0){
-                    _ref_graph.emplace(*x, merge_coord_list());
-                }
-                _ref_graph.at(*x).push_back(merge_coord(&_input, x));
-            }
-        }
-
-        std::unordered_map<T, int> local_ref_counts;
-        Rule<T> * current_rule;
-        int parent_pop_count;
-        int i = 0;
-        while(next.size() != 0){
-            for(auto front : next){
-                current_rule = _grammar_accessor[front];
-                parent_pop_count = _pop_counts[front];
-                //std::cout << parent_ref_count << std::endl;
-                for(iter x = current_rule->get_rhs().begin(); x != current_rule->get_rhs().end(); ++ x){
-                    if(_ref_counts.count(*x) != 0){
-                        if(_ref_graph.count(*x) == 0){
-                            _ref_graph.emplace(*x, merge_coord_list());
-                        }
-                        _ref_graph.at(*x).push_back(merge_coord(current_rule->get_rhs_pt(), x));
-                        if(local_ref_counts.count(*x) == 0){
-                            local_ref_counts[*x] = 0;
-                        }
-                        ++ local_ref_counts[*x];
-                    }
-                }
-                already_done.insert(front);
-                for(auto xy : local_ref_counts){
-                    _pop_counts[xy.first] += parent_pop_count * xy.second;
-                    _ref_counts[xy.first] += xy.second;
-                    if(already_done.count(xy.first) == 0){
-                        next_next.insert(xy.first);
-                    }
-                }
-            }
-            for(auto x : next){
-                std::cout << x << " " << _pop_counts[x] << " " << _ref_counts[x] << "  ";
-            }std::cout << std::endl;
-            next.swap(next_next);
-            next_next.clear();
-        }
-    }
-    */
-
     void collapse_grammar(int minimum){
         //std::cout << std::endl;
         //std::cout << "COLLAPSING GRAMMAR" << std::endl;
@@ -336,7 +274,7 @@ public:
                 //std::cout << "\rDeleting rule " << x->get_lhs() << std::endl;
                 to_delete.push_back(x->get_lhs());
                 for(auto rule : x->get_rhs()){
-                    -- _ref_counts[x->get_lhs()];
+                    -- _ref_counts[rule];
                 }
                 for(auto z : _ref_graph.at(x->get_lhs())){
                     //if(z.first == &_input) std::cout << "BOOOM" << *(z.second) << std::endl;
@@ -449,9 +387,9 @@ public:
         std::string result;
         for(auto x : _input){
             if(_bar_codes.count(x) != 0){
-                result += _bar_codes[x] + " ";
+                result += _bar_codes[x];
             }else{
-                result += std::to_string(x) + " ";
+                result += std::to_string(x);
             }
         }
         std::cout << result << std::endl;

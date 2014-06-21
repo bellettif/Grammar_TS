@@ -15,7 +15,7 @@ import plot_convention.colors as colors
 from load_data import achu_file_names, \
                         oldo_file_names
 
-from compression.sequitur import Sequitur
+from k_compression.k_sequitur import k_Sequitur
 
 repetition_data_set = [(x, load_data.achu_file_contents[x])
                        for x in achu_file_names] + \
@@ -27,7 +27,7 @@ no_repetition_data_set = [(x,load_data.no_rep_achu_file_contents[x])
                            for x in oldo_file_names]
                           
 def run_seq(sequence):
-    sequi = Sequitur(sequence.split(' '))
+    sequi = k_Sequitur(sequence.split(' '))
     sequi.run()
     return float(len(sequi.compressed_sequence)), \
             float(len(sequi.input_sequence)), \
