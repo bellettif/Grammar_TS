@@ -12,7 +12,9 @@ import load_data
 from load_data import int_to_char, \
                         char_to_int
 
-from Sequitur import Sequitur
+from plot_convention import colors
+
+from compression.sequitur import Sequitur
 
 achu_seq_files = load_data.achu_file_contents
     
@@ -37,3 +39,5 @@ sequi.run()
 print sequi.compressed_sequence
 for lhs, array in sequi.grammar.items():
     print '%s (%d) -> (%s)' % (lhs, sequi.ref_counts[lhs], '-'.join(array))
+    
+sequi.draw_graph('test.png')

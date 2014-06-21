@@ -7,6 +7,8 @@ Created on 20 juin 2014
 import sequitur_c
 import numpy as np
 
+from grammar_graph import grammar_to_graph
+
 class Sequitur():
     
     #
@@ -33,6 +35,8 @@ class Sequitur():
         #
         self.grammar = {}
         self.ref_counts = {}
+        self.hashed_ref_counts = {}
+        self.hashed_freqs = {}
         self.hashcode_to_rule = {}
         self.rule_to_hashcode = {}
         
@@ -62,7 +66,14 @@ class Sequitur():
             rule_name = 'r%d' % (-lhs)
             self.grammar[rule_name] = rhs_transformed
             self.ref_counts[rule_name] = ref_count
+            self.hashed_ref_counts[lhs_hashcode] = ref_count
+            self.hashed_freqs[lhs_hashcode] = float(ref_count) / float(len(self.input_sequence))
             self.hashcode_to_rule[lhs_hashcode] = rule_name
             self.rule_to_hashcode[rule_name] = lhs_hashcode
             
+    def draw_graph(self, file_path, cut = 10):
+        grammar_to_graph(file_path, 
+                         self.grammar, 
+                         self.compressed_sequence,
+                         cut)
         
