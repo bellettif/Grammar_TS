@@ -29,7 +29,7 @@ no_repetition_data_set = [(x,load_data.no_rep_achu_file_contents[x])
                            for x in oldo_file_names]
                           
 def run_seq(sequence):
-    sequi = Sequitur(sequence)
+    sequi = Sequitur(sequence.split(' '))
     sequi.run()
     return compute_entropy(sequi.compressed_sequence), \
             compute_entropy(sequi.input_sequence), \

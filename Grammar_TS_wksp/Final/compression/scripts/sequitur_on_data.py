@@ -27,7 +27,7 @@ no_repetition_data_set = [(x,load_data.no_rep_achu_file_contents[x])
                            for x in oldo_file_names]
                           
 def run_seq(sequence):
-    sequi = Sequitur(sequence)
+    sequi = Sequitur(sequence.split(' '))
     sequi.run()
     return float(len(sequi.compressed_sequence)), \
             float(len(sequi.input_sequence)), \
