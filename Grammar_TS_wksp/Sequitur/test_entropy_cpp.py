@@ -10,23 +10,18 @@ import csv
 
 import information_th.entropy_stats as entropy_stats
 from test_entropy import measure_entropy
-
-file_path = "compression/Sequitur_lk/data/achuSeq_7.csv"
-
-sequence = []
-with open(file_path, 'rb') as input_file:
-    csv_reader = csv.reader(input_file)
-    for line in csv_reader:
-        sequence = line
-        break
-    
-#sequence = np.random.binomial(1, 0.5, 1000)
+   
+sequence = np.random.binomial(1, 0.5, 1000)
 sequence = np.asarray(sequence, dtype = np.int32)
 
 probas = np.linspace(0, 1.0, 100)
 data = [np.asarray(np.random.binomial(1, x, 100000), dtype = np.int32) for x in probas]
+
 entropies = [entropy_stats.compute_string_entropy(line, 5) for line in data]
 ginis = [entropy_stats.compute_string_gini(line, 5) for line in data]
+
+entropies = [entropy_stats.compute_entropy(line) for line in data]
+ginis = [entropy_stats.compute_gini(line) for line in data]
 
 plt.title("Test information theory package (5 elt strings)")
 plt.plot(probas, entropies, c ='g')
