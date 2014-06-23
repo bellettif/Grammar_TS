@@ -14,12 +14,14 @@ class k_Sequitur():
     #
     #    Input sequence must be a list of chars
     #
-    def __init__(self, input_sequence):
+    def __init__(self, input_sequence, 
+                 k = 2):
         if(len(input_sequence) == 0):
             raise Exception('Input sequence length in sequitur is 0')
         #
         #    Store input and output
         #
+        self.k = k
         self.input_sequence = input_sequence
         self.compressed_sequence = []
         self.initial_length = len(input_sequence)
@@ -43,7 +45,8 @@ class k_Sequitur():
     def run(self):
         temp_grammar = k_sequitur_c.run(np.asarray([self.char_to_int[x] 
                                                   for x in self.input_sequence],
-                                                 dtype = np.int32))
+                                                 dtype = np.int32),
+                                        self.k)
         rule_indices = temp_grammar.keys()
         rule_indices.sort(key = (lambda x : -x))
         for lhs in rule_indices:
