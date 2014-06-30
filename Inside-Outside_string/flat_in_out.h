@@ -10,6 +10,8 @@
 #include <random>
 #include <deque>
 
+#include "rule.h"
+
 typedef std::unordered_map<std::string, int>              string_int_map;
 typedef std::vector<std::string>                          string_vect;
 typedef std::vector<string_vect>                          string_vect_vect;
@@ -27,71 +29,45 @@ static RNG core_rng (millis);
 static const int MAX_ITER_IN_DERIVATION = 10000;
 
 
-class Rule{
-    int                             _N;
-    int                             _M;
-    choice_distrib                  _emission_choice;
-    choice_distrib                  _non_term_choice;
-    choice_distrib                  _term_choice;
-    const string_vect &             _terminals;
-
-
-public:
-
-    Rule(int i, double * A, double * B, int N, int M,
-         const string_vect & terminals):
-        _N(N),
-        _M(M),
-        _terminals(terminals)
-    {
-        double total_emission_weight = 0;
-        double total_non_emission_weight = 0;
-        for(int j = 0; j < _M; ++j){
-            total_emission_weight += B[i*_M + j];
-        }
-        total_non_emission_weight = 1.0 - total_emission_weight;
-        _emission_choice = choice_distrib({total_non_emission_weight,
-                                           total_emission_weight});
-        _non_term_choice = choice_distrib(A + i*N*N, A + (i+1)*N*N);
-        _term_choice = choice_distrib(B + i*M, B+ (i+1)*M);
-    }
-
-    void inline derivation(RNG & rng,
-                           bool & emission,
-                           int & term,
-                           int & left,
-                           int & right){
-        emission = (_emission_choice(rng) == 1);
-        if(emission){
-            term = _term_choice(rng);
-        }else{
-            int non_term = _non_term_choice(rng);
-            left = non_term / _N;
-            right = non_term % _N;
-        }
-    }
-
-
-};
-
-
+/*
+ *      Handles Inside Outside algorithm with 1D arrays.
+ *          1D arrays improve Python compatibility.
+ */
 class Flat_in_out
 {
 
 private:
-    double*                                     _A;     //Flatenned 3D array
-    double*                                     _B;     //Flatenned 3D array
-    int                                         _N;
-    int                                         _M;
-    string_vect                                 _terminals;
-    string_int_map                              _terminal_to_index;
-
+    /*
+     *  Parameters of the grammar
+     *      _A is the non terminal transformation matrix (N * N * N)
+     *      _B is the terminal emission matrix (N * M)
+     *      _N is the number of non terminal symbols
+     *      _M is the number of terminal symbols
+     *      _terminals in the list of terminal symbols
+     *      _terminal to index is its reversed dictionary counterpart
+     *
+     */
+    const double * const                        _A;                 // Flatenned 3D array (N * N * N)
+    const double * const                        _B;                 // Flatenned 3D array (N * N * N)
+    const int                                   _N;
+    const int                                   _M;
+    const string_vect                           _terminals;
+    const string_int_map                        _terminal_to_index;
+    /*
+     *  The rule map will be built in case sentences need to be generated
+     *      and rules need to be used in a rule map format
+     */
     bool                                        _built_rule_map         = false;
     std::unordered_map<int, Rule>               _rule_map;
-
-    int                                         _root_index;
+    /*
+     *  Index of the root symbol
+     */
+    const int                                   _root_index;
 
 public:
+    /*
+     *  A and B are given by Python (already allocated)
+     */
     Flat_in_out(double* A, double* B,
                int N, int M,
                const string_vect & terminals,
@@ -103,11 +79,17 @@ public:
         _terminals(terminals),
         _root_index(root_index)
     {
+        const string_int_map * const term_to_indx_pt = & _terminal_to_index;
         for(int i = 0; i < _terminals.size(); ++i){
-            _terminal_to_index.emplace(_terminals[i], i);
+            const_cast<string_int_map *>(term_to_indx_pt)->emplace(_terminals[i], i);
         }
     }
 
+    /*
+     *  Compute the probability that the grammar generates sample
+     *      for each sample in grammar. The result in stored in probas
+     *      which is assumed to be of size size_of(double) * n_samples
+     */
     void inline compute_probas_flat(const std::vector<string_vect> & samples,
                                     double * probas){
         int n_samples = samples.size();
@@ -116,21 +98,41 @@ public:
         }
     }
 
+    /*
+     *  Compute the probability that the grammar generates sample
+     *      The inside part of the inside-outside algorithm is used
+     *      for that.
+     *
+     */
     double inline compute_proba_flat(const string_vect & sample){
         int length = sample.size();
         double* E = new double[_N * length * length];
         compute_inside_probas_flat(E, sample);
+        /*
+         *  Return the probability that root index generates the whole sequence
+         *      from index 0 to index length - 1
+         */
         double result = E[_root_index*length*length + 0*length + length - 1];
         delete[] E;
         return result;
     }
 
+    /*
+     *  Run the inside outside algorithm
+     */
     void inline compute_inside_outside_flat(double* E, double* F,
                                        const string_vect & sample){
         compute_inside_probas_flat(E, sample);
         compute_outside_probas_flat(E, F, sample);
     }
 
+    /*
+     *  Run the inside part of the algorithm on all subsequences of sample
+     *
+     *  The result will be stored in E whose dimension is N * length * length
+     *      (flattenned version of the 3D array)
+     *
+     */
     void inline compute_inside_probas_flat(double* E, const string_vect & sample){
         int length = sample.size();
         for(int i = 0; i < _N; ++i){
@@ -145,6 +147,16 @@ public:
         }
     }
 
+    /*
+     *  Run the inside part of the algorithm on subsequences on length == level
+     *
+     *  E is the linear flattened version of a 3D array of dimension
+     *      N * length * length
+     *  Level in the length of the subsequence that is currently being examined
+     *      in sample.
+     *  The results will be stored in E
+     *
+     */
     void inline compute_inside_level(double* E, const string_vect & sample,
                                      int level){
         int length = sample.size();
@@ -166,6 +178,15 @@ public:
                     for(r = s; r < t; ++r){
                         for(j = 0; j < _N; ++j){
                             for(k = 0; k < _N; ++k){
+                                /*
+                                 *  i is the index of parent the non term symbol
+                                 *  s is the index of the starting position in the parsed sequence
+                                 *  t is the index of the ending position in the parsed sequence
+                                 *      Here we have t - s = level as per the definition of the function
+                                 *  j is the index of the left child non term symbol
+                                 *  k is the index of the right child non term symbol
+                                 *
+                                 */
                                 E[i*length*length + s*length + t] +=
                                         _A[i*_N*_N + j*_N + k]
                                         *
@@ -180,22 +201,44 @@ public:
         }
     }
 
-    // Inside must have been computed already
+    /*
+     *  Run the outside part of the algorithm
+     *      Inside results must have been computed already (result stored in E)
+     *      Outside results will be computed and stored in F (dimension N * length * length)
+     */
     void inline compute_outside_probas_flat(double* E, double * F,
                                        const string_vect & sample){
         int length = sample.size();
+        /*
+         *  Initialize outside probas with zeros
+         */
         for(int i = 0; i < _N; ++i){
             for(int s = 0; s < length; ++s){
                 for(int t = 0; t < length; ++t){
+                    /*
+                     *  i is the index of the parent element
+                     *  s the index of the start position of the subsequence
+                     *  t the index of the end position of the subsequence
+                     */
                     F[i*length*length + s*length + t] = 0.0;
                 }
             }
         }
+        /*
+         *  Compute the outside probabilities for each level, i.e. for each
+         *      length of subscripts in the sample
+         */
         for(int level = length; level >= 0; --level){
             compute_outside_level(E, F, sample, level);
         }
     }
 
+    /*
+     *  Run the oustide part of the algorithm for all subsequences of length == level
+     *      Results of the inside part of the algorithm have already been computed
+     *      and are assumed to be available in E.
+     *      Results of the oustide part will be stored in F.
+     */
     void inline compute_outside_level(double * E, double * F,
                                       const string_vect & sample,
                                       int level){
@@ -240,6 +283,17 @@ public:
         }
     }
 
+    /*
+     *  Estimate matrices A and B with Baum-Welch algorithm (EM algo)
+     *      This runs one iteration of the EM algo.
+     *
+     *  Input: list of sentences in samples
+     *  Output: probability that each sample has been generated by the grammar
+     *      in sample_probas (pre-allocated by Python)
+     *          new estimation of matrix A in new_A (dimension N * N * N) (pre-allocated by Python)
+     *          new estimation of matrix B in new_B (dimension N * M) (pre-allocated by Python)
+     *
+     */
     void inline estimate_A_B(const std::vector<string_vect> & samples,
                              double* sample_probas,
                              double* new_A,
@@ -251,6 +305,10 @@ public:
         for(id = 0; id < samples.size(); ++id){
             sample_lengths[id] = samples[id].size();
         }
+        /*
+         *  Prepare memory for as many runs of the inside outside
+         *      algorithm as there are sample
+         */
         double** Es = new double*[n_samples];
         double** Fs = new double*[n_samples];
         for(id = 0; id < n_samples; ++id){
@@ -259,6 +317,10 @@ public:
             Fs[id] = new double[_N*length*length];
         }
 
+        /*
+         *  Run the inside outside algorithm for each sample and
+         *      get the proba that the corresponding sample has been generated
+         */
         for(id = 0; id < n_samples; ++id){
             compute_inside_outside_flat(Es[id], Fs[id], samples[id]);
             length = sample_lengths[id];
@@ -275,6 +337,12 @@ public:
         int s;
         int r;
         for(i = 0; i < _N; ++i){
+            /*
+             *  Estimation of A[i, :, :]
+             */
+            /*
+             *  Compute denominator in estimation of A[i, : ,:]
+             */
             den = 0;
             for(id = 0; id < n_samples; ++id){
                 length = sample_lengths[id];
@@ -284,6 +352,10 @@ public:
                 temp = 0;
                 for(s = 0; s < length; ++s){
                     for(t = s; t < length; ++t){
+                        /*
+                         *  s is the beginning of the subsequence
+                         *  t is the end of the subsequence
+                         */
                         temp += Es[id][i*length*length + s*length + t]
                                 *
                                 Fs[id][i*length*length + s*length + t];
@@ -293,6 +365,9 @@ public:
             }
             for(j = 0; j < _N; ++j){
                 for(k = 0; k < _N; ++k){
+                    /*
+                     *  Estimate element A[i, j, k]
+                     */
                     num = 0;
                     for(id = 0; id < n_samples; ++id){
                         if(sample_probas[id] == 0){
@@ -303,6 +378,13 @@ public:
                         for(s = 0; s < length - 1; ++s){
                             for(t = s + 1; t < length; ++t){
                                 for(r = s; r < t; ++r){
+                                    /*
+                                     *  s is the beginning of the subsequence
+                                     *  t is the end of the subsequence
+                                     *  r is the current index at which the subsequence is
+                                     *      split into a left generated element and a right
+                                     *      generated element
+                                     */
                                     temp += _A[i*_N*_N + j*_N + k]
                                             *
                                             Es[id][j*length*length + s*length + r]
@@ -318,7 +400,13 @@ public:
                     new_A[i*_N*_N + j*_N + k] = num / den;
                 }
             }
+            /*
+             *  Estimation of B[i, :]
+             */
             for(j = 0; j < _M; ++j){
+                /*
+                 *  Estimate element B[i, j]
+                 */
                 num = 0;
                 for(id = 0; id < n_samples; ++id){
                     temp = 0;
@@ -327,7 +415,11 @@ public:
                     }
                     length = sample_lengths[id];
                     for(s = 0; s < length; ++s){
-                        if(_terminal_to_index[samples[id][s]] == j){
+                        /*
+                         *  s is the position of the current terminal
+                         *      symbol being examined in the sequence
+                         */
+                        if(_terminal_to_index.at(samples[id][s]) == j){
                             temp += Es[id][i*length*length + s*length + s]
                                     *
                                     Fs[id][i*length*length + s*length + s];
@@ -339,6 +431,9 @@ public:
             }
         }
 
+        /*
+         *  Clear memory of inside-outside algorithm
+         */
         for(id = 0; id < n_samples; ++id){
             delete[] Es[id];
             delete[] Fs[id];
@@ -348,6 +443,12 @@ public:
         delete[] sample_lengths;
     }
 
+    /*
+     *  Generate n_sentences samples of the grammar.
+     *  If the grammar is unstable, the function will not terminate.
+     *      In that case, does_not_terminate will be true
+     *
+     */
     string_vect_vect inline produce_sentences(int n_sentences,
                                               bool & does_not_terminate){
         return produce_sentences(n_sentences,
@@ -355,6 +456,9 @@ public:
                                  core_rng);
     }
 
+    /*
+     *  Same as before by rng can is not necessarily the core one
+     */
     string_vect_vect inline produce_sentences(int n_sentences,
                                               bool & does_not_terminate,
                                               RNG & rng){
@@ -370,6 +474,19 @@ public:
         return result;
     }
 
+    /*
+     *  Compute the MC signature of the grammar.
+     *  Produce n_sentences.
+     *  For each type of sentence generate, compute the count among
+     *      all the sequences that have been generated.
+     *
+     *  Input: n_sentences, number of samples that will be used
+     *         max_length, if not zero, all sequences of length > max_length
+     *              will be discarded (avoid pathological cases when comparing signatures)
+     *  Output: freqs, the count of each type of sentence that has been generated
+     *          doest_not_terminate, in case the grammar is unstable and the algorithm
+     *          loops, this will be true.
+     */
     void inline compute_frequences(int n_sentences,
                                     int_vect & freqs,
                                     string_vect & strings,
@@ -404,20 +521,44 @@ public:
         }
     }
 
+    /*
+     *  Produce one sentence with the grammar. (Rule class will be used for that).
+     *  If it has not been built yet, rule_map will be built.
+     */
     inline bool produce_sentence(string_vect & result, RNG & rng){
         if(!_built_rule_map){
             build_rule_map();
         }
+        /*
+         *  The temporary sequence of symbols (that will be both non terminals
+         *      and terminals) will be stored as integers (corresponding to the index
+         *      of the rule or the index of the terminal)
+         */
         std::list<int>                                  temp_result = {_root_index};
+        /*
+         *  List of instruction (two for BFS swap), contain the list of indices
+         *      that need processing in temp_result, i.e., non terminal symbols
+         *      that correpsonding to rules that need further derivation
+         *      prior to producing terminal symbols
+         */
         std::vector<list_it>                            index_to_do = {temp_result.begin()};
         std::vector<list_it>                            next_index_to_do;
+        /*
+         *  Preparing output that is going to be passed by reference
+         */
         bool emission;
         int terminal;
         int left;
         int right;
+        /*
+         *  Preparing iterators for BFS
+         */
         Rule * current_rule;
         list_it second_it;
         int current_iter = 0;
+        /*
+         *  BFS construction of the sentence
+         */
         while(!index_to_do.empty()){
             for(list_it & it : index_to_do){
                 current_rule = &(_rule_map.at(*it));
@@ -436,6 +577,9 @@ public:
             index_to_do.swap(next_index_to_do);
             next_index_to_do.clear();
             ++ current_iter;
+            /*
+             *  Prevent infinite loop
+             */
             if(current_iter == MAX_ITER_IN_DERIVATION){
                 return false;
             }
@@ -446,6 +590,10 @@ public:
         return true;
     }
 
+    /*
+     *  Build a map of rules that are ready for derivation and production
+     *      of a sentence.
+     */
     void inline build_rule_map(){
         for(int i = 0; i < _N; ++i){
             _rule_map.emplace(i, Rule(i, _A, _B, _N, _M, _terminals));

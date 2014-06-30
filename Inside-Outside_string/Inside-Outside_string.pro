@@ -30,6 +30,7 @@ HEADERS += \
     bare_estimator.h \
     stochastic_rule.h \
     array_utils.h \
-    flat_in_out.h
+    flat_in_out.h \
+    rule.h
 
 OTHER_FILES += \

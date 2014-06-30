@@ -3,8 +3,13 @@
 
 #include <boost/functional/hash.hpp>
 
-#include "mem_sandwitch.h"
+#include "centipede.h"
 
+/**
+*   Believe it or not, standard lib doesn't have a to_string
+*       taking strings as values. This is necessary for class templating
+*       so T can also be of type std::string.
+*/
 namespace std{
     static std::string to_string(std::string value){
         return value;
@@ -12,6 +17,9 @@ namespace std{
 }
 
 
+/**
+ *  Class that wraps a hashmap of pairs as keys to centipedes
+ */
 template<typename T>
 class Counter{
 
@@ -23,31 +31,56 @@ typedef std::list<iter>                                 iter_list;
 typedef std::list<iter_pair>                            iter_pair_list;
 typedef typename iter_list::iterator                    iter_list_iter;
 
+/**
+ *  Define a hashing function for pairs of symbols
+ */
 typedef std::function<size_t(T_pair)>                   T_pair_hash;
 public: T_pair_hash T_pair_hasher = [&](const T_pair & pair){
     boost::hash<std::pair<T, T>> hasher;
     return hasher(std::pair<T, T>(pair.first, pair.second));
 };
 
+/**
+ * @brief Mem_map
+ *  This type maps pairs of symbols to the corresponding
+ *      book-keeping centipede unit
+ */
 typedef std::unordered_map<T_pair,
-                           Mem_sandwitch<T>,
+                           Centipede<T>,
                            T_pair_hash>                 Mem_map;
 
 
 
 private:
+    /**
+     * @brief _memory_map
+     *  Main element of the memory that maps pairs of symbols onto
+     *      centipedes.
+     */
     Mem_map         _memory_map;
 
 
 public:
+    /**
+     * @brief Counter
+     *  Default constructor. Hashmap needs to be explecitely defined
+     *      so it uses the proper hashcode function.
+     */
     Counter():
         _memory_map(128, T_pair_hasher){}
 
 
+    /**
+     * @brief add_ref
+     * @param ref_pair
+     *  Add a reference pointing the positions of the elements of the pair
+     *      in the centipeded corresponding to the pair of values the pair
+     *      of pointers points towards.
+     */
     void add_ref(const iter_pair & ref_pair){
         T_pair value_pair (*(ref_pair.first), *(ref_pair.second));
         if(_memory_map.count(value_pair) == 0){
-            _memory_map.emplace(value_pair, Mem_sandwitch<T>());
+            _memory_map.emplace(value_pair, Centipede<T>());
         }
         _memory_map.at(value_pair).push_back(ref_pair);
     }
@@ -71,14 +104,11 @@ public:
     void delete_ref(const iter_pair & ref_pair,
                     T_list & input,
                     const iter & stop){
-        //std::cout << "Calling delete ref " << *(ref_pair.first) << "-" << *(ref_pair.second) << std::endl;
         if(ref_pair.first != input.begin()){
-            //Sstd::cout << "Ref pair " << *(ref_pair.first) << "_" << *(ref_pair.second) << std::endl;
             iter_pair pre_iters(ref_pair.first, ref_pair.first);
             -- pre_iters.first;
             T_pair pre_values(*(pre_iters.first), *(pre_iters.second));
             _memory_map.at(pre_values).delete_ref_second(pre_iters.second);
-            //std::cout << "Deleted " << pre_values.first << "_" << pre_values.second << std::endl;
         }
         iter pre_end = stop;
         -- pre_end;
@@ -87,7 +117,6 @@ public:
             ++ post_iters.second;
             T_pair post_values(*(post_iters.first), *(post_iters.second));
             _memory_map.at(post_values).delete_ref_first(post_iters.first);
-            //std::cout << "Deleted " << post_values.first << "_" << post_values.second << std::endl;
         }
     }
 
@@ -101,7 +130,7 @@ public:
             -- pre_iters.first;
             T_pair pre_values (*(pre_iters.first), *(pre_iters.second));
             if(_memory_map.count(pre_values) == 0){
-                _memory_map.emplace(pre_values, Mem_sandwitch<T>());
+                _memory_map.emplace(pre_values, Centipede<T>());
             }
             _memory_map.at(pre_values).push_back(pre_iters);
         }
@@ -112,7 +141,7 @@ public:
             ++ post_iters.second;
             T_pair post_values (*(post_iters.first), *(post_iters.second));
             if(_memory_map.count(post_values) == 0){
-                _memory_map.emplace(post_values, Mem_sandwitch<T>());
+                _memory_map.emplace(post_values, Centipede<T>());
             }
             _memory_map.at(post_values).push_back(post_iters);
         }

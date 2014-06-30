@@ -6,4 +6,7 @@ Created on 20 mai 2014
 
 import dummy
 
-dummy.print_content(['b', 'j'])
+my_list = ['bla', 'bla', 'bla']
+
+print dummy.modify_list(my_list, {1: 'cla'})
+

@@ -8,18 +8,20 @@ template<typename T>
 class Dummy{
 
 private:
-	std::pair<T, T> _content;
+	std::vector<T> &		_content;
 
 public:
-	Dummy(){}
+	Dummy(std::vector<T> & content):
+		_content(content)
+	{}
 
-	void set_content(std::pair<T, T> content){
-		_content = content;
+	void modify_content(int i,
+						const T & value){
+		_content[i] = value;
 	}
 
-	void print_content(){
-		std::cout << "Content left: " << _content.first << std::endl;
-		std::cout << "Content right: " << _content.second << std::endl;
+	const std::vector<T> & get_content(){
+		return _content;
 	}
 
 };

@@ -17,20 +17,16 @@ ctypedef np.int32_t ITYPE_t
 # Linking with the c code
 cdef extern from "dummy.h":
 	cdef cppclass Dummy[T]:
-		Dummy()
-		void set_content(pair[T, T] content)
-		void print_content()
+		Dummy(vector[T] & content)
+		void modify_content(int i,
+							const T & value)
+		vector[T] & get_content()
 
-def print_content(content):
-	cdef pair[string, string] my_pair
-	my_pair.first = 'michel'
-	my_pair.second = 'mathieu'
-	print my_pair.first
-	print my_pair.second
-	cdef Dummy[string] c_dummy
-	c_dummy.set_content(content)
-	c_dummy.print_content()
-	cdef vector[int] *vect_to_show = new vector[int]()
-	for i in xrange(10):
-		vect_to_show.push_back(i*i)
-	print deref(vect_to_show)
+def modify_list(list_of_strings,
+				list_of_modifications):
+	cdef Dummy[string] * c_dummy = new Dummy[string](list_of_strings)
+	for key, value in list_of_modifications.iteritems():
+		c_dummy.modify_content(key, value)
+	list_of_strings = c_dummy.get_content()
+	del c_dummy
+	return list_of_strings

@@ -25,8 +25,8 @@ HEADERS += \
     rule.h \
     name_generator.h \
     counter.h \
-    mem_sandwitch.h \
     utils.h \
     file_reader.h \
+    centipede.h
 
 OTHER_FILES += \
