@@ -9,7 +9,7 @@ from matplotlib import pyplot as plt
 import copy
 import time
 
-from Proba_sequitur import Proba_sequitur
+from proba_sequitur import Proba_sequitur
 import load_data
 
 achu_data_set = load_data.achu_file_contents.values()
@@ -22,8 +22,8 @@ inference_content = achu_data_set_no_rep + oldo_data_set_no_rep
 count_content = copy.deepcopy(inference_content)
 
 begin = time.clock()
-ps = Proba_sequitur(inference_content,
-                    count_content,
+ps = Proba_sequitur([x.split(' ') for x in inference_content],
+                    [x.split(' ') for x in count_content],
                     12,
                     120,
                     False,
@@ -34,7 +34,7 @@ ps.run()
 print time.clock() - begin
 
 
-rule_names = ps.rule_names
+rule_names = ps.hashcode_to_rule
 
 for terminal_parse in ps.count_parsed:
     print ' '.join([rule_names[x] if x in rule_names else x for x in terminal_parse])

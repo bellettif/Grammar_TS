@@ -36,11 +36,15 @@ class k_Sequitur():
         #    Grammar
         #
         self.grammar = {}
+        self.hashcode_to_rule = {}
+        self.rule_to_hashcode = {}
+        self.hashed_grammar = {}
+        #
+        #    Hashed frequency results
+        #
         self.ref_counts = {}
         self.hashed_ref_counts = {}
         self.hashed_freqs = {}
-        self.hashcode_to_rule = {}
-        self.rule_to_hashcode = {}
         
     def run(self):
         temp_grammar = k_sequitur_c.run(np.asarray([self.char_to_int[x] 
