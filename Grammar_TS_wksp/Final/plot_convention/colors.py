@@ -26,3 +26,6 @@ oldo_colors = {'oldoSeq_1' : '#3300CC',
 
 all_colors = dict(achu_colors.items() + 
                   oldo_colors.items())
+
+oranges = achu_colors.values()
+blues = oldo_colors.values()

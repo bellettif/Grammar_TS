@@ -6,6 +6,8 @@ Created on 18 avr. 2014
 
 import pydot
 
+already_done = []
+
 def add_rule(graph, 
              lhs, 
              grammar):
@@ -25,8 +27,10 @@ def add_rule(graph,
                 next_node = pydot.Node(lhs + ' rhs ' + str(i) + ', ' + x, 
                                        style = 'filled', 
                                        fillcolor = "lightsteelblue")
-            cluster.add_node(next_node)
-            cluster.add_edge(pydot.Edge(previous_node, next_node))
+            if (lhs + ' rhs ' + str(i) + ', ' + x) not in already_done:
+                cluster.add_node(next_node)
+                cluster.add_edge(pydot.Edge(previous_node, next_node))
+                already_done.append(lhs + ' rhs ' + str(i) + ', ' + x)
             previous_node = next_node
         graph.add_subgraph(cluster)
         return lhs_node

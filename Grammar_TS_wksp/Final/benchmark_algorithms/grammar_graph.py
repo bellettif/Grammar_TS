@@ -22,16 +22,17 @@ def add_rule(graph,
                 next_node = pydot.Node(lhs + ' rhs ' + str(i) + ', ' + x, 
                                        style = 'filled', 
                                        fillcolor = "lightcoral")
-                graph.add_edge(pydot.Edge(next_node, other_lhs_node))
+                if lhs not in already_done:
+                    graph.add_edge(pydot.Edge(next_node, other_lhs_node))
             else:
                 next_node = pydot.Node(lhs + ' rhs ' + str(i) + ', ' + x, 
                                        style = 'filled', 
                                        fillcolor = "lightsteelblue")
-            if (lhs + ' rhs ' + str(i) + ', ' + x) not in already_done:
+            if lhs not in already_done:
                 cluster.add_node(next_node)
                 cluster.add_edge(pydot.Edge(previous_node, next_node))
-                already_done.append(lhs + ' rhs ' + str(i) + ', ' + x)
             previous_node = next_node
+        already_done.append(lhs)
         graph.add_subgraph(cluster)
         return lhs_node
 
