@@ -11,6 +11,8 @@ from matplotlib import pyplot as plt
 import os
 import cPickle as pickle
 
+from pylab import *
+
 class Proba_seq_merger:
     
     def __init__(self):
@@ -227,9 +229,7 @@ class Proba_seq_merger:
                     oldo_counts_array.extend(oldo_counts_dict[x])
                 plt.scatter(oldo_counts_array,
                             achu_counts_array, 
-                            marker = 'o',
-                            alpha = 0.01,
-                            s = 40,
+                            marker = '.',
                             c = 'blue')
                 plt.xlim((-0.05, 0.15))
                 plt.ylim((-0.05, 0.15))
@@ -245,11 +245,11 @@ class Proba_seq_merger:
                 pop_matrix = self.comparison_matrix(achu_counts_array,
                                                     oldo_counts_array,
                                                     2)
-                plt.matshow(pop_matrix)
+                plt.matshow(pop_matrix, cmap = 'automn')
                 plt.xlabel('Oldo')
                 plt.ylabel('Achu')
-                plt.xticks(range(0, 2), ['Zeros', 'Non Zeros'], fontsize = 4, rotation = 'vertical')
-                plt.yticks(range(0, 2), ['Zeros', 'Non Zeros'], fontsize = 4, rotation = 'vertical')
+                plt.xticks(range(0, 2), ['Zeros', 'Non Zeros'], fontsize = 8, rotation = 'vertical')
+                plt.yticks(range(0, 2), ['Zeros', 'Non Zeros'], fontsize = 8, rotation = 'vertical')
                 plt.savefig('Results/%s/Comparison_%s_matrix_%d.png' % 
                             (prefix, prefix, target_depth), dpi = 300)
                 plt.close()
@@ -266,9 +266,7 @@ class Proba_seq_merger:
                 oldo_counts_array = np.asanyarray(oldo_counts_array, dtype = np.double)
                 plt.scatter(np.ravel(oldo_counts_array),
                             np.ravel(achu_counts_array),
-                            marker = 'o',
-                            alpha = 0.01,
-                            s = 40,
+                            marker = '.',
                             c = 'green')
                 plt.xlim((-0.05, 0.15))
                 plt.ylim((-0.05, 0.15))

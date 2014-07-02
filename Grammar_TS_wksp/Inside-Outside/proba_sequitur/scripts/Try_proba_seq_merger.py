@@ -19,7 +19,7 @@ f_achu_data_set = load_data.filtered_achu_file_contents.values()
 oldo_data_set = load_data.oldo_file_contents.values()
 f_oldo_data_set = load_data.filtered_oldo_file_contents.values()
 
-MAX_PROCESSES = 8
+MAX_PROCESSES = 6
 
 n_trials = 100
 
@@ -147,5 +147,10 @@ instruction_set = [(x[0], x[1], x[2],
                    for T in T_set
                    for T_decay in T_decay_set]
 
+"""
 p = multi.Pool(processes = MAX_PROCESSES)
 p.map(run_algo_tuple, instruction_set)
+"""
+
+for instruction in instruction_set:
+    run_algo_tuple(instruction)
