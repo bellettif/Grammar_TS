@@ -11,7 +11,7 @@ import cPickle as pickle
 
 from surrogate_grammar import Surrogate_grammar
 
-all_symbols = string.ascii_lowercase[:7]
+all_symbols = list(string.ascii_lowercase[:7]) + 5* ['a']
 n_layers = 5
 
 s_g = Surrogate_grammar(terminal_symbols = all_symbols,

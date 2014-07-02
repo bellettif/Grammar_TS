@@ -29,3 +29,8 @@ all_colors = dict(achu_colors.items() +
 
 oranges = achu_colors.values()
 blues = oldo_colors.values()
+
+algo_colors = {'sequitur' : '#FF6600',
+               'k_sequitur' : '#FFCC66',
+               'proba_sequitur' : '#3300CC',
+               'proba_sequitur_rand' : '#33CCFF'}
