@@ -19,24 +19,25 @@ n_sentences = 18
 #
 #    Generate sequences of symbols
 #
-all_symbols = list(string.ascii_lowercase[:7]) + 5* ['a']
+all_symbols = list(string.ascii_lowercase[:7]) + 4* ['a']
 n_layers = 5
 s_g = Surrogate_grammar(terminal_symbols = all_symbols,
                         n_layers = n_layers)
-"""
+input_sentences = s_g.produce_sentences(n_roots,
+                                        n_wildcards,
+                                        n_sentences)
 #
 #    Compute individual symbol frequencies
 #
 symbol_density = compute_symbol_density(input_sentences)
-plot_frequencies(symbol_density, 'Density_5_reps.png')
-"""
+plot_frequencies(symbol_density, 'Density_4_reps.png')
 #
 #    Run benchmark
 #
 k_set = range(2, 12)
 run_complete_benchmark(k_set, 
                        n_rounds = 4,
-                       filename = 'Benchmark_5_reps.png',
+                       filename = 'Benchmark_4_reps.png',
                        surrogate_grammar = s_g,
                        n_trials = 100,
                        n_roots = n_roots,
@@ -46,24 +47,25 @@ run_complete_benchmark(k_set,
 #
 #    Generate sequences of symbols
 #
-all_symbols = list(string.ascii_lowercase[:7]) + 3* ['a']
+all_symbols = list(string.ascii_lowercase[:7]) + 2* ['a']
 n_layers = 5
 s_g = Surrogate_grammar(terminal_symbols = all_symbols,
                         n_layers = n_layers)
-"""
+input_sentences = s_g.produce_sentences(n_roots,
+                                        n_wildcards,
+                                        n_sentences)
 #
 #    Compute individual symbol frequencies
 #
 symbol_density = compute_symbol_density(input_sentences)
-plot_frequencies(symbol_density, 'Density_3_reps.png')
-"""
+plot_frequencies(symbol_density, 'Density_2_reps.png')
 #
 #    Run benchmark
 #
 k_set = range(2, 12)
 run_complete_benchmark(k_set, 
                        n_rounds = 4,
-                       filename = 'Benchmark_3_reps.png',
+                       filename = 'Benchmark_2_reps.png',
                        surrogate_grammar = s_g,
                        n_trials = 100,
                        n_roots = n_roots,
@@ -74,13 +76,14 @@ all_symbols = list(string.ascii_lowercase[:7])
 n_layers = 5
 s_g = Surrogate_grammar(terminal_symbols = all_symbols,
                         n_layers = n_layers)
-"""
 #
 #    Compute individual symbol frequencies
 #
+input_sentences = s_g.produce_sentences(n_roots,
+                                        n_wildcards,
+                                        n_sentences)
 symbol_density = compute_symbol_density(input_sentences)
 plot_frequencies(symbol_density, 'Density_0_reps.png')
-"""
 #
 #    Run benchmark
 #

@@ -112,22 +112,22 @@ def run_benchmark(k, n_rounds, input_sentences, s_g):
                             'F_score' : F_score,
                             'avg_depth' : avg_depth}
     print 'Proba_sequitur (k = %d, max_rules = %d):\n\tprecision = %f, recall = %f, F_score = %f, avg depth = %f' \
-            % (k, max_rules, precision, recall, F_score, avg_depth)      
+            % (k, max_rules, precision, recall, F_score, avg_depth)   
+    """   
     #
     #    Test proba-sequitur randomized
     #
     proba_sequitur_rand_hashcodes = []
     max_rules = n_rounds * k
-    for i in xrange(len(input_sentences)):
-        proba_seq = Proba_sequitur(copy.deepcopy(input_sentences),
-                                   copy.deepcopy(input_sentences),
-                                   k = k,
-                                   max_rules = max_rules,
-                                   random = True,
-                                   init_T = 0.05,
-                                   T_decay = 0.05)
-        proba_seq.run()
-        proba_sequitur_rand_hashcodes.extend(proba_seq.hashcode_to_rule.keys())
+    proba_seq = Proba_sequitur(copy.deepcopy(input_sentences),
+                               copy.deepcopy(input_sentences),
+                               k = k,
+                               max_rules = max_rules,
+                               random = True,
+                               init_T = 0.05,
+                               T_decay = 0.1)
+    proba_seq.run()
+    proba_sequitur_rand_hashcodes.extend(proba_seq.hashcode_to_rule.keys())
     #
     s_g_hashcodes = filter_hashcodes(s_g_hashcodes)
     proba_sequitur_rand_hashcodes = filter_hashcodes(proba_sequitur_rand_hashcodes)
@@ -144,8 +144,9 @@ def run_benchmark(k, n_rounds, input_sentences, s_g):
                                    'avg_depth' : avg_depth}
     print 'Proba_sequitur_rand (k = %d, max_rules = %d):\n\tprecision = %f, recall = %f, F_score = %f, avg depth = %f' \
             % (k, max_rules, precision, recall, F_score, avg_depth)
+    """
     return sequitur_scores, k_sequitur_scores, \
-            proba_sequitur_scores, proba_sequitur_rand_scores
+            proba_sequitur_scores
 
 def run_complete_benchmark(k_set,
                            n_rounds,
@@ -171,10 +172,12 @@ def run_complete_benchmark(k_set,
     all_proba_sequitur_f_score = []
     all_proba_sequitur_avg_depth = []
     #
+    """
     all_proba_sequitur_rand_precision = []
     all_proba_sequitur_rand_recall = []
     all_proba_sequitur_rand_f_score = []
     all_proba_sequitur_rand_avg_depth = []
+    """
     #
     #
     #
@@ -185,19 +188,22 @@ def run_complete_benchmark(k_set,
         all_sequitur_scores = []
         all_k_sequitur_scores = []
         all_proba_sequitur_scores = []
+        """
         all_proba_sequitur_rand_scores = []
+        """
         #
         #    Run benchmark over input sequences for all values of k
         #        in k_set
         #
         for k in k_set:
             sequitur_scores, k_sequitur_scores, \
-                proba_sequitur_scores, proba_sequitur_rand_scores \
-                = run_benchmark(k, n_rounds, input_sentences, surrogate_grammar)
+                proba_sequitur_scores = run_benchmark(k, n_rounds, input_sentences, surrogate_grammar)
             all_sequitur_scores.append(sequitur_scores)
             all_k_sequitur_scores.append(k_sequitur_scores)
             all_proba_sequitur_scores.append(proba_sequitur_scores)
+            """
             all_proba_sequitur_rand_scores.append(proba_sequitur_rand_scores)
+            """
             print '\n'
         #
         sequitur_precision = [x['precision'] for x in all_sequitur_scores]
@@ -215,10 +221,12 @@ def run_complete_benchmark(k_set,
         proba_sequitur_f_score = [x['F_score'] for x in all_proba_sequitur_scores]
         proba_sequitur_avg_depth = [x['avg_depth'] for x in all_proba_sequitur_scores]
         #
+        """
         proba_sequitur_rand_precision = [x['precision'] for x in all_proba_sequitur_rand_scores]
         proba_sequitur_rand_recall = [x['recall'] for x in all_proba_sequitur_rand_scores]
         proba_sequitur_rand_f_score = [x['F_score'] for x in all_proba_sequitur_rand_scores]
         proba_sequitur_rand_avg_depth = [x['avg_depth'] for x in all_proba_sequitur_rand_scores]
+        """
         #
         #    Appending to all trials
         #
@@ -237,10 +245,12 @@ def run_complete_benchmark(k_set,
         all_proba_sequitur_f_score.append(proba_sequitur_f_score)
         all_proba_sequitur_avg_depth.append(proba_sequitur_avg_depth)
         #
+        """
         all_proba_sequitur_rand_precision.append(proba_sequitur_rand_precision)
         all_proba_sequitur_rand_recall.append(proba_sequitur_rand_recall)
         all_proba_sequitur_rand_f_score.append(proba_sequitur_rand_f_score)
         all_proba_sequitur_rand_avg_depth.append(proba_sequitur_rand_avg_depth)
+        """
     #
     #    Computing averages and stds:
     #
@@ -259,10 +269,12 @@ def run_complete_benchmark(k_set,
     all_proba_sequitur_f_score = np.asanyarray(all_proba_sequitur_f_score)
     all_proba_sequitur_avg_depth = np.asanyarray(all_proba_sequitur_avg_depth)
     #
+    """
     all_proba_sequitur_rand_precision = np.asanyarray(all_proba_sequitur_rand_precision)
     all_proba_sequitur_rand_recall = np.asanyarray(all_proba_sequitur_rand_recall)
     all_proba_sequitur_rand_f_score = np.asanyarray(all_proba_sequitur_rand_f_score)
     all_proba_sequitur_rand_avg_depth = np.asanyarray(all_proba_sequitur_rand_avg_depth)
+    """
     #
     def compute_mean_lower_upper(all_results):
         avg_all_results = np.mean(all_results, axis = 0)
@@ -297,6 +309,7 @@ def run_complete_benchmark(k_set,
     avg_proba_sequitur_avg_depth, lower_proba_sequitur_avg_depth, upper_proba_sequitur_avg_depth = \
         compute_mean_lower_upper(all_proba_sequitur_avg_depth)
     #
+    """
     avg_proba_sequitur_rand_precision, lower_proba_sequitur_rand_precision, upper_proba_sequitur_rand_precision = \
         compute_mean_lower_upper(all_proba_sequitur_rand_precision)
     avg_proba_sequitur_rand_recall, lower_proba_sequitur_rand_recall, upper_proba_sequitur_rand_recall = \
@@ -305,6 +318,7 @@ def run_complete_benchmark(k_set,
         compute_mean_lower_upper(all_proba_sequitur_rand_f_score)
     avg_proba_sequitur_rand_avg_depth, lower_proba_sequitur_rand_avg_depth, upper_proba_sequitur_rand_avg_depth = \
         compute_mean_lower_upper(all_proba_sequitur_rand_avg_depth)
+    """
     #
     #    Plotting precision
     #
@@ -355,6 +369,7 @@ def run_complete_benchmark(k_set,
              lw = 0.5,
              linestyle = '--', 
              c = algo_colors['proba_sequitur'])
+    """
     #
     #    Proba_sequitur_rand
     #
@@ -371,13 +386,15 @@ def run_complete_benchmark(k_set,
              linestyle = '--', 
              c = algo_colors['proba_sequitur_rand'])
     #
+    """
     plt.legend(('Sequitur avg', 'Sequitur lower', 'Sequitur upper', 
                 'K sequitur avg', 'K_sequitur lower', 'K_sequitur upper',
                 'Proba sequitur avg', 'Proba sequitur lower', 'Proba sequitur upper',
-                'Proba sequitur rand avg', 'Proba sequitur rand lower', 'Proba sequitur rand upper'),
-               'upper right', fontsize = 6, ncol = 4)
+                #'Proba sequitur rand avg', 'Proba sequitur rand lower', 'Proba sequitur rand upper'
+                ),
+               'upper right', fontsize = 8, ncol = 4)
     plt.ylabel('Precision ratio')
-    plt.ylim((0, 1.0))
+    plt.ylim((0, 1.3))
     plt.xlabel('K')
     #
     #    PLotting recall
@@ -429,6 +446,7 @@ def run_complete_benchmark(k_set,
              lw = 0.5,
              linestyle = '--', 
              c = algo_colors['proba_sequitur'])
+    """
     #
     #    Proba_sequitur_rand
     #
@@ -445,13 +463,15 @@ def run_complete_benchmark(k_set,
              linestyle = '--', 
              c = algo_colors['proba_sequitur_rand'])
     #
+    """
     plt.legend(('Sequitur avg', 'Sequitur lower', 'Sequitur upper', 
                 'K sequitur avg', 'K_sequitur lower', 'K_sequitur upper',
                 'Proba sequitur avg', 'Proba sequitur lower', 'Proba sequitur upper',
-                'Proba sequitur rand avg', 'Proba sequitur rand lower', 'Proba sequitur rand upper'),
-               'upper right', fontsize = 6, ncol = 4)
+                #'Proba sequitur rand avg', 'Proba sequitur rand lower', 'Proba sequitur rand upper'
+                ),
+               'upper right', fontsize = 8, ncol = 4)
     plt.ylabel('Recall ratio')
-    plt.ylim((0, 1.0))
+    plt.ylim((0, 1.3))
     plt.xlabel('K')
     #
     #    Plotting F score
@@ -503,6 +523,7 @@ def run_complete_benchmark(k_set,
              lw = 0.5,
              linestyle = '--', 
              c = algo_colors['proba_sequitur'])
+    """
     #
     #    Proba_sequitur_rand
     #
@@ -518,12 +539,14 @@ def run_complete_benchmark(k_set,
              lw = 0.5,
              linestyle = '--', 
              c = algo_colors['proba_sequitur_rand'])
+    """
     #
     plt.legend(('Sequitur avg', 'Sequitur lower', 'Sequitur upper', 
                 'K sequitur avg', 'K_sequitur lower', 'K_sequitur upper',
                 'Proba sequitur avg', 'Proba sequitur lower', 'Proba sequitur upper',
-                'Proba sequitur rand avg', 'Proba sequitur rand lower', 'Proba sequitur rand upper'),
-               'upper right', fontsize = 6, ncol = 4)
+                #'Proba sequitur rand avg', 'Proba sequitur rand lower', 'Proba sequitur rand upper'
+                ),
+               'upper right', fontsize = 8, ncol = 4)
     plt.ylabel('F score')
     plt.ylim((0, 1.0))
     plt.xlabel('K')
@@ -577,6 +600,7 @@ def run_complete_benchmark(k_set,
              lw = 0.5,
              linestyle = '--', 
              c = algo_colors['proba_sequitur'])
+    """
     #
     #    Proba_sequitur_rand
     #
@@ -592,12 +616,14 @@ def run_complete_benchmark(k_set,
              lw = 0.5,
              linestyle = '--', 
              c = algo_colors['proba_sequitur_rand'])
+    """
     #
     plt.legend(('Sequitur avg', 'Sequitur lower', 'Sequitur upper', 
                 'K sequitur avg', 'K_sequitur lower', 'K_sequitur upper',
                 'Proba sequitur avg', 'Proba sequitur lower', 'Proba sequitur upper',
-                'Proba sequitur rand avg', 'Proba sequitur rand lower', 'Proba sequitur rand upper'),
-               'upper right', fontsize = 6, ncol = 4)
+                #'Proba sequitur rand avg', 'Proba sequitur rand lower', 'Proba sequitur rand upper'
+               ),
+               'upper right', fontsize = 8, ncol = 4)
     plt.ylabel('Avg rule depth')
     plt.ylim((0, 8))
     plt.xlabel('K')
