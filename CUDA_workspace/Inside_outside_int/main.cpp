@@ -27,6 +27,10 @@ int main(void){
 	 */
 	simple_grammar.set_B(1, 0, 1.0);
 	simple_grammar.set_B(2, 1, 1.0);
+	/*
+	 * Normalize
+	 */
+	simple_grammar.normalize();
 
 	/*
 	 * Grammar example Figure 7 of Lari, Young 1987
@@ -35,13 +39,26 @@ int main(void){
 	/*
 	 * Non terminal symbols
 	 */
-	palindrom_grammar.set_A(0, 1, 2, 0.2);
-	palindrom_grammar.set_A(0, 3, 4, 0.2);
-	palindrom_grammar.set_A(0, 5, 6, 0.2);
-	palindrom_grammar.set_A(0, 5, 6, 0.11);
-	palindrom_grammar.set_A(0, 5, 6, 0.11);
-	palindrom_grammar.set_A(0, 5, 6, 0.11);
-
+	palindrom_grammar.set_A(0, 1, 2, 0.3);
+	palindrom_grammar.set_A(0, 3, 4, 0.3);
+	palindrom_grammar.set_A(0, 5, 6, 0.3);
+	palindrom_grammar.set_A(0, 1, 1, 0.2);
+	palindrom_grammar.set_A(0, 3, 3, 0.2);
+	palindrom_grammar.set_A(0, 5, 5, 0.2);
+	//
+	palindrom_grammar.set_A(2, 0, 1, 1.0);
+	palindrom_grammar.set_A(4, 0, 3, 1.0);
+	palindrom_grammar.set_A(6, 0, 5, 1.0);
+	/*
+	 * Terminal symbols
+	 */
+	palindrom_grammar.set_B(1, 0, 1.0);
+	palindrom_grammar.set_B(3, 1, 1.0);
+	palindrom_grammar.set_B(5, 2, 1.0);
+	/*
+	 * Normalize
+	 */
+	palindrom_grammar.normalize();
 
 	int n_samples = 10000;
 
@@ -53,7 +70,7 @@ int main(void){
 	int error_code;
 
 	for(int i = 0; i < 100; ++i){
-		error_code = simple_grammar.produce_sentence(sentence,
+		error_code = palindrom_grammar.produce_sentence(sentence,
 				length,
 				MAX_LENGTH);
 		if(error_code == 0){
