@@ -9,7 +9,7 @@ __global__ void fill_with_zeros_kernel(float * dev_array, int N){
 void fill_with_zeros(float * dev_array, int N){
 	int n_blocks = ceil( ((float) N) / ((float) BLOCK_SIZE) );
 	fill_with_zeros_kernel<<<n_blocks, BLOCK_SIZE>>>(dev_array, N);
-	check_last_error();
+	CUDA_CHECK(check_last_error());
 }
 
 __global__ void compute_sums_kernel(float * dev_array,
@@ -56,7 +56,7 @@ void compute_sums_on_device(float * dev_array, float * dev_sum_array,
 				stride, N_sums,
 				iter
 				);
-		check_last_error();
+		CUDA_CHECK(check_last_error());
 	}
 }
 
@@ -64,17 +64,17 @@ void compute_sums(float * array, float * sum_array,
 		int stride, int N_sums){
 	float * dev_input;
 	float * dev_sums;
-	dev_alloc<float>(dev_input, N_sums * stride);
-	dev_alloc<float>(dev_sums, N_sums);
+	CUDA_CHECK(dev_alloc<float>(dev_input, N_sums * stride));
+	CUDA_CHECK(dev_alloc<float>(dev_sums, N_sums));
 
-	copy_to_device<float>(dev_input, array, N_sums * stride);
+	CUDA_CHECK(copy_to_device<float>(dev_input, array, N_sums * stride));
 
 	compute_sums_on_device(dev_input, dev_sums, stride, N_sums);
 
-	copy_to_host<float>(sum_array, dev_sums, N_sums);
+	CUDA_CHECK(copy_to_host<float>(sum_array, dev_sums, N_sums));
 
-	dev_free<float>(dev_input);
-	dev_free<float>(dev_sums);
+	CUDA_CHECK(dev_free<float>(dev_input));
+	CUDA_CHECK(dev_free<float>(dev_sums));
 }
 
 __global__ void print_matrix_3D_kernel(float * dev_matrix,
@@ -108,7 +108,7 @@ void print_matrix_3D(float * dev_matrix,
 			N_1,
 			N_2,
 			N_3);
-	check_last_error();
+	CUDA_CHECK(check_last_error());
 }
 
 __global__ void print_matrix_2D_kernel(float * dev_matrix,
@@ -133,7 +133,7 @@ void print_matrix_2D(float * dev_matrix,
 	print_matrix_2D_kernel<<<1, block_dim>>>(dev_matrix,
 			N_1,
 			N_2);
-	check_last_error();
+	CUDA_CHECK(check_last_error());
 }
 
 __global__ void add_dev_vector_kernel(float * dev_A,
@@ -151,7 +151,7 @@ void add_vectors_on_device(float * dev_A,
 		int N){
 	int n_blocks = ceil( ((float) N) / ((float) BLOCK_SIZE) );
 	add_dev_vector_kernel<<<n_blocks, BLOCK_SIZE>>>(dev_A, dev_B, dev_C, N);
-	check_last_error();
+	CUDA_CHECK(check_last_error());
 }
 
 void add_vectors(float * A,
@@ -162,18 +162,18 @@ void add_vectors(float * A,
 	float * dev_B;
 	float * dev_C;
 
-	dev_alloc<float>(dev_A, N);
-	dev_alloc<float>(dev_B, N);
-	dev_alloc<float>(dev_C, N);
+	CUDA_CHECK(dev_alloc<float>(dev_A, N));
+	CUDA_CHECK(dev_alloc<float>(dev_B, N));
+	CUDA_CHECK(dev_alloc<float>(dev_C, N));
 
-	copy_to_device<float>(dev_A, A, N);
-	copy_to_device<float>(dev_B, B, N);
+	CUDA_CHECK(copy_to_device<float>(dev_A, A, N));
+	CUDA_CHECK(copy_to_device<float>(dev_B, B, N));
 
 	add_vectors_on_device(dev_A, dev_B, dev_C, N);
 
-	copy_to_host<float>(C, dev_C, N);
+	CUDA_CHECK(copy_to_host<float>(C, dev_C, N));
 
-	dev_free<float>(dev_A);
-	dev_free<float>(dev_B);
-	dev_free<float>(dev_C);
+	CUDA_CHECK(dev_free<float>(dev_A));
+	CUDA_CHECK(dev_free<float>(dev_B));
+	CUDA_CHECK(dev_free<float>(dev_C));
 }

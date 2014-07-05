@@ -10,8 +10,6 @@
 
 #include "utils.h"
 
-#define BLOCK_SIZE 256
-
 void fill_with_zeros(float * dev_array, int N);
 
 void compute_sums_on_device(float * dev_array, float * dev_sum_array,
