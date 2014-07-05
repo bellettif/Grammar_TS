@@ -1,32 +1,26 @@
 #include <iostream>
 #include <string>
 #include <time.h>
+#include <iostream>
 
 #include "sto_grammar.h"
+#include "matrix_utils.h"
 
 int main(void){
 
 	srand(time(NULL));
 
-	const int N_sums = 64;
-	const int stride = 1024;
+	const int N = 128;
+	float A[N];
+	float B[N];
+	float C[N];
 
-	float input[N_sums * stride];
-	float sums[N_sums];
-
-	int i, j;
-	for(i = 0; i < N_sums; ++i){
-		for(j = 0; j < stride; ++j){
-			input[i * stride + j] = i * j;
-		}
+	for(int i = 0; i < N; ++i){
+		A[i] = i * i;
+		B[i] = -i;
 	}
 
-	compute_sums(input, sums,
-			stride, N_sums);
-
-	for(int i = 0; i < N_sums; ++i){
-		std::cout << sums[i] << std::endl;
-	}
+	add_vectors(A, B, C, N);
 
 	return 0;
 }

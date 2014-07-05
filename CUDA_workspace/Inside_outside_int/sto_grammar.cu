@@ -5,149 +5,149 @@
  *      Author: francois
  */
 
-#include "matrix_utils.cuh"
+#include <cuda_runtime.h>
+
+#include "matrix_utils.h"
 #include "sto_grammar.h"
 
-#define MAX_ITERS 128
+__device__ static void emission_choice(int i,
+		float * dev_non_term_term_dists){
+
+}
+
+__device__ inline static void non_term_derivation(int i, int & j, int & k,
+		float * dev_A, int N){
+	/*
+	 * TODO
+	 */
+}
+
+__device__ inline static void term_derivation(int i, int & term,
+		flaot * dev_B, int N, int M){
+	/*
+	 * TODO
+	 */
+}
 
 
-class cu_Sto_grammar{
-
-	const int 	_N;
-	const int	_M;
-	int			_root_symbol;
-	float * 	_dev_A;
-	float * 	_dev_B;
-	float *		_dev_non_term_weights;
-	float *		_dev_term_weights;
-	float *		_dev_non_term_term_dists;
-
-public:
-
-	cu_Sto_grammar(int N, int M,
+cu_Sto_grammar::cu_Sto_grammar(int N, int M,
 			int root_symbol = 0):
-		_N(N), _M(M),
-		_root_symbol(root_symbol)
-	{
-		CUDA_CHECK_RETURN(cudaMalloc((void **) & _dev_A,
-				_N *_N *_N * sizeof(float)));
-		CUDA_CHECK_RETURN(cudaMalloc((void **) & _dev_B,
-				_N * _M * sizeof(float)));
-		CUDA_CHECK_RETURN(cudaMalloc((void **) & _dev_non_term_weights,
-				_N * sizeof(float)));
-		CUDA_CHECK_RETURN(cudaMalloc((void **) & _dev_term_weights,
-				_N * sizeof(float)));
-		CUDA_CHECK_RETURN(cudaMalloc((void **) & _dev_non_term_term_dists,
-				2 * _N * sizeof(float)));
+	_N(N), _M(M),
+	_root_symbol(root_symbol)
+{
+	dev_alloc<float>(_dev_A, _N * _N * _N);
+	dev_alloc<float>(_dev_B, _N * _M);
+	dev_alloc<float>(_dev_non_term_weights, _N);
+	dev_alloc<float>(_dev_term_weights, _N);
+	dev_alloc<float>(_dev_non_term_term_dists, 2 * _N);
 
-		int n_blocks = ceil(_N * _N * _N / BLOCK_SIZE);
-		fill_with_zeros<<<n_blocks, BLOCK_SIZE>>>(_dev_A, _N * _N * _N);
-		CUDA_CHECK_RETURN(cudaGetLastError());
+	fill_with_zeros(_dev_A, _N * _N * _N);
+	fill_with_zeros(_dev_B, _N * _M);
+	fill_with_zeros(_dev_non_term_weights, _N);
+	fill_with_zeros(_dev_term_weights, _N);
+	fill_with_zeros(_dev_non_term_term_dists, 2 * _N);
+}
 
-		n_blocks = ceil(_N * _M / BLOCK_SIZE);
-		fill_with_zeros<<<n_blocks, BLOCK_SIZE>>>(_dev_B, _N * _M);
-		CUDA_CHECK_RETURN(cudaGetLastError());
-
-		n_blocks = ceil(_N / BLOCK_SIZE);
-		fill_with_zeros<<<n_blocks, BLOCK_SIZE>>>(_dev_non_term_weights, _N);
-		CUDA_CHECK_RETURN(cudaGetLastError());
-
-		n_blocks = ceil(_N / BLOCK_SIZE);
-		fill_with_zeros<<<n_blocks, BLOCK_SIZE>>>(_dev_term_weights, _N);
-		CUDA_CHECK_RETURN(cudaGetLastError());
-
-		n_blocks = ceil(2 * _N / BLOCK_SIZE);
-		fill_with_zeros<<<n_blocks, BLOCK_SIZE>>>(_dev_non_term_term_dists, 2 * _N);
-		CUDA_CHECK_RETURN(cudaGetLastError());
-	}
-
-	cu_Sto_grammar(float * A, float * B,
+cu_Sto_grammar::cu_Sto_grammar(float * A, float * B,
 			int N, int M,
 			int root_symbol = 0):
 			_N(N), _M(M),
-			_root_symbol(root_symbol){
-		CUDA_CHECK_RETURN(cudaMalloc((void **) & _dev_A,
-				_N *_N *_N * sizeof(float)));
-		CUDA_CHECK_RETURN(cudaMalloc((void **) & _dev_B,
-				_N * _M * sizeof(float)));
-		CUDA_CHECK_RETURN(cudaMalloc((void **) & _dev_non_term_weights,
-				_N * sizeof(float)));
-		CUDA_CHECK_RETURN(cudaMalloc((void **) & _dev_term_weights,
-				_N * sizeof(float)));
-		CUDA_CHECK_RETURN(cudaMalloc((void **) & _dev_non_term_term_dists,
-				2 * _N * sizeof(float)));
+			_root_symbol(root_symbol)
+{
+	dev_alloc<float>(_dev_A, _N * _N * _N);
+	dev_alloc<float>(_dev_B, _N * _M);
+	dev_alloc<float>(_dev_non_term_weights, _N);
+	dev_alloc<float>(_dev_term_weights, _N);
+	dev_alloc<float>(_dev_non_term_term_dists, 2 * _N);
 
-		CUDA_CHECK_RETURN(cudaMemcpy(_dev_A, A, _N *_N *_N * sizeof(float),
-				cudaMemcpyHostToDevice));
-		CUDA_CHECK_RETURN(cudaMemcpy(_dev_B, B, _N *_M * sizeof(float),
-				cudaMemcpyHostToDevice));
-	}
+	copy_to_device<float>(_dev_A, A, _N * _N * _N);
+	copy_to_host<float>(_dev_B, B, _N * _M);
+}
 
-	~cu_Sto_grammar(){
-		CUDA_CHECK_RETURN(cudaFree(_dev_A));
-		CUDA_CHECK_RETURN(cudaFree(_dev_B));
-		CUDA_CHECK_RETURN(cudaFree(_dev_non_term_weights));
-		CUDA_CHECK_RETURN(cudaFree(_dev_term_weights));
-		CUDA_CHECK_RETURN(cudaFree(_dev_non_term_term_dists));
-	}
+cu_Sto_grammar::~cu_Sto_grammar(){
+	dev_free<float>(_dev_A);
+	dev_free<float>(_dev_B);
+	dev_free<float>(_dev_non_term_weights);
+	dev_free<float>(_dev_term_weights);
+	dev_free<float>(_dev_non_term_term_dists);
+}
 
-	void printA(){
-		/*
-		 * TODO
-		 */
-	}
+void cu_Sto_grammar::printA(){
+	print_matrix_3D(_dev_A, _N, _N, _N);
+}
 
-	void printB(){
-		/*
-		 * TODO
-		 */
-	}
+void cu_Sto_grammar::printB(){
+	print_matrix_2D(_dev_B, _N, _M);
+}
 
-	void set_A(int i, int j, int k, float p){
-		/*
-		 * TODO
-		 */
-	}
-
-	void set_B(int i, int j, float p){
-		/*
-		 * TODO
-		 */
-	}
-
-	void normalize(){
-		/*
-		 * TODO
-		 */
-	}
-
-	void set_root_symbol(int new_root_symbol){
-		_root_symbol = new_root_symbol;
-	}
-
-	__device__ inline void non_term_derivation(int i, int & j, int & k){
-		/*
-		 * TODO
-		 */
-	}
-
-	__device__ inline void term_derivation(int i, int & term){
-		/*
-		 * TODO
-		 */
-	}
-
+void cu_Sto_grammar::set_A(int i, int j, int k, float p)
+{
 	/*
-	 * sentence will contain the result and is at most
-	 * MAX_LENGTH symbol long
+	 * Changing probability on A table
 	 */
-	int produce_sentence(int * sentence,
-			int & length,
-			int MAX_LENGTH){
-		/*
-		 * TODO
-		 */
-		return 0;
-	}
+	float * position = _dev_A + i * _N * _N + j * _N + k;
+	float prev;
+	copy_to_host<float>(& prev, position, 1);
+	copy_to_device<float>(position, & p, 1);
+	/*
+	 * Changing weights
+	 */
+	float * weight_position = _dev_non_term_weights + i ;
+	float prev_weight;
+	copy_to_host<float>(& prev_weight, weight_position, 1);
+	prev_weight = prev_weight - prev + p;
+	copy_to_device<float>(weight_position, & prev_weight, 1);
+	/*
+	 * Changing non_term / term distribution
+	 */
+	float * dist_position = _dev_non_term_term_dists + i;
+	copy_on_device<float>(dist_position, weight_position, 1);
+}
 
-};
+void cu_Sto_grammar::set_B(int i, int j, float p){
+	/*
+	 * Changing probability on B table
+	 */
+	float * position = _dev_B + i * _N + j;
+	float prev;
+	copy_to_host<float>(& prev, position, 1);
+	copy_to_device<float>(position, & p, 1);
+	/*
+	 * Changing weights
+	 */
+	float * weight_position = _dev_term_weights + i ;
+	float prev_weight;
+	copy_to_host<float>(& prev_weight, weight_position, 1);
+	prev_weight = prev_weight - prev + p;
+	copy_to_device<float>(weight_position, & prev_weight, 1);
+	/*
+	 * Changing non_term / term distribution
+	 */
+	float * dist_position = _dev_non_term_term_dists + i + 1;
+	copy_on_device<float>(dist_position, weight_position, 1);
+}
+
+void cu_Sto_grammar::normalize(){
+	/*
+	 * TODO
+	 */
+}
+
+void cu_Sto_grammar::set_root_symbol(int new_root_symbol){
+	_root_symbol = new_root_symbol;
+}
+
+
+
+/*
+ * sentence will contain the result and is at most
+ * MAX_LENGTH symbol long
+ */
+int cu_Sto_grammar::produce_sentence(int * sentence,
+		int & length,
+		int MAX_LENGTH){
+	/*
+	 * TODO
+	 */
+	return 0;
+}
