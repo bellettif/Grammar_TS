@@ -1,7 +1,7 @@
 #include "matrix_utils.h"
 
 __global__ void fill_with_zeros_kernel(float * dev_array, int N){
-	int tid = threadIdx.x * blockDim.x + threadIdx.x;
+	int tid = blockIdx.x * blockDim.x + threadIdx.x;
 	if(tid >= N) return;
 	dev_array[tid] = 0.0;
 }
@@ -81,30 +81,22 @@ __global__ void print_matrix_3D_kernel(float * dev_matrix,
 		int N_1,
 		int N_2,
 		int N_3){
-	int i = threadIdx.x;
-	int j = threadIdx.y;
-	int k = threadIdx.z;
+	int i = blockIdx.x;
+	int j = threadIdx.x;
+	int k = threadIdx.y;
 	if(i >= N_1) return;
 	if(j >= N_2) return;
 	if(k >= N_3) return;
 	int pos = i * N_2 * N_3 + j * N_3 + k;
-	if(j == N_2 - 1){
-		printf("%f\n\n", dev_matrix[pos]);
-		return;
-	}
-	if(k == N_3 - 1){
-		printf("%f\n", dev_matrix[pos]);
-		return;
-	}
-	printf("%f ", dev_matrix[pos]);
+	printf("(%d,%d,%d)=%f\n", i, j, k, dev_matrix[pos]);
 }
 
 void print_matrix_3D(float * dev_matrix,
 		int N_1,
 		int N_2,
 		int N_3){
-	dim3 block_dim(N_1, N_2, N_3);
-	print_matrix_3D_kernel<<<1, block_dim>>>(dev_matrix,
+	dim3 block_dim(N_2, N_3);
+	print_matrix_3D_kernel<<<N_1, block_dim>>>(dev_matrix,
 			N_1,
 			N_2,
 			N_3);
@@ -119,11 +111,7 @@ __global__ void print_matrix_2D_kernel(float * dev_matrix,
 	if(i >= N_1) return;
 	if(j >= N_2) return;
 	int pos = i * N_2 + j;
-	if(j == N_2 - 1){
-		printf("%f\n", dev_matrix[pos]);
-		return;
-	}
-	printf("%f ", dev_matrix[pos]);
+	printf("(%d,%d)=%f\n", i, j, dev_matrix[pos]);
 }
 
 void print_matrix_2D(float * dev_matrix,

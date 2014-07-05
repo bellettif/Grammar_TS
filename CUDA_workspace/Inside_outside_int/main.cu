@@ -9,6 +9,9 @@
 
 int main(void){
 
+	/*
+	 * Grammar example Figure 4 of Lari, Young 1987
+	 */
 	cu_Sto_grammar simple_grammar(5, 2);
 	/*
 	 * Non terminal symbols
@@ -27,7 +30,7 @@ int main(void){
 	/*
 	 * Normalize
 	 */
-	simple_grammar.normalize();
+	simple_grammar.printB();
 
 	return 0;
 }
