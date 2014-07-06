@@ -9,6 +9,7 @@
 
 #include "matrix_utils.h"
 #include "sto_grammar.h"
+#include "sentence_prod.cuh"
 
 cu_Sto_grammar::cu_Sto_grammar(int N, int M,
 			int root_symbol):
@@ -170,17 +171,56 @@ void cu_Sto_grammar::set_root_symbol(int new_root_symbol){
 	_root_symbol = new_root_symbol;
 }
 
-
-
 /*
  * sentence will contain the result and is at most
  * MAX_LENGTH symbol long
+ * length points to the final sentence length
  */
-int cu_Sto_grammar::produce_sentence(int * sentence,
-		int & length,
-		int MAX_LENGTH){
-	/*
-	 * TODO
-	 */
+int cu_Sto_grammar::produce_sentences_dev(
+		curandState * state_array,
+		int * dev_sentences,
+		int * dev_lengths,
+		int * dev_error_status,
+		int n_sentences){
+	Compact_grammar host_cmpct (_N,
+								_M,
+								_root_symbol,
+								_dev_A,
+								_dev_B,
+								_dev_non_term_weights,
+								_dev_term_weights,
+								_dev_non_term_term_dists,
+								_dev_tot_weights);
+
+	bool * dev_todo;
+	bool * dev_next_todo;
+	int * dev_buffer;
+	Compact_grammar * dev_cmpct;
+
+	dev_alloc<bool>(dev_todo, n_sentences * MAX_LENGTH);
+	dev_alloc<bool>(dev_next_todo, n_sentences * MAX_LENGTH);
+	dev_alloc<int>(dev_buffer, n_sentences * MAX_LENGTH);
+	dev_alloc<Compact_grammar>(dev_cmpct, 1);
+
+	copy_to_device<Compact_grammar>(dev_cmpct, &host_cmpct, 1);
+
+	int n_blocks = ceil( ((float) n_sentences) / ((float) BLOCK_SIZE));
+	produce_sentence_kernel<<<n_blocks, BLOCK_SIZE>>>(state_array,
+			dev_sentences,
+			dev_lengths,
+			dev_error_status,
+			n_sentences,
+			dev_todo,
+			dev_next_todo,
+			dev_buffer,
+			dev_cmpct);
+	CUDA_CHECK(check_last_error());
+	CUDA_CHECK(cudaDeviceSynchronize());
+
+	dev_free<bool>(dev_todo);
+	dev_free<bool>(dev_next_todo);
+	dev_free<int>(dev_buffer);
+	dev_free<Compact_grammar>(dev_cmpct);
+
 	return 0;
 }
