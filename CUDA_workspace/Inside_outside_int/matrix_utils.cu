@@ -211,3 +211,27 @@ void divide_by(float * M, float * tot,
 	CUDA_CHECK(cudaDeviceSynchronize());
 }
 
+__global__ void compute_cumsum_kernel(float * output,
+		float * input,
+		int N,
+		int stride, int offset){
+	int i = threadIdx.x;
+	if(i >= N) return;
+	if(offset == 0){
+		output[i*stride] = input[i*stride];
+	}else{
+		output[i * stride + offset] = output[i * stride + offset - 1]
+		                            + input[i * stride + offset];
+	}
+}
+
+void compute_cumsum(float * output,
+		float * input,
+		int N,
+		int stride){
+	for(int o = 0; o < stride; ++o){
+		compute_cumsum_kernel<<<1, N>>>(output, input, N, stride, o);
+		CUDA_CHECK(check_last_error());
+		CUDA_CHECK(cudaDeviceSynchronize());
+	}
+}

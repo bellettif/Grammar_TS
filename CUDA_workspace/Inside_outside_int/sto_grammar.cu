@@ -36,14 +36,18 @@ cu_Sto_grammar::cu_Sto_grammar(int N, int M,
 	_root_symbol(root_symbol)
 {
 	CUDA_CHECK(dev_alloc<float>(_dev_A, _N * _N * _N));
+	CUDA_CHECK(dev_alloc<float>(_dev_cum_A, _N * _N * _N));
 	CUDA_CHECK(dev_alloc<float>(_dev_B, _N * _M));
+	CUDA_CHECK(dev_alloc<float>(_dev_cum_B, _N * _M));
 	CUDA_CHECK(dev_alloc<float>(_dev_non_term_weights, _N));
 	CUDA_CHECK(dev_alloc<float>(_dev_term_weights, _N));
 	CUDA_CHECK(dev_alloc<float>(_dev_non_term_term_dists, 2 * _N));
 	CUDA_CHECK(dev_alloc<float>(_dev_tot_weights, _N));
 
 	fill_with_zeros(_dev_A, _N * _N * _N);
+	fill_with_zeros(_dev_cum_A, _N * _N * _N);
 	fill_with_zeros(_dev_B, _N * _M);
+	fill_with_zeros(_dev_cum_B, _N * _M);
 	fill_with_zeros(_dev_non_term_weights, _N);
 	fill_with_zeros(_dev_term_weights, _N);
 	fill_with_zeros(_dev_non_term_term_dists, 2 * _N);
@@ -57,7 +61,9 @@ cu_Sto_grammar::cu_Sto_grammar(float * A, float * B,
 			_root_symbol(root_symbol)
 {
 	CUDA_CHECK(dev_alloc<float>(_dev_A, _N * _N * _N));
+	CUDA_CHECK(dev_alloc<float>(_dev_cum_A, _N * _N * _N));
 	CUDA_CHECK(dev_alloc<float>(_dev_B, _N * _M));
+	CUDA_CHECK(dev_alloc<float>(_dev_cum_B, _N * _M));
 	CUDA_CHECK(dev_alloc<float>(_dev_non_term_weights, _N));
 	CUDA_CHECK(dev_alloc<float>(_dev_term_weights, _N));
 	CUDA_CHECK(dev_alloc<float>(_dev_non_term_term_dists, 2 * _N));
@@ -78,20 +84,29 @@ cu_Sto_grammar::cu_Sto_grammar(float * A, float * B,
 
 cu_Sto_grammar::~cu_Sto_grammar(){
 	CUDA_CHECK(dev_free<float>(_dev_A));
+	CUDA_CHECK(dev_free<float>(_dev_cum_A));
 	CUDA_CHECK(dev_free<float>(_dev_B));
+	CUDA_CHECK(dev_free<float>(_dev_cum_B));
 	CUDA_CHECK(dev_free<float>(_dev_non_term_weights));
 	CUDA_CHECK(dev_free<float>(_dev_term_weights));
 	CUDA_CHECK(dev_free<float>(_dev_non_term_term_dists));
 	CUDA_CHECK(dev_free<float>(_dev_tot_weights));
-	CUDA_CHECK(cudaDeviceReset());
 }
 
 void cu_Sto_grammar::printA(){
 	print_matrix_3D(_dev_A, _N, _N, _N);
 }
 
+void cu_Sto_grammar::print_cum_A(){
+	print_matrix_3D(_dev_cum_A, _N, _N, _N);
+}
+
 void cu_Sto_grammar::printB(){
 	print_matrix_2D(_dev_B, _N, _M);
+}
+
+void cu_Sto_grammar::print_cum_B(){
+	print_matrix_2D(_dev_cum_B, _N, _M);
 }
 
 void cu_Sto_grammar::print_non_term_weights(){
@@ -185,6 +200,10 @@ void cu_Sto_grammar::normalize(){
 	divide_by(_dev_non_term_term_dists, _dev_tot_weights,
 			_N, 2);
 	fill_with_scalar(_dev_tot_weights, 1.0, _N);
+	compute_cumsum(_dev_cum_A, _dev_A,
+			_N, _N * _N);
+	compute_cumsum(_dev_cum_B, _dev_B,
+				_N, _M);
 }
 
 void cu_Sto_grammar::set_root_symbol(int new_root_symbol){

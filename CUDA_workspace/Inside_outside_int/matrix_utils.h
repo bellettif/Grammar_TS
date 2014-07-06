@@ -45,4 +45,9 @@ void add_vectors(float * A,
 void divide_by(float * M, float * tot,
 		int N, int stride);
 
+void compute_cumsum(float * output,
+		float * input,
+		int N,
+		int stride);
+
 #endif /* MATRIX_UTILS_CUH_ */
