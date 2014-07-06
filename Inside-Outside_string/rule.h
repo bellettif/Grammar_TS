@@ -17,7 +17,7 @@ typedef std::discrete_distribution<>                      choice_distrib;
 typedef std::mt19937                                      RNG;
 typedef std::vector<int>::iterator                        vect_it;
 typedef std::list<int>::iterator                          list_it;
-typedef std::vector<double>                               double_vect;
+typedef std::vector<float>                                float_vect;
 typedef std::vector<int>                                  int_vect;
 
 
@@ -51,8 +51,8 @@ class Rule{
 public:
 
     Rule(const int i,                       // Index of the rule
-         const double * const A,            // Grammar parameters
-         const double * const B,
+         const float * const A,            // Grammar parameters
+         const float * const B,
          const int N,
          const int M,
          const string_vect & terminals):    // List of terminal symbols
@@ -60,8 +60,8 @@ public:
         _M(M),
         _terminals(terminals)
     {
-        double total_emission_weight = 0;
-        double total_non_emission_weight = 0;
+        float total_emission_weight = 0;
+        float total_non_emission_weight = 0;
         for(int j = 0; j < _M; ++j){
             total_emission_weight += B[i*_M + j];
         }

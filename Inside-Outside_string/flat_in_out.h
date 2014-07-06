@@ -19,7 +19,7 @@ typedef std::discrete_distribution<>                      choice_distrib;
 typedef std::mt19937                                      RNG;
 typedef std::vector<int>::iterator                        vect_it;
 typedef std::list<int>::iterator                          list_it;
-typedef std::vector<double>                               double_vect;
+typedef std::vector<float>                                float_vect;
 typedef std::vector<int>                                  int_vect;
 
 static auto duration =  std::chrono::system_clock::now().time_since_epoch();
@@ -47,8 +47,8 @@ private:
      *      _terminal to index is its reversed dictionary counterpart
      *
      */
-    const double * const                        _A;                 // Flatenned 3D array (N * N * N)
-    const double * const                        _B;                 // Flatenned 3D array (N * N * N)
+    const float * const                         _A;                 // Flatenned 3D array (N * N * N)
+    const float * const                         _B;                 // Flatenned 3D array (N * N * N)
     const int                                   _N;
     const int                                   _M;
     const string_vect                           _terminals;
@@ -68,10 +68,10 @@ public:
     /*
      *  A and B are given by Python (already allocated)
      */
-    Flat_in_out(double* A, double* B,
-               int N, int M,
-               const string_vect & terminals,
-               int root_index):
+    Flat_in_out(float* A, float* B,
+                   int N, int M,
+                   const string_vect & terminals,
+                   int root_index):
         _A(A),
         _B(B),
         _N(N),
@@ -88,10 +88,10 @@ public:
     /*
      *  Compute the probability that the grammar generates sample
      *      for each sample in grammar. The result in stored in probas
-     *      which is assumed to be of size size_of(double) * n_samples
+     *      which is assumed to be of size size_of(float) * n_samples
      */
     void inline compute_probas_flat(const std::vector<string_vect> & samples,
-                                    double * probas){
+                                    float * probas){
         int n_samples = samples.size();
         for(int i = 0; i < n_samples; ++i){
             probas[i] = compute_proba_flat(samples[i]);
@@ -104,15 +104,15 @@ public:
      *      for that.
      *
      */
-    double inline compute_proba_flat(const string_vect & sample){
+    float inline compute_proba_flat(const string_vect & sample){
         int length = sample.size();
-        double* E = new double[_N * length * length];
+        float* E = new float[_N * length * length];
         compute_inside_probas_flat(E, sample);
         /*
          *  Return the probability that root index generates the whole sequence
          *      from index 0 to index length - 1
          */
-        double result = E[_root_index*length*length + 0*length + length - 1];
+        float result = E[_root_index*length*length + 0*length + length - 1];
         delete[] E;
         return result;
     }
@@ -120,7 +120,7 @@ public:
     /*
      *  Run the inside outside algorithm
      */
-    void inline compute_inside_outside_flat(double* E, double* F,
+    void inline compute_inside_outside_flat(float* E, float* F,
                                        const string_vect & sample){
         compute_inside_probas_flat(E, sample);
         compute_outside_probas_flat(E, F, sample);
@@ -133,7 +133,7 @@ public:
      *      (flattenned version of the 3D array)
      *
      */
-    void inline compute_inside_probas_flat(double* E, const string_vect & sample){
+    void inline compute_inside_probas_flat(float* E, const string_vect & sample){
         int length = sample.size();
         for(int i = 0; i < _N; ++i){
             for(int s = 0; s < length; ++s){
@@ -157,7 +157,7 @@ public:
      *  The results will be stored in E
      *
      */
-    void inline compute_inside_level(double* E, const string_vect & sample,
+    void inline compute_inside_level(float* E, const string_vect & sample,
                                      int level){
         int length = sample.size();
         if(level == 0){
@@ -172,12 +172,16 @@ public:
             int r;
             int j;
             int k;
+            float temp_A;
+            float temp_sum;
             for(int i = 0; i < _N; ++i){
-                for(s = 0; s < length - level; ++s){
-                    t = s + level;
-                    for(r = s; r < t; ++r){
-                        for(j = 0; j < _N; ++j){
-                            for(k = 0; k < _N; ++k){
+                for(j = 0; j < _N; ++j){
+                    for(k = 0; k < _N; ++k){
+                        temp_A = _A[i*_N*_N + j*_N + k];
+                        for(s = 0; s < length - level; ++s){
+                            t = s + level;
+                            temp_sum = 0;
+                            for(r = s; r < t; ++r){
                                 /*
                                  *  i is the index of parent the non term symbol
                                  *  s is the index of the starting position in the parsed sequence
@@ -187,13 +191,14 @@ public:
                                  *  k is the index of the right child non term symbol
                                  *
                                  */
-                                E[i*length*length + s*length + t] +=
-                                        _A[i*_N*_N + j*_N + k]
+                                 temp_sum +=
+                                        temp_A
                                         *
                                         E[j*length*length + s*length + r]
                                         *
                                         E[k*length*length + (r+1)*length + t];
                             }
+                            E[i*length*length + s*length + t] = temp_sum;
                         }
                     }
                 }
@@ -206,7 +211,7 @@ public:
      *      Inside results must have been computed already (result stored in E)
      *      Outside results will be computed and stored in F (dimension N * length * length)
      */
-    void inline compute_outside_probas_flat(double* E, double * F,
+    void inline compute_outside_probas_flat(float* E, float * F,
                                        const string_vect & sample){
         int length = sample.size();
         /*
@@ -239,7 +244,7 @@ public:
      *      and are assumed to be available in E.
      *      Results of the oustide part will be stored in F.
      */
-    void inline compute_outside_level(double * E, double * F,
+    void inline compute_outside_level(float * E, float * F,
                                       const string_vect & sample,
                                       int level){
         int length = sample.size();
@@ -251,16 +256,19 @@ public:
             int r;
             int j;
             int k;
+            float temp_A;
+            float temp_F;
             for(int i = 0; i < _N; ++i){
-                for(s = 0; s < length - level; ++s){
-                    t = s + level;
-                    for(r = 0; r < s; ++r){
-                        for(j = 0; j < _N; ++j){
-                            for(k = 0; k < _N; ++k){
-                                F[i*length*length + s*length + t] +=
+                for(j = 0; j < _N; ++j){
+                    for(k = 0; k < _N; ++k){
+                        temp_A = _A[j*_N*_N + k*_N + i];
+                        for(s = 0; s < length - level; ++s){
+                            t = s + level;
+                            for(r = 0; r < s; ++r){
+                                 temp_F +=
                                         F[j*length*length + r*length + t]
                                         *
-                                        _A[j*_N*_N + k*_N + i]
+                                        temp_A
                                         *
                                         E[k*length*length + r*length + (s-1)];
                             }
@@ -269,15 +277,16 @@ public:
                     for(r = t + 1; r < length; ++r){
                         for(j = 0; j < _N; ++j){
                             for(k = 0; k < _N; ++k){
-                                F[i*length*length + s*length + t] +=
+                                temp_F +=
                                         F[j*length*length + s*length + r]
                                         *
-                                        _A[j*_N*_N + i*_N + k]
+                                        temp_A
                                         *
                                         E[k*length*length + (t+1)*length + r];
                             }
                         }
                     }
+                    F[i*length*length + s*length + t] = temp_F;
                 }
             }
         }
@@ -295,9 +304,9 @@ public:
      *
      */
     void inline estimate_A_B(const std::vector<string_vect> & samples,
-                             double* sample_probas,
-                             double* new_A,
-                             double* new_B){
+                             float* sample_probas,
+                             float* new_A,
+                             float* new_B){
         int n_samples = samples.size();
         int * sample_lengths = new int[n_samples];
         int length;
@@ -309,12 +318,12 @@ public:
          *  Prepare memory for as many runs of the inside outside
          *      algorithm as there are sample
          */
-        double** Es = new double*[n_samples];
-        double** Fs = new double*[n_samples];
+        float** Es = new float*[n_samples];
+        float** Fs = new float*[n_samples];
         for(id = 0; id < n_samples; ++id){
             length = sample_lengths[id];
-            Es[id] = new double[_N*length*length];
-            Fs[id] = new double[_N*length*length];
+            Es[id] = new float[_N*length*length];
+            Fs[id] = new float[_N*length*length];
         }
 
         /*
@@ -327,15 +336,17 @@ public:
             sample_probas[id] = Es[id][_root_index*length*length + _root_index*length + length - 1];
         }
 
-        double den;
-        double num;
-        double temp;
+        float den;
+        float num;
+        float temp;
         int i;
         int j;
         int k;
         int t;
         int s;
         int r;
+        float temp_A;
+        float temp_F;
         for(i = 0; i < _N; ++i){
             /*
              *  Estimation of A[i, :, :]
@@ -365,6 +376,7 @@ public:
             }
             for(j = 0; j < _N; ++j){
                 for(k = 0; k < _N; ++k){
+                    temp_A = _A[i*_N*_N + j*_N + k];
                     /*
                      *  Estimate element A[i, j, k]
                      */
@@ -377,6 +389,7 @@ public:
                         temp = 0;
                         for(s = 0; s < length - 1; ++s){
                             for(t = s + 1; t < length; ++t){
+                                temp_F = Fs[id][i*length*length + s*length + t];
                                 for(r = s; r < t; ++r){
                                     /*
                                      *  s is the beginning of the subsequence
@@ -385,13 +398,13 @@ public:
                                      *      split into a left generated element and a right
                                      *      generated element
                                      */
-                                    temp += _A[i*_N*_N + j*_N + k]
+                                    temp += temp_A
                                             *
                                             Es[id][j*length*length + s*length + r]
                                             *
                                             Es[id][k*length*length + (r+1)*length + t]
                                             *
-                                            Fs[id][i*length*length + s*length + t];
+                                            temp_F;
                                 }
                             }
                         }

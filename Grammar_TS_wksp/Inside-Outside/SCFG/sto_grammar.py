@@ -112,8 +112,8 @@ class SCFG:
     def __init__(self, root_index = 0):
         self.term_chars = []
         self.term_char_to_index = {}
-        self.A = np.zeros((0, 0, 0))
-        self.B = np.zeros((0, 0))
+        self.A = np.zeros((0, 0, 0), dtype = np.float32)
+        self.B = np.zeros((0, 0), dtype = np.float32)
         self.N = 0
         self.M = 0
         #
@@ -146,8 +146,8 @@ class SCFG:
         #
         #    Building A and B matrices
         #
-        self.A = np.zeros((self.N, self.N, self.N))
-        self.B = np.zeros((self.N, self.M))
+        self.A = np.zeros((self.N, self.N, self.N), dtype = np.float32)
+        self.B = np.zeros((self.N, self.M), dtype = np.float32)
         for i in xrange(self.N):
             list_of_pairs, list_of_weights, list_of_terms, list_of_term_weights = rule_dict[i]
             assert(len(list_of_pairs) == len(list_of_weights))
@@ -610,7 +610,7 @@ class SCFG:
                                               max_length,
                                               self.root_index)
         print time.clock() - first_time
-        freqs = np.asarray(freqs, dtype = np.double)
+        freqs = np.asarray(freqs, dtype = np.float32)
         total = float(np.sum(freqs))
         print 'Number of sentences %f' % total
         freqs /= total
@@ -638,7 +638,7 @@ class SCFG:
                                               n_samples,
                                               max_length = 0,
                                               root_index = self.root_index)
-        freqs = np.asarray(freqs, dtype = np.double)
+        freqs = np.asarray(freqs, dtype = np.float32)
         total = float(np.sum(freqs))
         freqs /= total
         if max_length == 0 and epsilon != 0:
