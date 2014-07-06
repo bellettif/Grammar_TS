@@ -21,8 +21,7 @@ __device__ int choice(
 __device__ bool emit_term(
 		curandState * state,
 		float * dev_non_term_term_dists,
-		int i,
-		int N);
+		int i);
 
 __device__ void non_term_derivation(
 		curandState * state,

@@ -16,8 +16,7 @@ __device__ int choice(
 __device__ bool emit_term(
 		curandState * state,
 		float * dev_non_term_term_dists,
-		int i,
-		int N){
+		int i){
 	return (choice(state,
 			dev_non_term_term_dists + i * 2,
 			2)

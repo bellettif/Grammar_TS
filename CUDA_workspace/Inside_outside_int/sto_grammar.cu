@@ -64,6 +64,7 @@ cu_Sto_grammar::~cu_Sto_grammar(){
 	CUDA_CHECK(dev_free<float>(_dev_term_weights));
 	CUDA_CHECK(dev_free<float>(_dev_non_term_term_dists));
 	CUDA_CHECK(dev_free<float>(_dev_tot_weights));
+	CUDA_CHECK(cudaDeviceReset());
 }
 
 void cu_Sto_grammar::printA(){
@@ -110,7 +111,7 @@ void cu_Sto_grammar::set_A(int i, int j, int k, float p)
 	/*
 	 * Changing non_term / term distribution
 	 */
-	float * dist_position = _dev_non_term_term_dists + i;
+	float * dist_position = _dev_non_term_term_dists + 2*i;
 	CUDA_CHECK(copy_on_device<float>(dist_position, weight_position, 1));
 	/*
 	 * 	Changing tot weight
@@ -141,7 +142,7 @@ void cu_Sto_grammar::set_B(int i, int j, float p){
 	/*
 	 * Changing non_term / term distribution
 	 */
-	float * dist_position = _dev_non_term_term_dists + i + 1;
+	float * dist_position = _dev_non_term_term_dists + 2*i + 1;
 	CUDA_CHECK(copy_on_device<float>(dist_position, weight_position, 1));
 	/*
 	 * 	Changing tot weight
