@@ -16,4 +16,5 @@ void copy_full_to_column_on_device(float * dest_pt, float * source_pt,
 	copy_full_to_columns_on_device_kernel<<<n_blocks, BLOCK_SIZE>>>(dest_pt,
 			source_pt, stride, offset, N);
 	CUDA_CHECK(check_last_error());
+	CUDA_CHECK(cudaDeviceSynchronize());
 }

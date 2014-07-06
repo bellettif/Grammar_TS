@@ -47,6 +47,7 @@ cu_Sto_grammar::cu_Sto_grammar(int N, int M,
 	fill_with_zeros(_dev_non_term_weights, _N);
 	fill_with_zeros(_dev_term_weights, _N);
 	fill_with_zeros(_dev_non_term_term_dists, 2 * _N);
+	fill_with_zeros(_dev_tot_weights, _N);
 }
 
 cu_Sto_grammar::cu_Sto_grammar(float * A, float * B,
@@ -82,6 +83,7 @@ cu_Sto_grammar::~cu_Sto_grammar(){
 	CUDA_CHECK(dev_free<float>(_dev_term_weights));
 	CUDA_CHECK(dev_free<float>(_dev_non_term_term_dists));
 	CUDA_CHECK(dev_free<float>(_dev_tot_weights));
+	CUDA_CHECK(cudaDeviceReset());
 }
 
 void cu_Sto_grammar::printA(){
@@ -90,6 +92,22 @@ void cu_Sto_grammar::printA(){
 
 void cu_Sto_grammar::printB(){
 	print_matrix_2D(_dev_B, _N, _M);
+}
+
+void cu_Sto_grammar::print_non_term_weights(){
+	print_matrix_1D(_dev_non_term_weights, _N);
+}
+
+void cu_Sto_grammar::print_term_weights(){
+	print_matrix_1D(_dev_term_weights, _N);
+}
+
+void cu_Sto_grammar::print_non_term_term_dists(){
+	print_matrix_1D(_dev_non_term_term_dists, 2 * _N);
+}
+
+void cu_Sto_grammar::print_tot_weights(){
+	print_matrix_1D(_dev_tot_weights, _N);
 }
 
 void cu_Sto_grammar::set_A(int i, int j, int k, float p)
@@ -156,10 +174,17 @@ void cu_Sto_grammar::set_B(int i, int j, float p){
 }
 
 void cu_Sto_grammar::normalize(){
-	/*
-	 * TODO
-	 */
-
+	divide_by(_dev_A, _dev_tot_weights,
+			_N, _N * _N);
+	divide_by(_dev_B, _dev_tot_weights,
+			_N, _M);
+	divide_by(_dev_non_term_weights, _dev_tot_weights,
+			_N, 1);
+	divide_by(_dev_term_weights, _dev_tot_weights,
+			_N, 1);
+	divide_by(_dev_non_term_term_dists, _dev_tot_weights,
+			_N, 2);
+	fill_with_scalar(_dev_tot_weights, 1.0, _N);
 }
 
 void cu_Sto_grammar::set_root_symbol(int new_root_symbol){

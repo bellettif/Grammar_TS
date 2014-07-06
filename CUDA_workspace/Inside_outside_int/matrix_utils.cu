@@ -1,15 +1,20 @@
 #include "matrix_utils.h"
 
-__global__ void fill_with_zeros_kernel(float * dev_array, int N){
+__global__ void fill_with_scalar_kernel(float * dev_array, float scalar, int N){
 	int tid = blockIdx.x * blockDim.x + threadIdx.x;
 	if(tid >= N) return;
-	dev_array[tid] = 0.0;
+	dev_array[tid] = scalar;
+}
+
+void fill_with_scalar(float * dev_array, float scalar, int N){
+	int n_blocks = ceil( ((float) N) / ((float) BLOCK_SIZE) );
+	fill_with_scalar_kernel<<<n_blocks, BLOCK_SIZE>>>(dev_array, scalar, N);
+	CUDA_CHECK(check_last_error());
+	CUDA_CHECK(cudaDeviceSynchronize());
 }
 
 void fill_with_zeros(float * dev_array, int N){
-	int n_blocks = ceil( ((float) N) / ((float) BLOCK_SIZE) );
-	fill_with_zeros_kernel<<<n_blocks, BLOCK_SIZE>>>(dev_array, N);
-	CUDA_CHECK(check_last_error());
+	fill_with_scalar(dev_array, 0.0, N);
 }
 
 __global__ void compute_sums_kernel(float * dev_array,
@@ -57,6 +62,7 @@ void compute_sums_on_device(float * dev_array, float * dev_sum_array,
 				iter
 				);
 		CUDA_CHECK(check_last_error());
+		CUDA_CHECK(cudaDeviceSynchronize());
 	}
 }
 
@@ -101,6 +107,7 @@ void print_matrix_3D(float * dev_matrix,
 			N_2,
 			N_3);
 	CUDA_CHECK(check_last_error());
+	CUDA_CHECK(cudaDeviceSynchronize());
 }
 
 __global__ void print_matrix_2D_kernel(float * dev_matrix,
@@ -122,6 +129,24 @@ void print_matrix_2D(float * dev_matrix,
 			N_1,
 			N_2);
 	CUDA_CHECK(check_last_error());
+	CUDA_CHECK(cudaDeviceSynchronize());
+}
+
+__global__ void print_matrix_1D_kernel(float * dev_matrix,
+		int N){
+	int i = threadIdx.x;
+	if(i >= N) return;
+	int pos = i;
+	printf("(%d)=%f\n", i, dev_matrix[pos]);
+}
+
+void print_matrix_1D(float * dev_matrix,
+		int N){
+	dim3 block_dim(N);
+	print_matrix_1D_kernel<<<1, block_dim>>>(dev_matrix,
+			N);
+	CUDA_CHECK(check_last_error());
+	CUDA_CHECK(cudaDeviceSynchronize());
 }
 
 __global__ void add_dev_vector_kernel(float * dev_A,
@@ -140,6 +165,7 @@ void add_vectors_on_device(float * dev_A,
 	int n_blocks = ceil( ((float) N) / ((float) BLOCK_SIZE) );
 	add_dev_vector_kernel<<<n_blocks, BLOCK_SIZE>>>(dev_A, dev_B, dev_C, N);
 	CUDA_CHECK(check_last_error());
+	CUDA_CHECK(cudaDeviceSynchronize());
 }
 
 void add_vectors(float * A,
@@ -165,3 +191,23 @@ void add_vectors(float * A,
 	CUDA_CHECK(dev_free<float>(dev_B));
 	CUDA_CHECK(dev_free<float>(dev_C));
 }
+
+__global__ void divide_by_kernel(float * M, float * tot,
+		int N, int stride){
+	int i = blockIdx.x;
+	if(i >= N) return;
+
+	int j = threadIdx.x;
+	if(j >= stride) return;
+
+	int pos = i * stride + j;
+	M[pos] /= tot[i];
+}
+
+void divide_by(float * M, float * tot,
+		int N, int stride){
+	divide_by_kernel<<<N, stride>>>(M, tot, N, stride);
+	CUDA_CHECK(check_last_error());
+	CUDA_CHECK(cudaDeviceSynchronize());
+}
+

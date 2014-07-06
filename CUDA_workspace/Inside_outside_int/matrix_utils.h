@@ -10,6 +10,8 @@
 
 #include "utils.h"
 
+void fill_with_scalar(float * dev_array, float scalar, int N);
+
 void fill_with_zeros(float * dev_array, int N);
 
 void compute_sums_on_device(float * dev_array, float * dev_sum_array,
@@ -27,6 +29,9 @@ void print_matrix_2D(float * dev_matrix,
 		int N_1,
 		int N_2);
 
+void print_matrix_1D(float * dev_matrix,
+		int N);
+
 void add_vectors_on_device(float * dev_A,
 		float * dev_B,
 		float * dev_C,
@@ -36,5 +41,8 @@ void add_vectors(float * A,
 		float * B,
 		float * C,
 		int N);
+
+void divide_by(float * M, float * tot,
+		int N, int stride);
 
 #endif /* MATRIX_UTILS_CUH_ */
