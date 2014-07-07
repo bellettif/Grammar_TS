@@ -11,7 +11,7 @@
 #include "sto_grammar.h"
 #include "sentence_prod.cuh"
 
-cu_Sto_grammar::cu_Sto_grammar(int N, int M,
+Sto_grammar::Sto_grammar(int N, int M,
 			int root_symbol):
 	_N(N), _M(M),
 	_root_symbol(root_symbol)
@@ -22,6 +22,23 @@ cu_Sto_grammar::cu_Sto_grammar(int N, int M,
 	CUDA_CHECK(dev_alloc<float>(_dev_term_weights, _N));
 	CUDA_CHECK(dev_alloc<float>(_dev_non_term_term_dists, 2 * _N));
 	CUDA_CHECK(dev_alloc<float>(_dev_tot_weights, _N));
+	CUDA_CHECK(dev_alloc<Compact_grammar>(_dev_cmpct_grammar, 1));
+
+	Compact_grammar temp(
+			_N,
+			_M,
+			_root_symbol,
+			_dev_A,
+			_dev_B,
+			_dev_non_term_weights,
+			_dev_term_weights,
+			_dev_non_term_term_dists,
+			_dev_tot_weights);
+
+	CUDA_CHECK(copy_to_device<Compact_grammar>(
+			_dev_cmpct_grammar,
+			& temp,
+			1));
 
 	fill_with_zeros(_dev_A, _N * _N * _N);
 	fill_with_zeros(_dev_B, _N * _M);
@@ -31,7 +48,7 @@ cu_Sto_grammar::cu_Sto_grammar(int N, int M,
 	fill_with_zeros(_dev_tot_weights, _N);
 }
 
-cu_Sto_grammar::cu_Sto_grammar(float * A, float * B,
+Sto_grammar::Sto_grammar(float * A, float * B,
 			int N, int M,
 			int root_symbol):
 			_N(N), _M(M),
@@ -43,6 +60,7 @@ cu_Sto_grammar::cu_Sto_grammar(float * A, float * B,
 	CUDA_CHECK(dev_alloc<float>(_dev_term_weights, _N));
 	CUDA_CHECK(dev_alloc<float>(_dev_non_term_term_dists, 2 * _N));
 	CUDA_CHECK(dev_alloc<float>(_dev_tot_weights, _N));
+	CUDA_CHECK(dev_alloc<Compact_grammar>(_dev_cmpct_grammar, 1));
 
 	CUDA_CHECK(copy_to_device<float>(_dev_A, A, _N * _N * _N));
 	CUDA_CHECK(copy_to_host<float>(_dev_B, B, _N * _M));
@@ -55,43 +73,64 @@ cu_Sto_grammar::cu_Sto_grammar(float * A, float * B,
 			_dev_non_term_weights, 2, 0, _N);
 	copy_full_to_column_on_device(_dev_non_term_term_dists,
 				_dev_term_weights, 2, 1, _N);
+
+	Compact_grammar temp(
+				_N,
+				_M,
+				_root_symbol,
+				_dev_A,
+				_dev_B,
+				_dev_non_term_weights,
+				_dev_term_weights,
+				_dev_non_term_term_dists,
+				_dev_tot_weights);
+
+	CUDA_CHECK(copy_to_device<Compact_grammar>(
+			_dev_cmpct_grammar,
+			& temp,
+			1));
 }
 
-cu_Sto_grammar::~cu_Sto_grammar(){
+Sto_grammar::~Sto_grammar(){
 	CUDA_CHECK(dev_free<float>(_dev_A));
 	CUDA_CHECK(dev_free<float>(_dev_B));
 	CUDA_CHECK(dev_free<float>(_dev_non_term_weights));
 	CUDA_CHECK(dev_free<float>(_dev_term_weights));
 	CUDA_CHECK(dev_free<float>(_dev_non_term_term_dists));
 	CUDA_CHECK(dev_free<float>(_dev_tot_weights));
+	CUDA_CHECK(dev_free<Compact_grammar>(_dev_cmpct_grammar));
 	CUDA_CHECK(cudaDeviceReset());
 }
 
-void cu_Sto_grammar::printA(){
+Compact_grammar * Sto_grammar::get_cmpct_grammar(){
+	return _dev_cmpct_grammar;
+}
+
+void Sto_grammar::printA(){
 	print_matrix_3D(_dev_A, _N, _N, _N);
 }
 
-void cu_Sto_grammar::printB(){
+void Sto_grammar::printB(){
 	print_matrix_2D(_dev_B, _N, _M);
 }
 
-void cu_Sto_grammar::print_non_term_weights(){
+void Sto_grammar::print_non_term_weights(){
 	print_matrix_1D(_dev_non_term_weights, _N);
 }
 
-void cu_Sto_grammar::print_term_weights(){
+void Sto_grammar::print_term_weights(){
 	print_matrix_1D(_dev_term_weights, _N);
 }
 
-void cu_Sto_grammar::print_non_term_term_dists(){
+void Sto_grammar::print_non_term_term_dists(){
 	print_matrix_1D(_dev_non_term_term_dists, 2 * _N);
 }
 
-void cu_Sto_grammar::print_tot_weights(){
+void Sto_grammar::print_tot_weights(){
 	print_matrix_1D(_dev_tot_weights, _N);
 }
 
-void cu_Sto_grammar::set_A(int i, int j, int k, float p)
+void Sto_grammar::set_A(int i, int j, int k, float p)
 {
 	/*
 	 * Changing probability on A table
@@ -123,7 +162,7 @@ void cu_Sto_grammar::set_A(int i, int j, int k, float p)
 	CUDA_CHECK(copy_to_device<float>(tot_weight_position, & prev_tot_weight, 1));
 }
 
-void cu_Sto_grammar::set_B(int i, int j, float p){
+void Sto_grammar::set_B(int i, int j, float p){
 	/*
 	 * Changing probability on B table
 	 */
@@ -154,7 +193,7 @@ void cu_Sto_grammar::set_B(int i, int j, float p){
 	CUDA_CHECK(copy_to_device<float>(tot_weight_position, & prev_tot_weight, 1));
 }
 
-void cu_Sto_grammar::normalize(){
+void Sto_grammar::normalize(){
 	divide_by(_dev_A, _dev_tot_weights,
 			_N, _N * _N);
 	divide_by(_dev_B, _dev_tot_weights,
@@ -168,7 +207,7 @@ void cu_Sto_grammar::normalize(){
 	fill_with_scalar(_dev_tot_weights, 1.0, _N);
 }
 
-void cu_Sto_grammar::set_root_symbol(int new_root_symbol){
+void Sto_grammar::set_root_symbol(int new_root_symbol){
 	_root_symbol = new_root_symbol;
 }
 
@@ -177,7 +216,7 @@ void cu_Sto_grammar::set_root_symbol(int new_root_symbol){
  * MAX_LENGTH symbol long
  * length points to the final sentence length
  */
-int cu_Sto_grammar::produce_sentences_dev(
+int Sto_grammar::produce_sentences_dev(
 		curandState * state_array,
 		int * dev_sentences,
 		int * dev_lengths,
@@ -196,14 +235,10 @@ int cu_Sto_grammar::produce_sentences_dev(
 	bool * dev_todo;
 	bool * dev_next_todo;
 	int * dev_buffer;
-	Compact_grammar * dev_cmpct;
 
 	dev_alloc<bool>(dev_todo, n_sentences * MAX_LENGTH);
 	dev_alloc<bool>(dev_next_todo, n_sentences * MAX_LENGTH);
 	dev_alloc<int>(dev_buffer, n_sentences * MAX_LENGTH);
-	dev_alloc<Compact_grammar>(dev_cmpct, 1);
-
-	copy_to_device<Compact_grammar>(dev_cmpct, &host_cmpct, 1);
 
 	int n_blocks = ceil( ((float) n_sentences) / ((float) BLOCK_SIZE));
 	produce_sentence_kernel<<<n_blocks, BLOCK_SIZE>>>(state_array,
@@ -214,14 +249,13 @@ int cu_Sto_grammar::produce_sentences_dev(
 			dev_todo,
 			dev_next_todo,
 			dev_buffer,
-			dev_cmpct);
+			_dev_cmpct_grammar);
 	CUDA_CHECK(check_last_error());
 	CUDA_CHECK(cudaDeviceSynchronize());
 
 	dev_free<bool>(dev_todo);
 	dev_free<bool>(dev_next_todo);
 	dev_free<int>(dev_buffer);
-	dev_free<Compact_grammar>(dev_cmpct);
 
 	return 0;
 }
