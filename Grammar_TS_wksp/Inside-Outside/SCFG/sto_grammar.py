@@ -464,13 +464,20 @@ class SCFG:
             alpha_2_D = param_2_A
             alpha_T = param_1_B
             for i in xrange(n_D):
-                beta = np.random.dirichlet(alpha_1_D * np.ones(N))
+                beta = np.random.dirichlet(alpha_1_D * 
+                           np.ones(N, np.float32))
                 beta_beta = np.outer(beta, beta)
-                weights = np.random.dirichlet(alpha_2_D * np.ones(N ** 2))
+                weights = np.random.dirichlet(alpha_2_D * 
+                          np.ones(N ** 2, np.float32))
                 A_proposal[i, :, :] = np.reshape(weights, (N, N)) * beta_beta
             for i in xrange(n_D, N):
-                B_proposal[i, :] = np.random.dirichlet(alpha_T * np.ones(M))
+                B_proposal[i, :] = np.random.dirichlet(alpha_T * 
+                                       np.ones(M, dtype = np.float32))
             normalize_slices(A_proposal, B_proposal)
+            A_proposal = np.asanyarray(A_proposal, 
+                                       dtype = np.float32)
+            B_proposal = np.asanyarray(B_proposal,
+                                       dtype = np.float32)
             return SCFG_c.iterate_estimation(A_proposal,
                                              B_proposal,
                                              term_chars,

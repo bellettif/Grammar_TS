@@ -73,7 +73,7 @@ original_text = '\r'.join([' '.join(x) for x in sentences])
 
 print original_text + '\n'
 
-folder_path = '/Users/francois/Grammar_TS/Grammar_TS_wksp/Inside-Outside/bayesian_SCFG/Results_2'
+folder_path = '/Users/francois/Grammar_TS/Grammar_TS_wksp/Inside-Outside/bayesian_SCFG/Results_7'
 folder_name = 'Model'
 model_gram.plot_grammar_matrices(folder_path,
                                  folder_name)

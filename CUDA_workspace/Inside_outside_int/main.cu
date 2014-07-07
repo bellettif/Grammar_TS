@@ -14,7 +14,6 @@
 int main(void){
 
 	CUDA_CHECK(cudaDeviceReset());
-	CUDA_CHECK(cudaDeviceSetCacheConfig(cudaFuncCachePreferShared));
 
 	std::cout << "Start" << std::endl;
 

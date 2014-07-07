@@ -174,11 +174,11 @@ public:
             int k;
             float temp_A;
             float temp_sum;
-            for(s = 0; s < length - level; ++s){
-                t = s + level;
-                E[i*length*length + s*length + t] = 0;
-            }
             for(int i = 0; i < _N; ++i){
+                for(s = 0; s < length - level; ++s){
+                    t = s + level;
+                    E[i*length*length + s*length + t] = 0;
+                }
                 for(j = 0; j < _N; ++j){
                     for(k = 0; k < _N; ++k){
                         temp_A = _A[i*_N*_N + j*_N + k];

@@ -26,6 +26,7 @@ __device__ void compute_inside_level_symbol(
 	int M = cmpct_g->_M;
 	float * A = cmpct_g->_dev_A;
 	float * B = cmpct_g->_dev_B;
+
 	if(level == 0){
 		for(int s = 0; s < length; ++s){
 			E[i*length*length + s*length + s] = B[i*M + sample[s]];
@@ -106,6 +107,7 @@ __global__ void compute_inside_probas_kernel(
 		int n_samples,
 		int level
 		){
+
 	int tid = blockIdx.x * BLOCK_SIZE + threadIdx.x;
 	int N = cmpct_g->_N;
 
@@ -145,6 +147,7 @@ void compute_inside_probas(
 		int n_samples){
 	int N = gram->_N;
 	int n_blocks = ceil(((float) n_samples * N) / ((float) BLOCK_SIZE));
+	CUDA_CHECK(cudaFuncSetCacheConfig(compute_inside_probas_kernel, cudaFuncCachePreferShared));
 	for(int level = -1; level < MAX_LENGTH; ++level){
 		compute_inside_probas_kernel<<<n_blocks, BLOCK_SIZE>>>(
 				Es,
