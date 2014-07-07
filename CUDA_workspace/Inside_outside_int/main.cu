@@ -3,129 +3,71 @@
 #include <time.h>
 #include <iostream>
 
-#include "sto_grammar.h"
-#include "matrix_utils.h"
-#include "utils.h"
-
-#include "cu_choice.cuh"
-#include "random_utils.cuh"
-#include "inside.h"
+#include"launch.h"
 
 int main(void){
 
-	CUDA_CHECK(cudaDeviceReset());
+	int N = 7;
+	int M = 3;
 
-	std::cout << "Start" << std::endl;
+	float * A_1 = (float*) calloc(N * N * N, sizeof(float));
+	float * B_1 = (float*) calloc(N * M, sizeof(float));
 
-	/*
-	 * Grammar example Figure 7 of Lari, Young 1987
-	 */
-	Sto_grammar palindrom_grammar(7, 3);
-	/*
-	 * Non terminal symbols
-	 */
-	palindrom_grammar.set_A(0, 1, 2, 0.3);
-	palindrom_grammar.set_A(0, 3, 4, 0.3);
-	palindrom_grammar.set_A(0, 5, 6, 0.3);
-	palindrom_grammar.set_A(0, 1, 1, 0.2);
-	palindrom_grammar.set_A(0, 3, 3, 0.2);
-	palindrom_grammar.set_A(0, 5, 5, 0.2);
-	//
-	palindrom_grammar.set_A(2, 0, 1, 1.0);
-	palindrom_grammar.set_A(4, 0, 3, 1.0);
-	palindrom_grammar.set_A(6, 0, 5, 1.0);
-	/*
-	 * Terminal symbols
-	 */
-	palindrom_grammar.set_B(1, 0, 1.0);
-	palindrom_grammar.set_B(3, 1, 1.0);
-	palindrom_grammar.set_B(5, 2, 1.0);
-	/*
-	 * Normalize
-	 */
-	palindrom_grammar.normalize();
+	float * A_2 = (float*) calloc(N * N * N, sizeof(float));
+	float * B_2 = (float*) calloc(N * M, sizeof(float));
 
-	const int n_samples = 128;
+	A_1[0 * N * N + 1 * N + 2] = 0.3;
+	A_1[0 * N * N + 3 * N + 4] = 0.3;
+	A_1[0 * N * N + 5 * N + 6] = 0.3;
 
-	curandState * state_array;
-	dev_alloc<curandState>(state_array, n_samples * MAX_LENGTH);
+	A_1[0 * N * N + 1 * N + 1] = 0.2;
+	A_1[0 * N * N + 3 * N + 3] = 0.2;
+	A_1[0 * N * N + 5 * N + 5] = 0.2;
 
-	setup_states(state_array,
-			n_samples * MAX_LENGTH,
-			0,
-			0);
+	A_1[2 * N * N + 0 * N + 1] = 1.0;
+	A_1[4 * N * N + 0 * N + 3] = 1.0;
+	A_1[6 * N * N + 0 * N + 5] = 1.0;
 
-	int * host_sentences = (int *) malloc(n_samples * MAX_LENGTH * sizeof(int));
-	int * host_lengths = (int *) malloc(n_samples * sizeof(int));
-	int * host_error_status = (int *) malloc(n_samples * sizeof(int));
+	B_1[1 * M + 0] = 1.0;
+	B_1[3 * M + 1] = 1.0;
+	B_1[5 * M + 2] = 1.0;
 
-	int * dev_sentences;
-	int * dev_lengths;
-	int * dev_error_status;
+	A_2[0 * N * N + 1 * N + 2] = 0.23;
+	A_2[0 * N * N + 3 * N + 4] = 0.23;
+	A_2[0 * N * N + 5 * N + 6] = 0.23;
 
-	float * probas = (float *) malloc(n_samples * sizeof(float));
-	float * dev_probas;
+	A_2[0 * N * N + 1 * N + 1] = 0.2;
+	A_2[0 * N * N + 3 * N + 3] = 0.2;
+	A_2[0 * N * N + 5 * N + 5] = 0.2;
 
-	dev_alloc<float>(dev_probas, n_samples);
+	A_2[2 * N * N + 0 * N + 1] = 1.0;
+	A_2[4 * N * N + 0 * N + 3] = 1.0;
+	A_2[6 * N * N + 0 * N + 5] = 1.0;
 
-	dev_alloc<int>(dev_sentences, n_samples * MAX_LENGTH);
-	dev_alloc<int>(dev_lengths, n_samples);
-	dev_alloc<int>(dev_error_status, n_samples);
+	B_2[1 * M + 0] = 1.0;
+	B_2[3 * M + 1] = 1.0;
+	B_2[5 * M + 2] = 1.0;
 
-	palindrom_grammar.produce_sentences_dev(
-			state_array,
-			dev_sentences,
-			dev_lengths,
-			dev_error_status,
-			n_samples);
+	const int n_samples = 4096 * 4;
 
-	std::cout << "Starting compute probas" << std::endl;
+	time_t timer;
+	time(&timer);
 
-	compute_probas(dev_probas,
-			dev_sentences,
-			dev_lengths,
-			dev_error_status,
-			& palindrom_grammar,
-			n_samples);
+	std::cout << sqrt(compute_dist_batch(A_1, B_1,
+						N, M,
+						0,
+						A_2, B_2,
+						N, M,
+						0,
+						n_samples)) << std::endl;
 
-	std::cout << "Compute probas done" << std::endl;
+	std::cout << difftime(time(NULL), timer) << std::endl;
 
-	copy_to_host<int>(host_sentences, dev_sentences, n_samples * MAX_LENGTH);
-	copy_to_host<int>(host_lengths, dev_lengths, n_samples);
-	copy_to_host<int>(host_error_status, dev_error_status, n_samples);
+	free(A_1);
+	free(B_1);
 
-	copy_to_host<float>(probas, dev_probas, n_samples);
-
-	dev_free<curandState>(state_array);
-
-	for(int i = 0; i < n_samples; ++i){
-		std::cout << host_error_status[i] << " ";
-		std::cout << host_lengths[i] << ": ";
-		if(host_error_status[i] == 1){
-			std::cout << "Over max length" << std::endl;
-			continue;
-		}
-		if(host_error_status[i] == 2){
-			std::cout << "Over max iters" << std::endl;
-			continue;
-		}
-		std::cout << probas[i] << ": ";
-		for(int j = 0; j < host_lengths[i]; ++j){
-			std::cout << host_sentences[i * MAX_LENGTH + j] << " ";
-		}std::cout << std::endl;
-	}
-
-	dev_free<int>(dev_sentences);
-	dev_free<int>(dev_lengths);
-	dev_free<int>(dev_error_status);
-
-	dev_free<float>(dev_probas);
-
-	free(host_sentences);
-	free(host_lengths);
-	free(host_error_status);
-
-	free(probas);
+	free(A_2);
+	free(B_2);
 
 	return 0;
 }

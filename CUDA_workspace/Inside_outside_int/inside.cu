@@ -188,6 +188,36 @@ __global__ void copy_to_probas(
 
 }
 
+void compute_probas_allocated(
+		float * Es,
+		float * probas,
+		int * samples,
+		int * lengths,
+		int * error_codes,
+		Sto_grammar * gram,
+		int n_samples){
+	int N = gram->_N;
+
+	compute_inside_probas(
+			Es,
+			samples,
+			lengths,
+			error_codes,
+			gram,
+			n_samples);
+
+	int n_blocks = ceil(((float) n_samples * N) / ((float) BLOCK_SIZE));
+	copy_to_probas<<<n_blocks, BLOCK_SIZE>>>(
+			probas,
+			Es,
+			lengths,
+			gram->get_cmpct_grammar(),
+			n_samples);
+	CUDA_CHECK(check_last_error());
+	CUDA_CHECK(cudaDeviceSynchronize());
+}
+
+
 void compute_probas(
 		float * probas,
 		int * samples,

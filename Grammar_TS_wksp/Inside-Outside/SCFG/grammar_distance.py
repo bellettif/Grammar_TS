@@ -24,20 +24,24 @@ class Grammar_distance():
         if sorted(self.left_grammar.term_chars) != sorted(self.right_grammar.term_chars):
             return np.inf
         left_samples = self.left_grammar.produce_sentences(n_samples, max_length)
-        right_samples = self.right_grammar.produce_sentences(n_samples, max_length)       
-        left_right_probas = self.left_grammar.estimate_likelihoods(right_samples, max_length)
-        left_left_probas = self.left_grammar.estimate_likelihoods(left_samples, max_length)
-        right_left_probas = self.right_grammar.estimate_likelihoods(left_samples, max_length)
-        right_right_probas = self.right_grammar.estimate_likelihoods(right_samples, max_length)
+        right_samples = self.right_grammar.produce_sentences(n_samples, max_length)
+        print len(left_samples)
+        print len(right_samples)
+        left_right_probas = self.left_grammar.estimate_likelihoods(right_samples)
+        left_left_probas = self.left_grammar.estimate_likelihoods(left_samples)
+        right_left_probas = self.right_grammar.estimate_likelihoods(left_samples)
+        right_right_probas = self.right_grammar.estimate_likelihoods(right_samples)
         #
         selection = np.where(left_left_probas != 0)
-        left_result = np.sum(np.log(left_left_probas[selection] / right_left_probas[selection]) * left_left_probas[selection])
+        mid_probas = 0.5 * (left_left_probas + right_left_probas)
+        left_result = np.sum(np.log2(left_left_probas[selection] / mid_probas[selection]) * left_left_probas[selection])
         left_result /= float(n_samples)
         #
         selection = np.where(right_right_probas != 0)
-        right_result = np.sum(np.log(right_right_probas[selection] / left_right_probas[selection]) * right_right_probas[selection])
+        mid_probas = 0.5 * (right_right_probas + left_right_probas)
+        right_result = np.sum(np.log2(right_right_probas[selection] / mid_probas[selection]) * right_right_probas[selection])
         right_result /= float(n_samples)
-        return left_result + right_result
+        return np.sqrt(left_result + right_result)
 
     def compute_distance_MC(self,
                             n_samples,

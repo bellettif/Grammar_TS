@@ -1,5 +1,6 @@
 #include "cu_choice.cuh"
 
+/*
 __device__ int choice(
 		curandState * state,
 		float * weights,
@@ -12,8 +13,10 @@ __device__ int choice(
 	}
 	return N - 1;
 }
+*/
 
-__device__ bool emit_term(
+/*
+__device__ inline bool emit_term(
 		curandState * state,
 		float * dev_non_term_term_dists,
 		int i){
@@ -22,7 +25,9 @@ __device__ bool emit_term(
 			2)
 			== 1);
 }
+*/
 
+/*
 __device__ void non_term_derivation(
 		curandState * state,
 		float * dev_A,
@@ -34,7 +39,9 @@ __device__ void non_term_derivation(
 	j = pos / N;
 	k = pos % N;
 }
+*/
 
+/*
 __device__ void term_derivation(
 		curandState * state,
 		float * dev_B,
@@ -44,6 +51,7 @@ __device__ void term_derivation(
 			dev_B + i * M,
 			M);
 }
+*/
 
 /**
  * N below BLOCK_SIZE

@@ -63,7 +63,7 @@ Sto_grammar::Sto_grammar(float * A, float * B,
 	CUDA_CHECK(dev_alloc<Compact_grammar>(_dev_cmpct_grammar, 1));
 
 	CUDA_CHECK(copy_to_device<float>(_dev_A, A, _N * _N * _N));
-	CUDA_CHECK(copy_to_host<float>(_dev_B, B, _N * _M));
+	CUDA_CHECK(copy_to_device<float>(_dev_B, B, _N * _M));
 
 	compute_sums_on_device(_dev_A, _dev_non_term_weights, _N * _N, _N);
 	compute_sums_on_device(_dev_B, _dev_term_weights, _M, _N);
@@ -99,7 +99,6 @@ Sto_grammar::~Sto_grammar(){
 	CUDA_CHECK(dev_free<float>(_dev_non_term_term_dists));
 	CUDA_CHECK(dev_free<float>(_dev_tot_weights));
 	CUDA_CHECK(dev_free<Compact_grammar>(_dev_cmpct_grammar));
-	CUDA_CHECK(cudaDeviceReset());
 }
 
 Compact_grammar * Sto_grammar::get_cmpct_grammar(){
