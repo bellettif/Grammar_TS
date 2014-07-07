@@ -9,7 +9,7 @@
 #include <string>
 
 typedef std::string T;
-typedef std::vector<double>                 double_vect;
+typedef std::vector<float>                  float_vect;
 typedef std::pair<int, int>                 pair_i_i;
 typedef std::vector<std::pair<int, int>>    pair_i_i_vect;
 typedef std::vector<T>                      T_vect;
@@ -26,13 +26,13 @@ class Stochastic_rule{
 private:
     const int                           _rule_name;
 
-    double_vect                         _non_term_w;
+    float_vect                         _non_term_w;
     pair_i_i_vect                       _non_term_s;
-    double                              _non_term_totw;
+    float                              _non_term_totw;
 
-    double_vect                         _term_w;
+    float_vect                         _term_w;
     T_vect                              _term_s;
-    double                              _term_totw;
+    float                              _term_totw;
 
     RNG &                               _rng;
 
@@ -43,10 +43,10 @@ private:
 
 public:
     Stochastic_rule(const int &              rule_name,
-                    const double_vect &      non_term_w,
+                    const float_vect &      non_term_w,
                     const pair_i_i_vect &    non_term_s,
                     RNG &                    rng,
-                    const double_vect &      term_w = double_vect(),
+                    const float_vect &      term_w = float_vect(),
                     const T_vect &           term_s = T_vect()):
         _rule_name(rule_name),
         _non_term_w(non_term_w),
@@ -58,13 +58,13 @@ public:
         _rng(rng),
         _non_term_choice(_non_term_w.begin(), _non_term_w.end()),
         _term_choice(_term_w.begin(), _term_w.end()){
-        for(const double & x : _non_term_w){
+        for(const float & x : _non_term_w){
             _non_term_totw += x;
         }
-        for(const double & x : _term_w){
+        for(const float & x : _term_w){
             _term_totw += x;
         }
-        double total_weight = _non_term_totw + _term_totw;
+        float total_weight = _non_term_totw + _term_totw;
         _non_term_term_choice = choice_distrib({_non_term_totw, _term_totw});
         _non_term_totw /= total_weight;
         _term_totw /= total_weight;
@@ -113,7 +113,7 @@ public:
         return _rule_name;
     }
 
-    const double_vect & get_non_term_w() const{
+    const float_vect & get_non_term_w() const{
         return _non_term_w;
     }
 
@@ -121,7 +121,7 @@ public:
         return _non_term_s;
     }
 
-    const double_vect & get_term_w() const{
+    const float_vect & get_term_w() const{
         return _term_w;
     }
 

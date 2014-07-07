@@ -15,7 +15,7 @@ typedef std::string T;
 class SCFG{
 
 typedef Stochastic_rule                                     rule_T;
-typedef std::vector<double>                                 double_vect;
+typedef std::vector<float>                                 float_vect;
 typedef std::unordered_map<int, rule_T>                     int_rule_hashmap;
 typedef std::tuple<int, int, int>                           non_term_tuple;
 typedef std::unordered_set<non_term_tuple>                  non_term_tuple_set;
@@ -41,8 +41,8 @@ private:
     int_int_map                         _non_term_to_index;
     T_set                               _all_terms;
     int_set                             _all_non_terms;
-    double***                           _A;
-    double**                            _B;
+    float***                           _A;
+    float**                            _B;
 
 
 public:
@@ -88,20 +88,20 @@ public:
         int k;
 
         //Second run to setup A and B
-        _A = new double**[N];
+        _A = new float**[N];
         for(i = 0; i < N; ++i){
-          _A[i] = new double*[N];
+          _A[i] = new float*[N];
             for(j = 0; j < N; ++j){
-                _A[i][j] = new double[N];
+                _A[i][j] = new float[N];
                 for(k = 0; k < N; ++k){
                     _A[i][j][k] = 0;
                 }
             }
         }
 
-        _B = new double*[N];
+        _B = new float*[N];
         for(i = 0; i < N; ++i){
-            _B[i] = new double[M];
+            _B[i] = new float[M];
             for(k = 0; k < M; ++k){
                 _B[i][k] = 0;
             }
@@ -111,14 +111,14 @@ public:
         for(const rule_T & rule: rules){
             i = _non_term_to_index[rule.get_name()];
             l = 0;
-            const double_vect & weights = rule.get_non_term_w();
+            const float_vect & weights = rule.get_non_term_w();
             for(const pair_i_i & derivation: rule.get_non_term_s()){
                 j = _non_term_to_index[derivation.first];
                 k = _non_term_to_index[derivation.second];
                 _A[i][j][k] = weights[l++];
             }
             l = 0;
-            const double_vect & new_weights = rule.get_term_w();
+            const float_vect & new_weights = rule.get_term_w();
             for(const T & term: rule.get_term_s()){
                 k = _term_to_index[term];
                 _B[i][k] = new_weights[l++];
@@ -186,7 +186,7 @@ public:
         }
     }
 
-    double*** get_A() const{
+    float*** get_A() const{
         return _A;
     }
 
@@ -194,7 +194,7 @@ public:
         return _n_non_terms;
     }
 
-    double** get_B() const{
+    float** get_B() const{
         return _B;
     }
 

@@ -5,34 +5,34 @@
 
 namespace array_utils{
 
-static void allocate_arrays(double*** & A,
-                            double** & B,
+static void allocate_arrays(float*** & A,
+                            float** & B,
                             int N,
                             int M){
 
-    A = new double**[N];
+    A = new float**[N];
     for(int i = 0; i < N; ++i){
-        A[i] = new double*[N];
+        A[i] = new float*[N];
         for(int j = 0; j < N; ++j){
-            A[i][j] = new double[N];
+            A[i][j] = new float[N];
         }
     }
-    B = new double*[N];
+    B = new float*[N];
     for(int i = 0; i < N; ++i){
-        B[i] = new double[M];
+        B[i] = new float[M];
     }
 }
 
-static void allocate_array(double* & A,
-                           double* & B,
+static void allocate_array(float* & A,
+                           float* & B,
                            int N,
                            int M){
-    A = new double[N*N*N];
-    B = new double[N*M];
+    A = new float[N*N*N];
+    B = new float[N*M];
 }
 
-static void deallocate_arrays(double*** A,
-                              double** B,
+static void deallocate_arrays(float*** A,
+                              float** B,
                               int N,
                               int M){
     for(int i = 0; i < N; ++i){
@@ -48,14 +48,14 @@ static void deallocate_arrays(double*** A,
     delete B;
 }
 
-static void deallocate_arrays(double* A,
-                              double* B){
+static void deallocate_arrays(float* A,
+                              float* B){
     delete A;
     delete B;
 }
 
-static void print_array_content(double*** A,
-                                double** B,
+static void print_array_content(float*** A,
+                                float** B,
                                 int N,
                                 int M){
     std::cout << "A array:" << std::endl;
@@ -86,8 +86,8 @@ static void print_array_content(double*** A,
     std::cout << std::endl;
 }
 
-static void print_array_content(double* A,
-                                double* B,
+static void print_array_content(float* A,
+                                float* B,
                                 int N,
                                 int M){
     std::cout << "A array:" << std::endl;
@@ -118,9 +118,9 @@ static void print_array_content(double* A,
     std::cout << std::endl;
 }
 
-static void flatten_params(double*** A_3d, double** B_2d,
+static void flatten_params(float*** A_3d, float** B_2d,
                            int N, int M,
-                           double* A_1d, double* B_1d){
+                           float* A_1d, float* B_1d){
     for(int i = 0; i < N; ++i){
         for(int j = 0; j < N; ++j){
             for(int k = 0; k < N; ++k){
@@ -136,13 +136,13 @@ static void flatten_params(double*** A_3d, double** B_2d,
 }
 
 
-static void fill_arrays_with_random(double*** A,
-                                    double** B,
+static void fill_arrays_with_random(float*** A,
+                                    float** B,
                                     int N, int M,
                                     RNG rng){
-    std::uniform_real_distribution<double> noise(0.01, 1.0);
-    double temp_sum;
-    double temp_value;
+    std::uniform_real_distribution<float> noise(0.01, 1.0);
+    float temp_sum;
+    float temp_value;
     for(int i = 0; i < N; ++i){
         temp_sum = 0;
         for(int j = 0; j < N; ++j){
@@ -169,7 +169,7 @@ static void fill_arrays_with_random(double*** A,
     }
 }
 
-static void print_3d_array(double*** array,
+static void print_3d_array(float*** array,
                            int n, int m, int p){
     for(int i = 0; i < n; ++i){
         std::cout << "Printing slice " << i << std::endl;
@@ -186,7 +186,7 @@ static void print_3d_array(double*** array,
     }
 }
 
-static void print_3d_array(double* array,
+static void print_3d_array(float* array,
                            int n, int m, int p){
     for(int i = 0; i < n; ++i){
         std::cout << "Printing slice " << i << std::endl;
@@ -203,7 +203,7 @@ static void print_3d_array(double* array,
     }
 }
 
-static void print_2d_array(double** array,
+static void print_2d_array(float** array,
                            int n, int m){
     for(int i = 0; i < n; ++i){
         for(int j = 0; j < m; ++j){
@@ -216,7 +216,7 @@ static void print_2d_array(double** array,
     }
 }
 
-static void print_2d_array(double* array,
+static void print_2d_array(float* array,
                            int n, int m){
     for(int i = 0; i < n; ++i){
         for(int j = 0; j < m; ++j){

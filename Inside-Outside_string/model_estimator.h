@@ -20,8 +20,8 @@ typedef In_out_proba                                    in_out_T;
 
 private:
     const SGrammar_T &      _init_grammar;
-    double***               _A;
-    double**                _B;
+    float***               _A;
+    float**                _B;
     int                     _N;
     int                     _M;
     const T_int_map &       _term_to_index;
@@ -34,16 +34,16 @@ private:
     std::vector<in_out_T*>  _in_out_cpters;
 
     T_vect_vect             _inputs;
-    double***               _A_estim;
-    double**                _B_estim;
+    float***               _A_estim;
+    float**                _B_estim;
 
     bool					_delete_arrays;
 
 public:
     Model_estimator(const SGrammar_T & init_grammar,
                     const T_vect_vect & inputs,
-                    double*** initial_A_guess = 0,
-                    double** initial_B_guess = 0):
+                    float*** initial_A_guess = 0,
+                    float** initial_B_guess = 0):
         _init_grammar(init_grammar),
         _A(initial_A_guess),
         _B(initial_B_guess),
@@ -64,19 +64,19 @@ public:
             _B = init_grammar.get_B();
         }
         _delete_arrays = false;
-        _A_estim = new double**[_N];
+        _A_estim = new float**[_N];
         for(int i = 0; i < _N; ++i){
-            _A_estim[i] = new double*[_N];
+            _A_estim[i] = new float*[_N];
             for(int j = 0; j < _N; ++j){
-                _A_estim[i][j] = new double[_N];
+                _A_estim[i][j] = new float[_N];
                 for(int k = 0; k < _N; ++k){
                     _A_estim[i][j][k] = 0;
                 }
             }
         }
-        _B_estim = new double*[_N];
+        _B_estim = new float*[_N];
         for(int i = 0; i < _N; ++i){
-            _B_estim[i] = new double[_M];
+            _B_estim[i] = new float[_M];
             for(int k = 0; k < _M; ++k){
                 _B_estim[i][k] = 0;
             }
@@ -85,8 +85,8 @@ public:
 
     Model_estimator(const SGrammar_T & init_grammar,
                         const T_vect_vect & inputs,
-                        double* initial_A_guess,
-                        double* initial_B_guess):
+                        float* initial_A_guess,
+                        float* initial_B_guess):
             _init_grammar(init_grammar),
             _N(init_grammar.get_n_non_terms()),
             _M(init_grammar.get_n_terms()),
@@ -98,38 +98,38 @@ public:
             _root_index(init_grammar.get_non_term_to_index().at(_root_symbol)),
             _inputs(inputs)
         {
-    		_A = new double**[_N];
+            _A = new float**[_N];
     		for(int i = 0; i < _N; ++i){
-    			_A[i] = new double*[_N];
+                _A[i] = new float*[_N];
     			for(int j = 0; j < _N; ++j){
-    				_A[i][j] = new double[_N];
+                    _A[i][j] = new float[_N];
     				for(int k = 0; k < _N; ++k){
     					_A[i][j][k] = initial_A_guess[i*_N*_N + j*_N + k];
     				}
     			}
     		}
-    		_B = new double*[_N];
+            _B = new float*[_N];
     		for(int i = 0; i < _N; ++i){
-    			_B[i] = new double[_M];
+                _B[i] = new float[_M];
     			for(int j = 0; j < _M; ++j){
                     _B[i][j] = initial_B_guess[i*_M + j];
     			}
     		}
 
             _delete_arrays = true;
-            _A_estim = new double**[_N];
+            _A_estim = new float**[_N];
             for(int i = 0; i < _N; ++i){
-                _A_estim[i] = new double*[_N];
+                _A_estim[i] = new float*[_N];
                 for(int j = 0; j < _N; ++j){
-                    _A_estim[i][j] = new double[_N];
+                    _A_estim[i][j] = new float[_N];
                     for(int k = 0; k < _N; ++k){
                         _A_estim[i][j][k] = 0;
                     }
                 }
             }
-            _B_estim = new double*[_N];
+            _B_estim = new float*[_N];
             for(int i = 0; i < _N; ++i){
-                _B_estim[i] = new double[_M];
+                _B_estim[i] = new float[_M];
                 for(int k = 0; k < _M; ++k){
                     _B_estim[i][k] = 0;
                 }
@@ -165,14 +165,14 @@ public:
 
     void estimate_from_inputs(){
         int n_inputs = _inputs.size();
-        std::vector<double> weights;
+        std::vector<float> weights;
         _in_out_cpters = std::vector<in_out_T*>();
-        double *** E;
-        double *** F;
+        float *** E;
+        float *** F;
         int N;
         int M;
         int length;
-        double proba;
+        float proba;
         in_out_T * current_cpter;
         std::vector<int> input_indices;
         for(int current_it = 0; current_it < _inputs.size() ; ++current_it){
@@ -191,9 +191,9 @@ public:
             _in_out_cpters.push_back(current_cpter);
             input_indices.push_back(current_it);
         }
-        double den;
-        double temp;
-        double num;
+        float den;
+        float temp;
+        float num;
         int current_term_index;
         // Estimation of A
         for(int i = 0; i < _N; ++i){
@@ -313,46 +313,46 @@ public:
         }
     }
 
-    double*** get_A_estim(){
+    float*** get_A_estim(){
         return _A_estim;
     }
 
-    double** get_B_estim(){
+    float** get_B_estim(){
         return _B_estim;
     }
 
-    double*** get_A(){
+    float*** get_A(){
         return _A;
     }
 
-    double** get_B(){
+    float** get_B(){
         return _B;
     }
 
-    void set_A(double*** A){
+    void set_A(float*** A){
         _A = A;
     }
 
-    void set_B(double** B){
+    void set_B(float** B){
         _B = B;
     }
 
     void swap_model_estim(){
         _A = _A_estim;
         _B = _B_estim;
-        _A_estim = new double**[_N];
+        _A_estim = new float**[_N];
         for(int i = 0; i < _N; ++i){
-            _A_estim[i] = new double*[_N];
+            _A_estim[i] = new float*[_N];
             for(int j = 0; j < _N; ++j){
-                _A_estim[i][j] = new double[_N];
+                _A_estim[i][j] = new float[_N];
                 for(int k = 0; k < _N; ++k){
                     _A_estim[i][j][k] = 0;
                 }
             }
         }
-        _B_estim = new double*[_N];
+        _B_estim = new float*[_N];
         for(int i = 0; i < _N; ++i){
-            _B_estim[i] = new double[_M];
+            _B_estim[i] = new float[_M];
             for(int k = 0; k < _M; ++k){
                 _B_estim[i][k] = 0;
             }

@@ -19,11 +19,11 @@ typedef std::unordered_map<T, int>                      T_int_map;
 typedef SCFG                                            SGrammar_T;
 typedef std::pair<int, int>                             non_term_der;
 
-typedef std::unordered_map<int, double>                 int_double_hashmap;
+typedef std::unordered_map<int, float>                 int_float_hashmap;
 typedef std::unordered_map<int,
-                int_double_hashmap>                     int_int_double_hashmap;
+                int_float_hashmap>                     int_int_float_hashmap;
 typedef std::unordered_map<int,
-                int_int_double_hashmap>                 int_int_int_double_hashmap;
+                int_int_float_hashmap>                 int_int_int_float_hashmap;
 
 
 typedef std::tuple<int, int, int>                       trip;
@@ -37,8 +37,8 @@ typedef std::unordered_map<int,
 
 
 private:
-    double***               _A;
-    double**                _B;
+    float***               _A;
+    float**                _B;
     int                     _N;
     int                     _M;
     const T_int_map &       _term_to_index;
@@ -47,8 +47,8 @@ private:
     const int_int_map &     _index_to_non_term;
     const T_vect &          _input;
     int                     _length;
-    double***               _E;
-    double***               _F;
+    float***               _E;
+    float***               _F;
     int                     _root_symbol;
     int                     _root_index;
     bool                    _inside_computed        = false;
@@ -60,8 +60,8 @@ public:
 
     In_out_proba(const SGrammar_T & grammar,
                  const T_vect & input,
-                 double *** A = 0,
-                 double ** B = 0):
+                 float *** A = 0,
+                 float ** B = 0):
         _A(A),
         _B(B),
         _N(grammar.get_n_non_terms()),
@@ -82,21 +82,21 @@ public:
             _B = grammar.get_B();
         }
         _delete_arrays = false;
-        _E = new double**[_N];
+        _E = new float**[_N];
         for(int i = 0; i < _N; ++i){
-            _E[i] = new double*[_length];
+            _E[i] = new float*[_length];
             for(int j = 0; j < _length; ++j){
-                _E[i][j] = new double[_length];
+                _E[i][j] = new float[_length];
                 for(int k = 0; k < _length; ++k){
                     _E[i][j][k] = 0;
                 }
             }
         }
-        _F = new double**[_N];
+        _F = new float**[_N];
         for(int i = 0; i < _N; ++i){
-            _F[i] = new double*[_length];
+            _F[i] = new float*[_length];
             for(int j = 0; j  < _length; ++j){
-                _F[i][j] = new double[_length];
+                _F[i][j] = new float[_length];
                 for(int k = 0; k < _length; ++k){
                     _F[i][j][k] = 0;
                 }
@@ -107,8 +107,8 @@ public:
     // Flat array initializer, for numpy arrays
     In_out_proba(const SGrammar_T & grammar,
                  const T_vect & input,
-                 double* A,
-                 double* B):
+                 float* A,
+                 float* B):
         _N(grammar.get_n_non_terms()),
         _M(grammar.get_n_terms()),
         _term_to_index(grammar.get_term_to_index()),
@@ -120,13 +120,13 @@ public:
         _root_symbol(grammar.get_root_symbol()),
         _root_index(grammar.get_non_term_to_index().at(_root_symbol))
     {
-        _A = new double**[_N];
+        _A = new float**[_N];
         for(int i = 0; i < _N; ++i){
             //std::cout << "A matrix of non term " << i << std::endl;
-            _A[i] = new double*[_N];
+            _A[i] = new float*[_N];
             for(int j = 0; j < _N; ++j){
                 //std::cout << "\t";
-               _A[i][j] = new double[_N];
+               _A[i][j] = new float[_N];
                for(int k = 0; k < _N; ++k){
                    _A[i][j][k] = A[i*_N*_N + j*_N + k];
                    //std::cout << _A[i][j][k] << " ";
@@ -135,10 +135,10 @@ public:
             }
         }
         //std::cout << "B matrix: " << std::endl;
-        _B = new double*[_N];
+        _B = new float*[_N];
         for(int i = 0; i < _N; ++i){
             //std::cout << "\t";
-            _B[i] = new double[_M];
+            _B[i] = new float[_M];
             for(int j = 0; j < _M; ++j){
                 _B[i][j] = B[i*_M + j];
                 //std::cout << _B[i][j] << " ";
@@ -147,21 +147,21 @@ public:
         }
         _delete_arrays = true;
 
-        _E = new double**[_N];
+        _E = new float**[_N];
         for(int i = 0; i < _N; ++i){
-            _E[i] = new double*[_length];
+            _E[i] = new float*[_length];
             for(int j = 0; j < _length; ++j){
-                _E[i][j] = new double[_length];
+                _E[i][j] = new float[_length];
                 for(int k = 0; k < _length; ++k){
                     _E[i][j][k] = 0;
                 }
             }
         }
-        _F = new double**[_N];
+        _F = new float**[_N];
         for(int i = 0; i < _N; ++i){
-            _F[i] = new double*[_length];
+            _F[i] = new float*[_length];
             for(int j = 0; j  < _length; ++j){
-                _F[i][j] = new double[_length];
+                _F[i][j] = new float[_length];
                 for(int k = 0; k < _length; ++k){
                     _F[i][j][k] = 0;
                 }
@@ -169,7 +169,7 @@ public:
         }
     }
 
-    In_out_proba(double*** A, double** B,
+    In_out_proba(float*** A, float** B,
                  int N, int M,
                  const T_int_map & term_to_index,
                  const int_T_map & index_to_term,
@@ -189,21 +189,21 @@ public:
         _root_index(root_index)
     {
     	_delete_arrays = false;
-        _E = new double**[_N];
+        _E = new float**[_N];
         for(int i = 0; i < _N; ++i){
-            _E[i] = new double*[_length];
+            _E[i] = new float*[_length];
             for(int j = 0; j < _length; ++j){
-                _E[i][j] = new double[_length];
+                _E[i][j] = new float[_length];
                 for(int k = 0; k < _length; ++k){
                     _E[i][j][k] = 0;
                 }
             }
         }
-        _F = new double**[_N];
+        _F = new float**[_N];
         for(int i = 0; i < _N; ++i){
-            _F[i] = new double*[_length];
+            _F[i] = new float*[_length];
             for(int j = 0; j  < _length; ++j){
-                _F[i][j] = new double[_length];
+                _F[i][j] = new float[_length];
                 for(int k = 0; k < _length; ++k){
                     _F[i][j][k] = 0;
                 }
@@ -241,8 +241,8 @@ public:
         delete[] _F;
     }
 
-    void get_inside_outside(double*** & E,
-                            double*** & F,
+    void get_inside_outside(float*** & E,
+                            float*** & F,
                             int & N,
                             int & M,
                             int & length){
@@ -365,8 +365,8 @@ public:
     }
 
 
-    double run_CYK(){
-        int_int_int_double_hashmap      gammas;
+    float run_CYK(){
+        int_int_int_float_hashmap      gammas;
         int_int_int_trip_hashmap        taus;
         int                             i;
         int                             j;
@@ -375,8 +375,8 @@ public:
         int                             t;
         int                             r;
         trip                            current_arg_max;
-        double                          current_max;
-        double                          current_value;
+        float                          current_max;
+        float                          current_value;
         for(int l = 0; l < _length; ++l){
             if(l == 0){
                 for(i = 0; i < _N; ++i){
@@ -413,8 +413,8 @@ public:
         return std::exp(gammas[_root_index][0][_length - 1]);
     }
 
-    Parse_tree  run_CYK(double & parse_proba){
-        int_int_int_double_hashmap      gammas;
+    Parse_tree  run_CYK(float & parse_proba){
+        int_int_int_float_hashmap      gammas;
         int_int_int_trip_hashmap        taus;
         int                             i;
         int                             j;
@@ -423,8 +423,8 @@ public:
         int                             t;
         int                             r;
         trip                            current_arg_max;
-        double                          current_max;
-        double                          current_value;
+        float                          current_max;
+        float                          current_value;
         for(int l = 0; l < _length; ++l){
             if(l == 0){
                 for(i = 0; i < _N; ++i){
@@ -499,7 +499,7 @@ public:
     }
 
     void check_integrity(){
-        double temp_sum;
+        float temp_sum;
         int i;
         int s;
         int t;

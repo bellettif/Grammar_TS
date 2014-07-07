@@ -4,12 +4,10 @@ Created on 1 juin 2014
 @author: francois
 '''
 
-from SCFG_c import *
-
 import numpy as np
 from matplotlib import pyplot as plt
 
-from sto_grammar import SCFG
+from SCFG.sto_grammar import SCFG
 
 import time
 
@@ -19,8 +17,8 @@ terms = ['a', 'b', 'c']
 
 M = len(terms)
 
-A = np.zeros((N, N, N), dtype = np.double)
-B = np.zeros((N, M), dtype = np.double)
+A = np.zeros((N, N, N), dtype = np.float32)
+B = np.zeros((N, M), dtype = np.float32)
 
 A[0, 1, 2] = 1.0
 A[0, 3, 4] = 1.0
@@ -117,6 +115,9 @@ B_proposal = np.random.uniform(0.0, 1.0, (N, M))
 
 A_proposal = np.maximum(A_proposal, 0.1 * np.ones((N, N, N)))
 B_proposal = np.maximum(B_proposal, 0.1 * np.ones((N, M)))
+    
+A_proposal = np.asanyarray(A_proposal, dtype = np.float32)
+B_proposal = np.asanyarray(B_proposal, dtype = np.float32)
     
 estim_A, estim_B, likelihoods = first_try.estimate_A_B(sentences,
                                                        n_iterations, 

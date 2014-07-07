@@ -12,6 +12,7 @@
 #include <curand_kernel.h>
 
 #include "utils.h"
+#include "cuda_dimensions.h"
 
 __device__ int choice(
 		curandState * state,
