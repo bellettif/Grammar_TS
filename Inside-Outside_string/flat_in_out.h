@@ -174,6 +174,10 @@ public:
             int k;
             float temp_A;
             float temp_sum;
+            for(s = 0; s < length - level; ++s){
+                t = s + level;
+                E[i*length*length + s*length + t] = 0;
+            }
             for(int i = 0; i < _N; ++i){
                 for(j = 0; j < _N; ++j){
                     for(k = 0; k < _N; ++k){
@@ -198,7 +202,7 @@ public:
                                         *
                                         E[k*length*length + (r+1)*length + t];
                             }
-                            E[i*length*length + s*length + t] = temp_sum;
+                            E[i*length*length + s*length + t] += temp_sum;
                         }
                     }
                 }

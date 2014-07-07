@@ -37,16 +37,18 @@ __device__ void compute_inside_level_symbol(
 		int j;
 		int k;
 		float temp_sum;
-		float E_left;
-		float E_right;
+		float temp_A;
 		for(s = 0; s < length - level; ++s){
 			t = s + level;
-			temp_sum = 0;
-			for(r = s; r < t; ++r){
-				E_left = E[j*length*length + s*length + r];
-				E_right = E[k*length*length + (r+1)*length + t];
-				for(j = 0; j < N; ++j){
-					for(k = 0; k < N; ++k){
+			E[i*length*length + s*length + t] = 0;
+		}
+		for(j = 0; j < N; ++j){
+			for(k = 0; k < N; ++k){
+				temp_A = A[i*N*N + j*N + k];
+				for(s = 0; s < length - level; ++s){
+					t = s + level;
+					temp_sum = 0;
+					for(r = s; r < t; ++r){
 						/*
 						 *  i is the index of parent the non term symbol
 						 *  s is the index of the starting position in the parsed sequence
@@ -57,13 +59,13 @@ __device__ void compute_inside_level_symbol(
 						 *
 						 */
 						 temp_sum +=
-								A[i*N*N + j*N + k]
+								temp_A
 								*
-								E_left
+								E[j*length*length + s*length + r]
 								*
-								E_right;
+								E[k*length*length + (r+1)*length + t];
 					}
-					E[i*length*length + s*length + t] = temp_sum;
+					E[i*length*length + s*length + t] += temp_sum;
 				}
 			}
 		}
@@ -105,12 +107,13 @@ __global__ void compute_inside_probas_kernel(
 		int level
 		){
 	int tid = blockIdx.x * BLOCK_SIZE + threadIdx.x;
-	if(tid >= n_samples * MAX_LENGTH) return;
-
 	int N = cmpct_g->_N;
+
+	if(tid >= n_samples * N) return;
+
 	int E_stride = N * MAX_LENGTH * MAX_LENGTH;
 
-	int sample_id = tid / MAX_LENGTH;
+	int sample_id = tid / N;
 	int symbol_id = tid % N;
 
 	if(error_codes[sample_id] != 0) return;
@@ -127,7 +130,7 @@ __global__ void compute_inside_probas_kernel(
 				level,
 				symbol_id,
 				Es + sample_id * E_stride,
-				samples + sample_id + MAX_LENGTH,
+				samples + sample_id * MAX_LENGTH,
 				length,
 				cmpct_g);
 	}
@@ -140,7 +143,8 @@ void compute_inside_probas(
 		int * error_codes,
 		Sto_grammar * gram,
 		int n_samples){
-	int n_blocks = ceil(((float) n_samples) / ((float) BLOCK_SIZE));
+	int N = gram->_N;
+	int n_blocks = ceil(((float) n_samples * N) / ((float) BLOCK_SIZE));
 	for(int level = -1; level < MAX_LENGTH; ++level){
 		compute_inside_probas_kernel<<<n_blocks, BLOCK_SIZE>>>(
 				Es,
@@ -162,13 +166,13 @@ __global__ void copy_to_probas(
 		Compact_grammar * cmpct_g,
 		int n_samples){
 	int tid = blockIdx.x * BLOCK_SIZE + threadIdx.x;
-	if(tid >= n_samples * MAX_LENGTH) return;
-
 	int N = cmpct_g->_N;
+
+	if(tid >= n_samples * N) return;
 
 	int E_stride = N * MAX_LENGTH * MAX_LENGTH;
 
-	int sample_id = tid / MAX_LENGTH;
+	int sample_id = tid / N;
 	int symbol_id = tid % N;
 
 	int root_symbol = cmpct_g->_root_symbol;
@@ -177,7 +181,8 @@ __global__ void copy_to_probas(
 	int length = lengths[sample_id];
 
 	probas[sample_id] = Es[sample_id * E_stride +
-		   root_symbol *length*length + 0*length + length - 1];
+		   root_symbol * length * length + 0*length + length - 1];
+
 }
 
 void compute_probas(
@@ -190,12 +195,9 @@ void compute_probas(
 	int N = gram->_N;
 	int stride = N * MAX_LENGTH * MAX_LENGTH;
 
-	std::cout << "Coucou" << std::endl;
-
 	float * Es;
 	CUDA_CHECK(dev_alloc<float>(Es, n_samples * stride));
 
-	printf("Computing inside probas");
 	compute_inside_probas(
 			Es,
 			samples,
@@ -203,9 +205,8 @@ void compute_probas(
 			error_codes,
 			gram,
 			n_samples);
-	printf("Computing inside probas done");
 
-	int n_blocks = ceil(((float) n_samples) / ((float) BLOCK_SIZE));
+	int n_blocks = ceil(((float) n_samples * N) / ((float) BLOCK_SIZE));
 	copy_to_probas<<<n_blocks, BLOCK_SIZE>>>(
 			probas,
 			Es,
