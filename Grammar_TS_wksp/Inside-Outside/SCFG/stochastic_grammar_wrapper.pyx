@@ -178,53 +178,6 @@ def iterate_estimation(np.ndarray A_proposal,
 	del fio
 	return c_new_A, c_new_B, likelihoods
 
-def iterate_estimation(np.ndarray A_proposal,
-					   np.ndarray B_proposal,
-					   terminals,
-					   samples,
-					   n_iterations,
-					   root_index):
-	assert(A_proposal.shape[0] == A_proposal.shape[1] == A_proposal.shape[2] == B_proposal.shape[0])
-	assert(B_proposal.shape[1] == len(terminals))
-	N = A_proposal.shape[0]
-	M = B_proposal.shape[1]
-	n_samples = len(samples)
-	cdef np.ndarray[FTYPE_t, ndim = 3, mode = 'c'] c_A_proposal = np.copy(A_proposal)
-	cdef np.ndarray[FTYPE_t, ndim = 2, mode = 'c'] c_B_proposal = np.copy(B_proposal)
-	cdef np.ndarray[FTYPE_t, ndim = 3, mode = 'c'] c_new_A = np.zeros((N, N, N), dtype = FTYPE)
-	cdef np.ndarray[FTYPE_t, ndim = 2, mode = 'c'] c_new_B = np.zeros((N, M), dtype = FTYPE)
-	cdef Flat_in_out* fio
-	cdef np.ndarray[FTYPE_t, ndim = 1, mode = 'c'] temp_likelihoods
-	likelihoods = np.zeros((n_iterations + 1, n_samples), dtype = FTYPE)
-	for iter in xrange(n_iterations):
-		fio = new Flat_in_out(<float*> c_A_proposal.data,
-							  <float*> c_B_proposal.data,
-   							  N, M,
-   		     				  terminals,
-   		     				  root_index)
-		temp_likelihoods = np.zeros(n_samples, dtype = FTYPE)
-		fio.estimate_A_B(samples, 
-						 <float *> temp_likelihoods.data,
-						 <float *> c_new_A.data,
-						 <float *> c_new_B.data)
-		likelihoods[iter, :] = temp_likelihoods
-		del fio
-		c_A_proposal = c_new_A
-		c_B_proposal = c_new_B
-	fio = new Flat_in_out(<float *> c_A_proposal.data,
-						  <float *> c_B_proposal.data,
-						  N, M,
-	     				  terminals,
-	     				  root_index)
-	temp_likelihoods = np.zeros(n_samples, dtype = FTYPE)
-	fio.compute_probas_flat(samples,
-					   	    <float *> temp_likelihoods.data)
-	likelihoods[n_iterations, :] = temp_likelihoods
-	del c_A_proposal
-	del c_B_proposal
-	del fio
-	return c_new_A, c_new_B, likelihoods
-
 def iterate_estimation_perturbated(np.ndarray A_proposal,
 					   np.ndarray B_proposal,
 					   terminals,

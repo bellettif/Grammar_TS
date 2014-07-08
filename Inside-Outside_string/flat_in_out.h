@@ -182,6 +182,9 @@ public:
                 for(j = 0; j < _N; ++j){
                     for(k = 0; k < _N; ++k){
                         temp_A = _A[i*_N*_N + j*_N + k];
+                        if(temp_A == 0.0){
+                            continue;
+                        }
                         for(s = 0; s < length - level; ++s){
                             t = s + level;
                             temp_sum = 0;
@@ -266,8 +269,10 @@ public:
                 for(j = 0; j < _N; ++j){
                     for(k = 0; k < _N; ++k){
                         temp_A = _A[j*_N*_N + k*_N + i];
+                        if(temp_A == 0.0) continue;
                         for(s = 0; s < length - level; ++s){
                             t = s + level;
+                            temp_F = 0;
                             for(r = 0; r < s; ++r){
                                  temp_F +=
                                         F[j*length*length + r*length + t]
@@ -276,21 +281,17 @@ public:
                                         *
                                         E[k*length*length + r*length + (s-1)];
                             }
-                        }
-                    }
-                    for(r = t + 1; r < length; ++r){
-                        for(j = 0; j < _N; ++j){
-                            for(k = 0; k < _N; ++k){
-                                temp_F +=
-                                        F[j*length*length + s*length + r]
-                                        *
-                                        temp_A
-                                        *
-                                        E[k*length*length + (t+1)*length + r];
+                            for(r = t + 1; r < length; ++r){
+                                        temp_F +=
+                                                F[j*length*length + s*length + r]
+                                                *
+                                                temp_A
+                                                *
+                                                E[k*length*length + (t+1)*length + r];
                             }
+                            F[i*length*length + s*length + t] = temp_F;
                         }
                     }
-                    F[i*length*length + s*length + t] = temp_F;
                 }
             }
         }

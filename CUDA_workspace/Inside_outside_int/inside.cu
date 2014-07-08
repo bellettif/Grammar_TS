@@ -46,6 +46,7 @@ __device__ void compute_inside_level_symbol(
 		for(j = 0; j < N; ++j){
 			for(k = 0; k < N; ++k){
 				temp_A = A[i*N*N + j*N + k];
+				if(temp_A == 0) continue;
 				for(s = 0; s < length - level; ++s){
 					t = s + level;
 					temp_sum = 0;

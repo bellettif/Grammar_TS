@@ -7,8 +7,8 @@
 
 int main(void){
 
-	int N = 7;
-	int M = 3;
+	int N = 16;
+	int M = 4;
 
 	float * A_1 = (float*) calloc(N * N * N, sizeof(float));
 	float * B_1 = (float*) calloc(N * M, sizeof(float));
@@ -31,6 +31,9 @@ int main(void){
 	B_1[1 * M + 0] = 1.0;
 	B_1[3 * M + 1] = 1.0;
 	B_1[5 * M + 2] = 1.0;
+	for(int i = 7; i < N; ++i){
+		B_1[i * M + 3] = 1.0;
+	}
 
 	A_2[0 * N * N + 1 * N + 2] = 0.23;
 	A_2[0 * N * N + 3 * N + 4] = 0.23;
@@ -47,8 +50,11 @@ int main(void){
 	B_2[1 * M + 0] = 1.0;
 	B_2[3 * M + 1] = 1.0;
 	B_2[5 * M + 2] = 1.0;
+	for(int i = 7; i < N; ++i){
+		B_2[i * M + 3] = 1.0;
+	}
 
-	const int n_samples = 4096 * 4;
+	const int n_samples = 4096 * 8;
 
 	time_t timer;
 	time(&timer);

@@ -98,11 +98,7 @@ n_iterations = 100
 
 sentences = first_try.produce_sentences(n_samples)
 
-
-
 first_try.plot_stats(100000, max_represented = 100)
-
-
 
 for sentence in sentences:
     print sentence
@@ -125,6 +121,8 @@ estim_A, estim_B, likelihoods = first_try.estimate_A_B(sentences,
                                                        A_proposal,
                                                        B_proposal)
 
+print "Done"
+
 exact_likelihood = first_try.estimate_likelihoods(sentences)
 exact_likelihoods = np.zeros((n_iterations + 1, len(sentences)))
 
@@ -140,6 +138,8 @@ first_try.compare_grammar_matrices_3('Examples', 'Random_init',
                                    estim_A, estim_B,
                                    A_proposal, B_proposal)
 
+
+print likelihoods
 
 plt.plot(np.log(likelihoods))
 plt.plot(np.log(exact_likelihoods), linestyle = "--")
