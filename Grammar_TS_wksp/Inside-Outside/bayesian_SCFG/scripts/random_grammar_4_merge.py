@@ -18,12 +18,18 @@ from SCFG.sto_grammar import SCFG, Looping_der_except
 def plot_lks(left_grammar,
              right_grammar, 
              sample_sentences,
+             title,
+             xlabel,
+             ylabel,
              file_name):
     sentence_set = list(set([' '.join(sentence) for sentence in sample_sentences]))
     sentence_set = [sentence.split(' ') for sentence in sentence_set]
     left_lks = np.log(left_grammar.estimate_likelihoods(sentence_set))
     right_lks = np.log(right_grammar.estimate_likelihoods(sentence_set))
     plt.scatter(left_lks, right_lks, alpha = 0.1, marker = 'o')
+    plt.title(title)
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
     plt.savefig(file_name, dpi = 300)
     plt.close()
 
@@ -66,9 +72,13 @@ plot_lks(model_gram,
          'Model_model_model_samples_lk.png')
 
 distance_matrix_model = model_gram.compute_internal_distance_matrix(n_samples)
+plt.title('Distance matrix estimated estimated')
+plt.xlabel('Model rules')
+plt.xlabel('Model rules')
+plt.savefig('Distance_matrix_model_%d.png')
 
 iteration = 0
-
+ 
 while iteration < n_trials:
     try:
         print 'Doing iteration %d' % iteration
@@ -101,6 +111,9 @@ while iteration < n_trials:
                                                                   B_proposal = estim_gram.B,
                                                                   term_chars = word_grammar.term_chars)
         plt.plot(np.log(likelihoods))
+        plt.title('Log likelihoods iteration %d' % iteration)
+        plt.ylabel('Sample log lk')
+        plt.xlabel('EM step')
         plt.savefig('Likelihoods_%d.png' % iteration)
         plt.close()
         #
@@ -110,6 +123,9 @@ while iteration < n_trials:
         
         distance_matrix_estim = estim_gram.compute_internal_distance_matrix(n_samples)
         plt.matshow(distance_matrix_estim)
+        plt.title('Distance matrix estimated, iter %d' % iteration)
+        plt.xlabel('Estimated rules')
+        plt.xlabel('Estimated rules')
         plt.savefig('Distance_matrix_estim_%d.png' % iteration)
         plt.close()
         #
@@ -117,6 +133,9 @@ while iteration < n_trials:
                                                               estim_gram,
                                                               n_samples)
         plt.matshow(distance_matrix_model_estim)
+        plt.title('Distance matrix model estimated, iter %d' % iteration)
+        plt.xlabel('Model rules')
+        plt.ylabel('Estimated rules')
         plt.savefig('Distance_matrix_model_estim_%d.png' % iteration)
         plt.close()
         #
@@ -130,11 +149,17 @@ while iteration < n_trials:
         plot_lks(model_gram,
                  estim_gram,
                  sentences,
+                 'Model grammar samples lk, iter %d' % iteration,
+                 'Model grammar log lk',
+                 'Estim grammar log lk',
                  'Model_estim_model-samples_lk_%d.png' % iteration)
         #
         plot_lks(model_gram,
                  estim_gram,
                  estim_sentences,
+                 'Estimated grammar samples lk, iter %d' % iteration,
+                 'Model grammar log lk',
+                 'Estim grammar log lk',
                  'Model_estim_estim-samples_lk_%d.png' % iteration)
         #
         estim_gram.plot_grammar_matrices(folder_path,
@@ -149,6 +174,9 @@ while iteration < n_trials:
         distance_matrix_estim_folded = estim_gram.compute_internal_distance_matrix(n_samples)
         
         plt.matshow(distance_matrix_estim_folded)
+        plt.title('Distance matrix estimated folded, iter %d' % iteration)
+        plt.xlabel('Estimated rules folded')
+        plt.xlabel('Estimated rules folded')
         plt.savefig('Distance_matrix_estim-folded_%d.png' % iteration)
         plt.close()
         #
@@ -156,6 +184,9 @@ while iteration < n_trials:
                                                                       estim_gram,
                                                                       n_samples)
         plt.matshow(distance_matrix_model_estim_folded)
+        plt.title('Distance matrix model estimated folded, iter %d' % iteration)
+        plt.xlabel('Model rules')
+        plt.xlabel('Estimated rules folded')
         plt.savefig('Distance_matrix_model_estim-folded_%d.png' % iteration)
         plt.close()
         saved_estim_gram = copy.deepcopy(estim_gram)
@@ -173,6 +204,4 @@ while iteration < n_trials:
 pickle.dump(saved_estim_gram, open('Final_grammar.pi', 'wb'))
 
 saved_estim_gram.draw_grammar('Final_grammar_draw.png')
-saved_estim_gram.draw_grammar('Final_grammar_draw_3.png', 1e-3)
-saved_estim_gram.draw_grammar('Final_grammar_draw_6.png', 1e-6)
 

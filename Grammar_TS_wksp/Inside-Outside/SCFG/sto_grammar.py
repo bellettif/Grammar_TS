@@ -112,8 +112,8 @@ class SCFG:
     def __init__(self, root_index = 0):
         self.term_chars = []
         self.term_char_to_index = {}
-        self.A = np.zeros((0, 0, 0), dtype = np.float32)
-        self.B = np.zeros((0, 0), dtype = np.float32)
+        self.A = np.zeros((0, 0, 0), dtype = np.double)
+        self.B = np.zeros((0, 0), dtype = np.double)
         self.N = 0
         self.M = 0
         #
@@ -146,8 +146,8 @@ class SCFG:
         #
         #    Building A and B matrices
         #
-        self.A = np.zeros((self.N, self.N, self.N), dtype = np.float32)
-        self.B = np.zeros((self.N, self.M), dtype = np.float32)
+        self.A = np.zeros((self.N, self.N, self.N), dtype = np.double)
+        self.B = np.zeros((self.N, self.M), dtype = np.double)
         for i in xrange(self.N):
             list_of_pairs, list_of_weights, list_of_terms, list_of_term_weights = rule_dict[i]
             assert(len(list_of_pairs) == len(list_of_weights))
@@ -187,7 +187,7 @@ class SCFG:
                                                    range(self.A.shape[0]))
             A_items = zip(derivation_indices, np.ravel(self.A[i]))
             A_items = filter(lambda x : x[1] != 0, A_items)
-            B_items = zip(range(self.B.shape[0]), self.B[i])
+            B_items = zip(range(self.B.shape[1]), self.B[i])
             B_items = filter(lambda x : x[1] != 0, B_items)
             pairs = [x[0] for x in A_items]
             pair_weights = [x[1] for x in A_items]
@@ -465,19 +465,19 @@ class SCFG:
             alpha_T = param_1_B
             for i in xrange(n_D):
                 beta = np.random.dirichlet(alpha_1_D * 
-                           np.ones(N, np.float32))
+                           np.ones(N, np.double))
                 beta_beta = np.outer(beta, beta)
                 weights = np.random.dirichlet(alpha_2_D * 
-                          np.ones(N ** 2, np.float32))
+                          np.ones(N ** 2, np.double))
                 A_proposal[i, :, :] = np.reshape(weights, (N, N)) * beta_beta
             for i in xrange(n_D, N):
                 B_proposal[i, :] = np.random.dirichlet(alpha_T * 
-                                       np.ones(M, dtype = np.float32))
+                                       np.ones(M, dtype = np.double))
             normalize_slices(A_proposal, B_proposal)
             A_proposal = np.asanyarray(A_proposal, 
-                                       dtype = np.float32)
+                                       dtype = np.double)
             B_proposal = np.asanyarray(B_proposal,
-                                       dtype = np.float32)
+                                       dtype = np.double)
             return SCFG_c.iterate_estimation(A_proposal,
                                              B_proposal,
                                              term_chars,
@@ -617,7 +617,7 @@ class SCFG:
                                               max_length,
                                               self.root_index)
         print time.clock() - first_time
-        freqs = np.asarray(freqs, dtype = np.float32)
+        freqs = np.asarray(freqs, dtype = np.double)
         total = float(np.sum(freqs))
         print 'Number of sentences %f' % total
         freqs /= total
@@ -645,7 +645,7 @@ class SCFG:
                                               n_samples,
                                               max_length = 0,
                                               root_index = self.root_index)
-        freqs = np.asarray(freqs, dtype = np.float32)
+        freqs = np.asarray(freqs, dtype = np.double)
         total = float(np.sum(freqs))
         freqs /= total
         if max_length == 0 and epsilon != 0:
