@@ -67,15 +67,19 @@ model_gram.plot_grammar_matrices(folder_path,
                                  folder_name)
 
 plot_lks(model_gram, 
-         model_gram, 
+         model_gram,
          sentences, 
+         'Model grammar samples log lk',
+         'Model grammar lk',
+         'Model grammar lk',
          'Model_model_model_samples_lk.png')
 
 distance_matrix_model = model_gram.compute_internal_distance_matrix(n_samples)
+plt.matshow(distance_matrix_model)
 plt.title('Distance matrix estimated estimated')
 plt.xlabel('Model rules')
 plt.xlabel('Model rules')
-plt.savefig('Distance_matrix_model_%d.png')
+plt.savefig('Distance_matrix_model.png')
 
 iteration = 0
  

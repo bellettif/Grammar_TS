@@ -670,46 +670,64 @@ class SCFG:
     def draw_grammar(self,
                      file_path,
                      threshold = 0):
-        root_color = 'green'
-        transmission_color = 'red'
-        emission_color = 'blue'
-        left_color = 'magenta'
-        right_color = 'cyan'        
+        root_color = 'grey'
+        transmission_color = '#FF9900'
+        emission_color = '#6699FF'
+        left_color = 'orange'
+        right_color = 'blue'
+        rule_color = '#9999FF'
         graph = pydot.Dot(graph_type='digraph')
         if not self.rules_mapped:
             self.map_rules()
         print len(self.rules)
         rule_nodes = {}
+        derivation_nodes = {}
         for rule_index in self.rules.keys():
             if rule_index == self.root_index:
                 rule_nodes[rule_index] = pydot.Node('Root',
                                                style = 'filled',
+                                               shape = 'triangle',
                                                fillcolor = root_color)
             else:
                 rule_nodes[rule_index] = pydot.Node('Rule %d' % rule_index,
                                                 style = 'filled',
+                                                shape = 'triangle',
                                                 fillcolor = transmission_color)
             graph.add_node(rule_nodes[rule_index])
         terminal_nodes = {}
         for term, index in self.term_char_to_index.iteritems():
             terminal_nodes[index] = pydot.Node('Term %s' % str(term),
                                                style = 'filled',
+                                               shape = 'ellipse',
                                                fillcolor = emission_color)
             graph.add_node(terminal_nodes[index])
         for rule_index, (pairs, pair_weights,
                          terms, term_weights) in self.rules.iteritems():
             total_weight = np.sum(self.A[rule_index]) + np.sum(self.B[rule_index])
+            first_derivation = True
             for i in xrange(len(pairs)):
+                if first_derivation:
+                    derivation_nodes[rule_index] = {}
+                    first_derivation = False
                 if pair_weights[i] < threshold * total_weight:
                     continue
+                derivation_nodes[rule_index][i] = pydot.Node('%d->%d,%d' % (i, pairs[i][0], pairs[i][1]),
+                                                style = 'filled',
+                                                fillcolor = rule_color,
+                                                shape = 'box')
+                graph.add_node(derivation_nodes[rule_index][i])
                 edge = pydot.Edge(rule_nodes[rule_index], 
+                                  derivation_nodes[rule_index][i])
+                edge.set_label('%.2f ' % (pair_weights[i]))
+                graph.add_edge(edge)
+                edge = pydot.Edge(derivation_nodes[rule_index][i], 
                                   rule_nodes[pairs[i][0]])
-                edge.set_label(' %d_%.2f ' % (i, pair_weights[i]))
+                edge.set_label('left')
                 edge.set_color(left_color)
                 graph.add_edge(edge)
-                edge = pydot.Edge(rule_nodes[rule_index], 
+                edge = pydot.Edge(derivation_nodes[rule_index][i], 
                                   rule_nodes[pairs[i][1]])
-                edge.set_label(' %d_%.2f ' % (i, pair_weights[i]))
+                edge.set_label('right')
                 edge.set_color(right_color)
                 graph.add_edge(edge)
             for i in xrange(len(terms)):
