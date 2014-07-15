@@ -11,6 +11,12 @@
 #include "mem_sandwich.h"
 #include "decision_making.h"
 
+
+typedef std::pair<int_pair, double>                     int_pair_double_pair;
+typedef std::unordered_map<int_pair, double, pair_hash> int_pair_double_map;
+typedef std::pair<int, int>                     	int_pair;
+typedef std::function<size_t(const int_pair &)> 	pair_hash;
+
 typedef std::vector<double>                         double_vect;
 typedef std::vector<double_vect>                    double_vect_vect;
 typedef std::vector<int>                            int_vect;
@@ -179,7 +185,7 @@ public:
     void print_pattern_scores(){
         std::string left;
         std::string right;
-        for(auto xy : _pattern_scores){
+        for(std::pair<int_pair, double> & xy : _pattern_scores){
             if(xy.first.first >= 0){
                 left = _to_string_map.at(xy.first.first);
             }else{
