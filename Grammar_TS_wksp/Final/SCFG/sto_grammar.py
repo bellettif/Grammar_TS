@@ -679,7 +679,6 @@ class SCFG:
         graph = pydot.Dot(graph_type='digraph')
         if not self.rules_mapped:
             self.map_rules()
-        print len(self.rules)
         rule_nodes = {}
         derivation_nodes = {}
         for rule_index in self.rules.keys():
@@ -701,9 +700,10 @@ class SCFG:
                                                shape = 'ellipse',
                                                fillcolor = emission_color)
             graph.add_node(terminal_nodes[index])
+        edge_already_done = set()
         for rule_index, (pairs, pair_weights,
                          terms, term_weights) in self.rules.iteritems():
-            total_weight = np.sum(self.A[rule_index]) + np.sum(self.B[rule_index])
+            total_weight = 1.0
             first_derivation = True
             for i in xrange(len(pairs)):
                 if first_derivation:
@@ -718,25 +718,30 @@ class SCFG:
                 graph.add_node(derivation_nodes[rule_index][i])
                 edge = pydot.Edge(rule_nodes[rule_index], 
                                   derivation_nodes[rule_index][i])
-                edge.set_label('%.2f ' % (pair_weights[i]))
+                edge.set_label('p=%.2f ' % (pair_weights[i]))
                 graph.add_edge(edge)
-                edge = pydot.Edge(derivation_nodes[rule_index][i], 
-                                  rule_nodes[pairs[i][0]])
-                edge.set_label('left')
-                edge.set_color(left_color)
-                graph.add_edge(edge)
-                edge = pydot.Edge(derivation_nodes[rule_index][i], 
-                                  rule_nodes[pairs[i][1]])
-                edge.set_label('right')
-                edge.set_color(right_color)
-                graph.add_edge(edge)
+                if (pairs[i]) not in edge_already_done:
+                    edge = pydot.Edge(derivation_nodes[rule_index][i], 
+                                      rule_nodes[pairs[i][0]])
+                    edge.set_label('left')
+                    edge.set_color(left_color)
+                    edge.set_fontcolor(left_color)
+                    graph.add_edge(edge)
+                    edge = pydot.Edge(derivation_nodes[rule_index][i], 
+                                      rule_nodes[pairs[i][1]])
+                    edge.set_label('right')
+                    edge.set_color(right_color)
+                    edge.set_fontcolor(right_color)
+                    graph.add_edge(edge)
+                    edge_already_done.add(pairs[i])
             for i in xrange(len(terms)):
                 if term_weights[i] < threshold * total_weight:
                     continue
                 edge = pydot.Edge(rule_nodes[rule_index],
                                   terminal_nodes[self.term_char_to_index[terms[i]]])
-                edge.set_label('%.2f' % term_weights[i])
+                edge.set_label('p=%.2f' % term_weights[i])
                 edge.set_color(emission_color)
+                edge.set_fontcolor(emission_color)
                 graph.add_edge(edge)
         graph.write_png(file_path)
         
