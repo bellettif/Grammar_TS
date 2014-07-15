@@ -17,7 +17,7 @@ typedef std::vector<int_pair_double_pair>               int_pair_double_pair_vec
 typedef std::unordered_set<int_pair, pair_hash>         int_pair_set;
 typedef std::unordered_map<int, double>                 int_double_map;
 typedef std::vector<Mem_sandwich>                       mem_vect;
-typedef std::unordered_map<int, int_pair>       int_int_pair_map;
+typedef std::unordered_map<int, int_pair>       	int_int_pair_map;
 
 
 typedef std::mt19937                                    RNG;

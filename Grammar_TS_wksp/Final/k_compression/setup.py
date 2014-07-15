@@ -14,10 +14,19 @@ from Cython.Distutils import build_ext
 # For numpy array support
 import numpy as np
 
+import os
+current_dir = os.getcwd()
+os.system('rm ' + current_dir + "/*.so")
+
+import platform
+if platform.system() == 'Linux':
+	c11_args = ["-std=c++11"]
+elif platform.system() == 'Darwin':
+	c11_args = ["-std=c++11", "-stdlib=libc++"]
+
 sourcefiles = ["k_seq_wrapper.pyx", "k_seq.cpp"]
 main_I = "/usr/local/include"
 main_L = ["-L/usr/local/lib"]
-c11_args = ["-std=c++11", "-stdlib=libc++"]
 
 setup(
 	cmdclass = {"build_ext" : build_ext},
