@@ -9,6 +9,7 @@
 #include <string>
 #include <random>
 #include <deque>
+#include <chrono>
 
 #include "rule.h"
 
