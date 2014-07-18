@@ -7,7 +7,7 @@ Created on 20 mai 2014
 import SCFG_c
 from SCFG_c import Looping_der_except
 
-from internal_grammar_distance import compute_distance_matrix
+from grammar_distance import compute_distance_matrix, compute_distance_matrix_MC
 
 import numpy as np
 from matplotlib import pyplot as plt
@@ -96,16 +96,7 @@ def expand_rule(A, B,
     new_B[new_index] = new_B[target_index]
     return new_A, new_B
     
-def compute_KL_signature(first_sign, second_sign):
-    if set(first_sign.keys()) != set(second_sign.keys()):
-        return np.inf
-    else:
-        result = 0
-        for key in first_sign.keys():
-            p = first_sign[key]
-            q = second_sign[key]
-            result += p * np.log(p / q) + q * np.log(q / p)
-        return result
+
 
 class SCFG:
     
@@ -713,7 +704,6 @@ class SCFG:
                                                shape = 'ellipse',
                                                fillcolor = emission_color)
             graph.add_node(terminal_nodes[index])
-        edge_already_done = set()
         for rule_index, (pairs, pair_weights,
                          terms, term_weights) in self.rules.iteritems():
             first_derivation = True
@@ -724,7 +714,23 @@ class SCFG:
                 if pair_weights[i] < threshold:
                     continue
                 edge_weight = max(pair_weights[i] * 2, 0.2)
-                derivation_nodes[rule_index][i] = pydot.Node('%d->%d,%d' % (i, pairs[i][0], pairs[i][1]),
+                if rule_index in nick_names:
+                    rule_name = nick_names[rule_index]
+                else:
+                    rule_name = rule_index
+                left_idx = pairs[i][0]
+                if left_idx in nick_names:
+                    left_name = nick_names[left_idx]
+                else:
+                    left_name = left_idx
+                right_idx = pairs[i][1]
+                if right_idx in nick_names:
+                    right_name = nick_names[right_idx]
+                else:
+                    right_name = right_idx
+                derivation_nodes[rule_index][i] = pydot.Node((str(rule_name) + ' -> ' +
+                                                             str(left_name) + ', ' +
+                                                             str(right_name)),
                                                 style = 'filled',
                                                 fillcolor = rule_color,
                                                 shape = 'box')
@@ -734,20 +740,18 @@ class SCFG:
                                   penwidth = edge_weight)
                 edge.set_label('p=%.2f ' % (pair_weights[i]))
                 graph.add_edge(edge)
-                if (pairs[i]) not in edge_already_done:
-                    edge = pydot.Edge(derivation_nodes[rule_index][i], 
-                                      rule_nodes[pairs[i][0]])
-                    edge.set_label('left')
-                    edge.set_color(left_color)
-                    edge.set_fontcolor(left_color)
-                    graph.add_edge(edge)
-                    edge = pydot.Edge(derivation_nodes[rule_index][i], 
-                                      rule_nodes[pairs[i][1]])
-                    edge.set_label('right')
-                    edge.set_color(right_color)
-                    edge.set_fontcolor(right_color)
-                    graph.add_edge(edge)
-                    edge_already_done.add(pairs[i])
+                edge = pydot.Edge(derivation_nodes[rule_index][i], 
+                                  rule_nodes[pairs[i][0]])
+                edge.set_label('left')
+                edge.set_color(left_color)
+                edge.set_fontcolor(left_color)
+                graph.add_edge(edge)
+                edge = pydot.Edge(derivation_nodes[rule_index][i], 
+                                  rule_nodes[pairs[i][1]])
+                edge.set_label('right')
+                edge.set_color(right_color)
+                edge.set_fontcolor(right_color)
+                graph.add_edge(edge)
             for i in xrange(len(terms)):
                 if term_weights[i] < threshold:
                     continue
@@ -761,10 +765,21 @@ class SCFG:
                 graph.add_edge(edge)
         graph.write_png(file_path)
         
-    def compute_internal_distance_matrix(self, n_samples):
-        self.internal_distances = compute_distance_matrix(self, 
-                                                          self, 
-                                                          n_samples)
+    def compute_internal_distance_matrix(self, n_samples, 
+                                         symmetric = False, 
+                                         MC = False, 
+                                         epsilon = 0.01):
+        if not MC:
+            self.internal_distances = compute_distance_matrix(self, 
+                                                              self, 
+                                                              n_samples,
+                                                              symmetric)
+        else:
+            self.internal_distances = compute_distance_matrix_MC(self, 
+                                                                 self, 
+                                                                 n_samples,
+                                                                 symmetric,
+                                                                 epsilon)
         self.ranked_internal_distances = [[(i, j), self.internal_distances[i, j]]
                                           if i != j else [(i, j), np.inf]
                                           for i in xrange(self.N)
