@@ -242,6 +242,34 @@ class SCFG:
                                             n_sentences,
                                             self.root_index))
             
+    def write_sentences_to_file(self, n_sentences, file_path):
+        sentences = self.produce_sentences(n_sentences)
+        with open(file_path, 'wb') as output_file:
+            for sentence in sentences:
+                output_file.write(' '.join(sentence) + '\n')
+                
+    def write_signature_to_file(self, n_sentences, n_shown, file_path, title):
+        sentences = self.produce_sentences(n_sentences)
+        sentences = [' '.join(x) for x in sentences]
+        sentence_set = list(set(sentences))
+        sentence_set = [x.split(' ') for x in sentence_set]
+        lks = self.estimate_likelihoods(sentence_set)
+        sentence_set = [' '.join(x) for x in sentence_set]
+        histogram = [(sentence_set[i], lks[i]) for i in xrange(len(lks))]
+        histogram.sort(key = (lambda x : -x[1]))
+        histogram = histogram[:25]
+        width = 0.8
+        plt.bar(range(len(histogram)), [x[1] for x in histogram],
+                width = width)
+        plt.xticks(width*0.5 + np.arange(len(histogram)),
+                   [x[0] for x in histogram],
+                   rotation = 'vertical',
+                   fontsize = 4)
+        plt.ylabel('Sentence likelihood')
+        plt.title(title)
+        plt.savefig(file_path, dpi = 600)
+        plt.close()
+            
     def estimate_likelihoods(self,
                              samples,
                              A_proposal = 0,
@@ -331,6 +359,9 @@ class SCFG:
                      samples,
                      n_iterations,
                      init_option = 'exact',
+                     trim_near_zeros = False,
+                     trim_threshold = 0.01,
+                     n_iterations_post = 0,
                      A_proposal = 0,
                      B_proposal = 0,
                      term_chars = [],
@@ -347,16 +378,17 @@ class SCFG:
                                'perturbated_keep_zeros',
                                'explicit',
                                'explicit_keep_zeros',
-                               'random'])
+                               'dirichlet'])
         assert(n_iterations > 0)
         assert(len(samples) > 0)
+        n_samples = len(samples)
         if init_option == 'exact':
-            return SCFG_c.iterate_estimation(self.A,
-                                             self.B,
-                                             self.term_chars,
-                                             samples,
-                                             n_iterations,
-                                             self.root_index)
+            new_A, new_B, lks = SCFG_c.iterate_estimation(self.A,
+                                                         self.B,
+                                                         self.term_chars,
+                                                         samples,
+                                                         n_iterations,
+                                                         self.root_index)               
         if init_option == 'perturbated':
             assert(A_proposal == 0 and B_proposal == 0 and len(term_chars) == 0)
             A_proposal = self.A + noise_source_A(param_1_A, param_2_A, (self.N, self.N, self.N))
@@ -364,12 +396,12 @@ class SCFG:
             B_proposal = self.B + noise_source_B(param_1_B, param_2_B, (self.N, self.M))
             B_proposal = np.maximum(B_proposal, epsilon_B * np.ones((self.N, self.M)))
             normalize_slices(A_proposal, B_proposal)
-            return SCFG_c.iterate_estimation(A_proposal,
-                                             B_proposal,
-                                             self.term_chars,
-                                             samples,
-                                             n_iterations,
-                                             self.root_index)
+            new_A, new_B, lks = SCFG_c.iterate_estimation(A_proposal,
+                                                             B_proposal,
+                                                             self.term_chars,
+                                                             samples,
+                                                             n_iterations,
+                                                             self.root_index)
         if init_option == 'perturbated_keep_zeros':
             assert(A_proposal == 0 and B_proposal == 0 and len(term_chars) == 0)
             A_proposal = self.A + noise_source_A(param_1_A, param_2_A, (self.N, self.N, self.N))
@@ -379,12 +411,12 @@ class SCFG:
             A_proposal[np.where(self.A == 0)] = 0
             B_proposal[np.where(self.B == 0)] = 0
             normalize_slices(A_proposal, B_proposal)
-            return SCFG_c.iterate_estimation(A_proposal,
-                                             B_proposal,
-                                             self.term_chars,
-                                             samples,
-                                             n_iterations,
-                                             self.root_index)
+            new_A, new_B, lks = SCFG_c.iterate_estimation(A_proposal,
+                                                         B_proposal,
+                                                         self.term_chars,
+                                                         samples,
+                                                         n_iterations,
+                                                         self.root_index)
         if init_option == 'explicit':
             assert(noise_source_A == 0 and
                    param_1_A == 0 and
@@ -401,12 +433,12 @@ class SCFG:
             assert(A_proposal.shape[0] == A_proposal.shape[1] == A_proposal.shape[2] == B_proposal.shape[0])
             assert(B_proposal.shape[1] == len(term_chars))
             normalize_slices(A_proposal, B_proposal)
-            return SCFG_c.iterate_estimation(A_proposal,
-                                             B_proposal,
-                                             term_chars,
-                                             samples,
-                                             n_iterations,
-                                             self.root_index)
+            new_A, new_B, lks = SCFG_c.iterate_estimation(A_proposal,
+                                                         B_proposal,
+                                                         term_chars,
+                                                         samples,
+                                                         n_iterations,
+                                                         self.root_index)
         if init_option == 'explicit_keep_zeros':
             assert(noise_source_A == 0 and
                    param_1_A == 0 and
@@ -425,13 +457,13 @@ class SCFG:
             A_proposal[np.where(self.A == 0)] = 0
             B_proposal[np.where(self.B == 0)] = 0
             normalize_slices(A_proposal, B_proposal)
-            return SCFG_c.iterate_estimation(A_proposal,
-                                             B_proposal,
-                                             term_chars,
-                                             samples,
-                                             n_iterations,
-                                             self.root_index)
-        if init_option == 'random':
+            new_A, new_B, lks = SCFG_c.iterate_estimation(A_proposal,
+                                                         B_proposal,
+                                                         term_chars,
+                                                         samples,
+                                                         n_iterations,
+                                                         self.root_index)
+        if init_option == 'dirichlet':
             assert(A_proposal.ndim != 0)
             assert(B_proposal.ndim != 0)
             assert(noise_source_A == 0)
@@ -469,12 +501,38 @@ class SCFG:
                                        dtype = np.double)
             B_proposal = np.asanyarray(B_proposal,
                                        dtype = np.double)
-            return SCFG_c.iterate_estimation(A_proposal,
-                                             B_proposal,
-                                             term_chars,
-                                             samples,
-                                             n_iterations,
-                                             self.root_index)
+            new_A, new_B, lks =  SCFG_c.iterate_estimation(A_proposal,
+                                                             B_proposal,
+                                                             term_chars,
+                                                             samples,
+                                                             n_iterations,
+                                                             self.root_index)
+        #
+        #
+        #
+        if trim_near_zeros:
+            new_A[np.where(new_A < trim_threshold)] = 0.0
+            new_B[np.where(new_B < trim_threshold)] = 0.0
+            if n_iterations_post > 0:
+                new_A, new_B, new_lks = SCFG_c.iterate_estimation(new_A,
+                                         new_B,
+                                         self.term_chars,
+                                         samples,
+                                         n_iterations_post,
+                                         self.root_index)
+                final_lks = np.zeros((lks.shape[0] + new_lks.shape[0], n_samples))
+                final_lks[0:lks.shape[0],:] = lks
+                final_lks[lks.shape[0]:,:] = new_lks
+            else:
+                final_lks = np.zeros((lks.shape[0] + 1, n_samples))
+                final_lks[0:-1,:] = lks
+                final_lks[-1,:] = self.estimate_likelihoods(samples,
+                                                            new_A,
+                                                            new_B,
+                                                            self.term_chars)
+            return new_A, new_B, final_lks
+        else:
+            return new_A, new_B, lks
             
             
     def plot_grammar_matrices(self,
