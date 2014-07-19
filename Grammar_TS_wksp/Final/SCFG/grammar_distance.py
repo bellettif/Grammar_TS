@@ -82,7 +82,7 @@ def compute_distance_MC(left_grammar,
                         n_samples,
                         max_length = 0,
                         epsilon = 0,
-                        symmetric = False): # If true compute Jensen-Shannon div
+                        JS = False): # If true compute Jensen-Shannon div
     if sorted(left_grammar.term_chars) != sorted(right_grammar.term_chars):
         return np.inf
     left_signature = left_grammar.compute_signature(n_samples,
@@ -104,7 +104,7 @@ def compute_distance_MC(left_grammar,
                                  left_signature.items()))
     right_signature = dict(filter(lambda x : len(x[0].split(' ')) <= max_length,
                                   right_signature.items()))
-    if symmetric:
+    if JS:
         return compute_KL_signature(left_signature,
                                     right_signature)
     else:
@@ -119,7 +119,10 @@ def compute_distance_MC_tuple(input_tuple):
                                input_tuple[4],
                                input_tuple[5])
 
-def compute_distance_matrix(left_grammar, right_grammar, n_samples, symmetric):
+def compute_distance_matrix(left_grammar, 
+                            right_grammar, 
+                            n_samples, 
+                            JS):
     n_rules_left = left_grammar.N
     n_rules_right = right_grammar.N
     instruction_set = []
@@ -129,14 +132,18 @@ def compute_distance_matrix(left_grammar, right_grammar, n_samples, symmetric):
             right_copy = copy.deepcopy(right_grammar)
             left_copy.rotate(i)
             right_copy.rotate(j)
-            instruction_set.append((left_copy, right_copy, n_samples, 0, symmetric))
+            instruction_set.append((left_copy, right_copy, n_samples, 0, JS))
     p = multi.Pool(processes = N_PROCESSES)
     distances = p.map(compute_distance_tuple, instruction_set)
     distances = np.asarray(distances, dtype = np.double)
     distances = np.reshape(distances, (n_rules_left, n_rules_right))
     return distances
 
-def compute_distance_matrix_MC(left_grammar, right_grammar, n_samples, epsilon, symmetric):
+def compute_distance_matrix_MC(left_grammar, 
+                               right_grammar, 
+                               n_samples, 
+                               epsilon, 
+                               JS):
     n_rules_left = left_grammar.N
     n_rules_right = right_grammar.N
     instruction_set = []
@@ -146,7 +153,7 @@ def compute_distance_matrix_MC(left_grammar, right_grammar, n_samples, epsilon, 
             right_copy = copy.deepcopy(right_grammar)
             left_copy.rotate(i)
             right_copy.rotate(j)
-            instruction_set.append((left_copy, right_copy, n_samples, 0, epsilon, symmetric))
+            instruction_set.append((left_copy, right_copy, n_samples, 0, epsilon, JS))
     p = multi.Pool(processes = N_PROCESSES)
     distances = p.map(compute_distance_MC_tuple, instruction_set)
     distances = np.asarray(distances, dtype = np.double)

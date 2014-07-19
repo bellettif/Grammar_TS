@@ -11,7 +11,6 @@ from SCFG.sto_grammar import SCFG, normalize_slices
 from grammar_examples.grammar_examples import produce_palindrom_grammar
 
 from matplotlib import pyplot as plt
-from scipy.stats.mstats_basic import threshold
 
 def compute_signature(target_grammar, grammar_name, n_samples):
     sentences = target_grammar.produce_sentences(n_samples)
