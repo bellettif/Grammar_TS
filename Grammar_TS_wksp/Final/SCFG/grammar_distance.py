@@ -38,7 +38,7 @@ def compute_distance(left_grammar,
                      right_grammar,
                      n_samples,
                      max_length = 0,
-                     symmetric = False): # If symmetric is true, Jensen-Shannon distance will be computed
+                     JS = False): # If JS is true, Jensen-Shannon distance will be computed
     if sorted(left_grammar.term_chars) != sorted(right_grammar.term_chars):
         return np.inf
     left_samples = left_grammar.produce_sentences(n_samples, max_length)
@@ -47,7 +47,7 @@ def compute_distance(left_grammar,
     left_left_probas = left_grammar.estimate_likelihoods(left_samples)
     right_left_probas = right_grammar.estimate_likelihoods(left_samples)
     right_right_probas = right_grammar.estimate_likelihoods(right_samples)
-    if not symmetric:
+    if not JS:
         #
         selection = np.where(left_left_probas != 0)
         left_result = np.sum(np.log2(left_left_probas[selection] / right_left_probas[selection]) * left_left_probas[selection])

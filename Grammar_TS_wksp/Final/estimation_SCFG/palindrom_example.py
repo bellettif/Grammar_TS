@@ -6,12 +6,12 @@ Created on 18 juil. 2014
 
 import numpy as np
 import cPickle as pickle
+import os
 
 from SCFG.sto_grammar import SCFG, normalize_slices
 from grammar_examples.grammar_examples import produce_palindrom_grammar
 
 from matplotlib import pyplot as plt
-from scipy.stats.mstats_basic import threshold
 
 probas = [0.3, 0.3, 0.3, 0.2, 0.2, 0.2]
 probas = np.asarray(probas)
@@ -36,9 +36,9 @@ model_grammar.init_from_A_B(target_grammar.A,
 n_samples = 1000
 n_trials = 100
 n_iterations = 40
-n_iteration_post_trimming = 40
+n_iteration_post_trimming = 10
 threshold = 0.01
-N_range = np.arange(6, 9)
+N_range = np.arange(8, 9)
 n_productions = 100
 
 samples = model_grammar.produce_sentences(n_samples)
@@ -53,7 +53,10 @@ M = len(sample_term_symbols)
 print "Sample term symbols:"
 print sample_term_symbols
 
-result_folder = 'results_palindrom_grammar_sparse/'
+result_folder = 'results_palindrom_grammar_8_symbols/'
+
+os.mkdir(result_folder)
+
 model_name = 'Palindrom grammar'
 
 model_grammar.draw_grammar(result_folder + model_name + ' graph.png')
@@ -105,6 +108,7 @@ pickle.dump(all_lks, open(result_folder + 'all_lks.pi', 'wb'))
 pickle.dump(best_lks, open(result_folder + 'best_lks.pi', 'wb'))
 pickle.dump(estimation_results, open(result_folder + 'estimated_result.pi', 'wb'))
 
+all_sample_lks = []
 for rank, (N, i_trial, avg_lks) in enumerate(all_lks[:20]):
     est_grammar = SCFG()
     A, B, lks = estimation_results[N][i_trial]
@@ -114,6 +118,7 @@ for rank, (N, i_trial, avg_lks) in enumerate(all_lks[:20]):
                               % (rank, N, i_trial, avg_lks)))
     #
     sample_lks = np.log(est_grammar.estimate_likelihoods(samples))
+    all_sample_lks.append(sample_lks)
     plt.scatter(model_lks, sample_lks)
     plt.title('%s versus est. grammar (%d symbols, trial %d)' 
               % (model_name, N, i_trial))
@@ -140,4 +145,16 @@ for rank, (N, i_trial, avg_lks) in enumerate(all_lks[:20]):
                                         % (rank, N, i_trial, avg_lks)),
                                         '%s est. grammar (%d symbols, trial %d) signature' 
               % (model_name, N, i_trial))
+    
+all_sample_lks = np.asanyarray(all_sample_lks)
+for sample_lk in all_sample_lks:
+    plt.plot(model_lks, sample_lk,
+             marker = 'x', linestyle = 'None')
+plt.title('%s versus est. grammars (%d symbols)' 
+          % (model_name, N))
+plt.ylabel('Estimated grammar log lk')
+plt.savefig(result_folder + ('all_grammars_%d.png' 
+                          % N),
+            dpi = 600)
+plt.close()
     

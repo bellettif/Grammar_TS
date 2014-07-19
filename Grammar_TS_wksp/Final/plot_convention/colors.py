@@ -34,3 +34,6 @@ algo_colors = {'sequitur' : '#FF6600',
                'k_sequitur' : '#FFCC66',
                'proba_sequitur' : '#3300CC',
                'proba_sequitur_rand' : '#33CCFF'}
+
+b_orange = achu_colors.values()[0]
+b_blue = oldo_colors.values()[1]

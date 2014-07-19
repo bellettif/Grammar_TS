@@ -824,19 +824,19 @@ class SCFG:
         graph.write_png(file_path)
         
     def compute_internal_distance_matrix(self, n_samples, 
-                                         symmetric = False, 
+                                         JS = False, 
                                          MC = False, 
                                          epsilon = 0.01):
         if not MC:
             self.internal_distances = compute_distance_matrix(self, 
                                                               self, 
                                                               n_samples,
-                                                              symmetric)
+                                                              JS)
         else:
             self.internal_distances = compute_distance_matrix_MC(self, 
                                                                  self, 
                                                                  n_samples,
-                                                                 symmetric,
+                                                                 JS,
                                                                  epsilon)
         self.ranked_internal_distances = [[(i, j), self.internal_distances[i, j]]
                                           if i != j else [(i, j), np.inf]

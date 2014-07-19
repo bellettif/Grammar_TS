@@ -92,8 +92,8 @@ def produce_palindrom_grammar(p_S_AB,
 
 def produce_word_grammar(p_NP_DTNN,
                          p_NP_DTJJNP,
-                         p_JJNP_JJNN,
-                         p_JJNP_JJJJNP):
+                         p_JJNN_JJNN,
+                         p_JJNN_JJJJNN):
     word_grammar_rules = {0 : ([[1, 2]], # root
                              [1.0],
                              [],
@@ -115,7 +115,7 @@ def produce_word_grammar(p_NP_DTNN,
                              ['mouse', 'cat', 'dog'],
                              [0.3, 0.3, 0.3]),
                         5 : ([[6, 4], [6, 5]], # JJNN 
-                              [p_JJNP_JJNN, p_JJNP_JJJJNP],
+                              [p_JJNN_JJNN, p_JJNN_JJJJNN],
                               [],
                               []),
                         6 : ([], # JJ
