@@ -7,6 +7,7 @@
 #include <iostream>
 #include <unordered_map>
 #include <unordered_set>
+#include <chrono>
 
 #include "mem_sandwich.h"
 
@@ -128,7 +129,7 @@ inline static int_pair_vect pick_sto_patterns(const int_pair_double_map & patter
         for(auto xy : pattern_scores){
             scores.push_back(std::exp(xy.second / (T*total_score)));
         }
-        std::discrete_distribution<double> distrib(scores.begin(), scores.end());
+        std::discrete_distribution<> distrib(scores.begin(), scores.end());
         while(chosen_rules.size() < n_selected){
             chosen_rules.insert(items.at(distrib(rng)).first);
         }

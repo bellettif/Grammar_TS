@@ -51,6 +51,8 @@ static const std::vector<std::string> OLDO_FILE_NAMES = {"oldoSeq_1.csv",
 
 
 int main(){
+
+    /*
     string_vect_vect achu_oldo_content;
     for(const std::string & file_name : FILE_NAMES){
         achu_oldo_content.push_back(file_reader::read_csv(FOLDER_PATH + file_name).front());
@@ -106,6 +108,39 @@ int main(){
     ps.print_counts();
 
     string_vect_vect result = ps.translate_inference_samples();
+    */
+
+    const string_vect_vect inference_content;
+    const string_vect_vect count_content;
+    int degree;
+    int max_rules;
+    int random;
+    string_vect_vect inference_parsed;
+    string_vect_vect counts_parsed;
+    string_vect hashcodes;
+    string_vect rule_names;
+    string_pair_vect hashed_rhs;
+    double_vect_vect relative_counts;
+    int_vect_vect absolute_counts;
+    int_vect levels;
+    int_vect depths;
+    double_vect divergences;
+
+    launch_proba_sequitur(inference_content,
+                          count_content,
+                          degree,
+                          max_rules,
+                          random,
+                          inference_parsed,
+                          counts_parsed,
+                          hashcodes,
+                          rule_names,
+                          hashed_rhs,
+                          relative_counts,
+                          absolute_counts,
+                          levels,
+                          depths,
+                          divergences);
 
     return 0;
 }

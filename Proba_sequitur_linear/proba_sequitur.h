@@ -185,7 +185,7 @@ public:
     void print_pattern_scores(){
         std::string left;
         std::string right;
-        for(std::pair<int_pair, double> & xy : _pattern_scores){
+        for(std::pair<const int_pair, double> & xy : _pattern_scores){
             if(xy.first.first >= 0){
                 left = _to_string_map.at(xy.first.first);
             }else{
