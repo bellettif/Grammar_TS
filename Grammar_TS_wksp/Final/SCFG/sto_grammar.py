@@ -95,8 +95,6 @@ def expand_rule(A, B,
     new_B[sub_selection] = B
     new_B[new_index] = new_B[target_index]
     return new_A, new_B
-    
-
 
 class SCFG:
     
@@ -845,6 +843,11 @@ class SCFG:
         self.ranked_internal_distances.sort(key = (lambda x : x[1]))
         return self.internal_distances
     
+    def is_diagonal(self):
+        assert(len(self.internal_distances) > 0)
+        [(first_index, second_index), dist] = self.ranked_internal_distances[0]
+        return first_index == second_index
+    
     def merge_on_closest(self):
         assert(len(self.internal_distances) > 0)
         [(first_index, second_index), dist] = self.ranked_internal_distances[0]
@@ -855,4 +858,26 @@ class SCFG:
         print self.ranked_internal_distances
         print '\n'
         self.merge(first_index, second_index)
+        
+    def add_virgin_rule(self):
+        old_N = self.N
+        N = old_N + 1
+        new_A = np.zeros((N, N, N),
+                         dtype = np.double)
+        new_A[:old_N,:old_N,:old_N] = np.copy(self.A)
+        new_A[old_N,:,:] = np.random.uniform(0.01, 1.0, (N, N))
+        new_A[:,old_N,:] = np.random.uniform(0.01, 1.0, (N, N))
+        new_A[:,:,old_N] = np.random.uniform(0.01, 1.0, (N, N))
+        new_B = np.zeros((N, self.M))
+        new_B[:old_N,:] = np.copy(self.B)
+        new_B[old_N,:] = np.random.uniform(0.01, 1.0, self.M)
+        self.A = new_A
+        self.B = new_B
+        normalize_slices(self.A, self.B)
+        self.N += 1
+        self.internal_distances = np.zeros((0, 0))
+        self.ranked_internal_distances = []
+        self.rules_mapped = False
+        
+        
         

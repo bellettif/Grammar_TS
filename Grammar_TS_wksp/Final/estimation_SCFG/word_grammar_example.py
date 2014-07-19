@@ -51,7 +51,7 @@ M = len(sample_term_symbols)
 print "Sample term symbols:"
 print sample_term_symbols
 
-result_folder = 'results_word_grammar_8_symbols/'
+result_folder = 'word_grammar_8/'
 
 os.mkdir(result_folder)
 
@@ -89,7 +89,7 @@ for N in N_range:
                                                         n_iterations_post= n_iteration_post_trimming)
         est_lk = np.log(est_lk)
         estimation_results[N][i_trial] = (est_A, est_B, est_lk)
-        avg_lk = np.mean(est_lk[:,-1])
+        avg_lk = np.mean(est_lk[-1,:])
         all_lks.append((N, i_trial, avg_lk))
         if first:
             max_lk_N = avg_lk

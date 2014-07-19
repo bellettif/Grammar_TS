@@ -20,7 +20,7 @@ import load_data
 data = load_data.no_rep_achu_file_contents
 file_names = load_data.achu_file_names
 
-result_folder = 'achu'
+result_folder = '_achu'
 source_name = 'Achu'
 
 for key, value in data.iteritems():
@@ -70,7 +70,7 @@ def do_test_with_N_symbols(N, folder_name):
                                                         n_iterations_post= n_iteration_post_trimming)
         est_lk = np.log(est_lk)
         estimation_results[i_trial] = (est_A, est_B, est_lk)
-        avg_lk = np.mean(est_lk[:,-1])
+        avg_lk = np.mean(est_lk[-1,:])
         all_lks.append((N, i_trial, avg_lk))
         if first:
             max_lk_N = avg_lk

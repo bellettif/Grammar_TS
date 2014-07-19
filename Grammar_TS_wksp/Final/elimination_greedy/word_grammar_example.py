@@ -9,20 +9,20 @@ import cPickle as pickle
 import os
 
 from SCFG.sto_grammar import SCFG, normalize_slices
-from grammar_examples.grammar_examples import produce_palindrom_grammar
+from grammar_examples.grammar_examples import produce_word_grammar
+from SCFG.grammar_distance import compute_distance_matrix
 
 from matplotlib import pyplot as plt
 
-probas = [0.3, 0.3, 0.3, 0.2, 0.2, 0.2]
+probas = [0.5, 0.5, 0.5, 0.5]
 probas = np.asarray(probas)
 probas /= np.sum(probas)
 
-target_grammar, rule_nick_names = produce_palindrom_grammar(probas[0],
+
+target_grammar, rule_nick_names = produce_word_grammar(probas[0],
                                            probas[1],
                                            probas[2],
-                                           probas[3],
-                                           probas[4],
-                                           probas[5])
+                                           probas[3])
 
 model_grammar = SCFG()
 model_grammar.init_from_A_B(target_grammar.A, 
@@ -31,11 +31,14 @@ model_grammar.init_from_A_B(target_grammar.A,
 
 n_samples = 1000
 n_trials = 100
-n_iterations = 40
+n_iterations = 20
+max_n_steps = 3
 n_iteration_post_trimming = 10
 threshold = 0.01
-N_range = np.arange(8, 9)
+N_range = np.arange(7, 8)
 n_productions = 100
+
+n_samples_MC = 1000
 
 samples = model_grammar.produce_sentences(n_samples)
 
@@ -49,7 +52,7 @@ M = len(sample_term_symbols)
 print "Sample term symbols:"
 print sample_term_symbols
 
-result_folder = 'palindrom_8/'
+result_folder = 'results_word_grammar_7_symbols_elimination/'
 
 os.mkdir(result_folder)
 
@@ -79,15 +82,41 @@ for N in N_range:
         exp_grammar.init_from_A_B(A_init,
                                   B_init,
                                   sample_term_symbols)
-        est_A, est_B, est_lk = exp_grammar.estimate_A_B(samples,
+        est_lk = []
+        for step in xrange(max_n_steps - 1):
+            est_A, est_B, temp = exp_grammar.estimate_A_B(samples,
+                                                            n_iterations,
+                                                            init_option = 'exact',
+                                                            trim_near_zeros= True,
+                                                            trim_threshold= threshold,
+                                                            n_iterations_post= n_iteration_post_trimming)
+            temp = np.log(temp)
+            for line in temp:
+                est_lk.append(line)
+            exp_grammar.A = est_A
+            exp_grammar.B = est_B
+            exp_grammar.compute_internal_distance_matrix(n_samples = n_samples_MC,
+                                                         JS = False)
+            if not exp_grammar.is_diagonal():
+                print '\t\tGrammar is not diagonal'
+                exp_grammar.merge_on_closest()
+                exp_grammar.add_virgin_rule()
+            else:
+                print '\t\tGrammar is diagonal'
+                break
+        print step
+        est_A, est_B, temp = exp_grammar.estimate_A_B(samples,
                                                         n_iterations,
                                                         init_option = 'exact',
                                                         trim_near_zeros= True,
                                                         trim_threshold= threshold,
                                                         n_iterations_post= n_iteration_post_trimming)
-        est_lk = np.log(est_lk)
-        estimation_results[N][i_trial] = (est_A, est_B, est_lk)
+        temp = np.log(temp)
+        for line in temp:
+            est_lk.append(line)
+        est_lk = np.vstack(est_lk)
         print est_lk.shape
+        estimation_results[N][i_trial] = (est_A, est_B, est_lk)
         avg_lk = np.mean(est_lk[-1,:])
         all_lks.append((N, i_trial, avg_lk))
         if first:
@@ -132,6 +161,33 @@ for rank, (N, i_trial, avg_lks) in enumerate(all_lks[:20]):
     plt.ylabel('EM iteration')
     plt.savefig(result_folder + ('grammar_%d_%d_%d_lk_%.2f_EM.png' 
                               % (rank, N, i_trial, avg_lks)))
+    plt.close()
+    #
+    dist_matrix_KL = compute_distance_matrix(model_grammar,
+                                             est_grammar,
+                                             n_samples, JS = False)
+    plt.imshow(dist_matrix_KL, cmap = 'PuOr',
+               interpolation = 'None')
+    plt.title('KL dist matrix %s vs %s' 
+              % ('est. grammar %d symbol, %d trial' % (N, i_trial),
+                 'model grammar'))
+    plt.colorbar()
+    plt.savefig(result_folder + ('grammar_%d_%d_%d_lk_%.2f_inter_matrix.png' 
+                              % (rank, N, i_trial, avg_lks)),
+                dpi = 600)
+    plt.close()
+    #
+    dist_matrix_KL = compute_distance_matrix(model_grammar,
+                                             model_grammar,
+                                             n_samples, JS = False)
+    plt.imshow(dist_matrix_KL, cmap = 'PuOr',
+               interpolation = 'None')
+    plt.title('KL internal dist matrix %s' 
+              % ('est. grammar %d symbol, %d trial' % (N, i_trial)))
+    plt.colorbar()
+    plt.savefig(result_folder + ('grammar_%d_%d_%d_lk_%.2f_cross_matrix.png' 
+                              % (rank, N, i_trial, avg_lks)),
+                dpi = 600)
     plt.close()
     #
     est_grammar.write_sentences_to_file(n_productions,
