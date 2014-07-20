@@ -22,7 +22,7 @@ result_folder = 'achu'
 source_name = 'Achu'
 
 for key, value in data.iteritems():
-    data[key] = value.split(' ')[:40]
+    data[key] = value.split(' ')
 
 
 def do_test_with_N_symbols(N, folder_name):
@@ -138,7 +138,7 @@ def do_test_with_N_symbols(N, folder_name):
                 dpi = 600)
     plt.close()
         
-for N in xrange(6, 14):
+for N in xrange(5, 16):
     folder_name = result_folder + '_' + str(N) + '/'
     do_test_with_N_symbols(N, folder_name)
     
