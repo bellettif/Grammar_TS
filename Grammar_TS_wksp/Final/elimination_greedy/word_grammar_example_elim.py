@@ -41,7 +41,7 @@ n_iterations = 20
 max_n_steps = 3
 n_iteration_post_trimming = 10
 threshold = 0.01
-N_range = np.arange(7, 8)
+N_range = np.arange(8, 9)
 n_productions = 100
 
 n_samples_MC = 1000
@@ -58,7 +58,7 @@ M = len(sample_term_symbols)
 print "Sample term symbols:"
 print sample_term_symbols
 
-result_folder = 'results_word_grammar_7_symbols_elimination/'
+result_folder = 'results_word_grammar_8_symbols_elimination/'
 
 os.mkdir(result_folder)
 

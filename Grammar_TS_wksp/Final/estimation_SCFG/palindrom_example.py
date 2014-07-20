@@ -31,10 +31,10 @@ model_grammar.init_from_A_B(target_grammar.A,
 
 model_grammar.write_signature_to_file(10000,
                                       25,
-                                      'model_sign.png',
+                                      'model_sign_palindrom.png',
                                       'Model signature')
 
-for _N in range(6, 9):
+for _N in range(6, 6):
 
     n_in_signature = 20
     n_samples = 1000
