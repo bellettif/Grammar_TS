@@ -130,3 +130,4 @@ instruction_set = [(x[0], x[1], x[2],
 
 p = multi.Pool(processes = MAX_PROCESSES)
 p.map(run_algo_tuple, instruction_set)
+p.close()

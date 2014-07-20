@@ -135,6 +135,7 @@ def compute_distance_matrix(left_grammar,
             instruction_set.append((left_copy, right_copy, n_samples, 0, JS))
     p = multi.Pool(processes = N_PROCESSES)
     distances = p.map(compute_distance_tuple, instruction_set)
+    p.close()
     distances = np.asarray(distances, dtype = np.double)
     distances = np.reshape(distances, (n_rules_left, n_rules_right))
     return distances
@@ -156,6 +157,7 @@ def compute_distance_matrix_MC(left_grammar,
             instruction_set.append((left_copy, right_copy, n_samples, 0, epsilon, JS))
     p = multi.Pool(processes = N_PROCESSES)
     distances = p.map(compute_distance_MC_tuple, instruction_set)
+    p.close()
     distances = np.asarray(distances, dtype = np.double)
     distances = np.reshape(distances, (n_rules_left, n_rules_right))
     return distances

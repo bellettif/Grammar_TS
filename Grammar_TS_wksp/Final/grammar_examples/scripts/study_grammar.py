@@ -69,11 +69,11 @@ def study_grammar(grammar_name, grammar_ex,
     #
     internal_distance_matrix = \
         grammar_ex.compute_internal_distance_matrix(n_samples = n_samples,
-                                                           symmetric = False)
+                                                           JS = False)
     
-    internal_distance_matrix_sym = \
+    internal_distance_matrix_JS = \
         grammar_ex.compute_internal_distance_matrix(n_samples = n_samples,
-                                                           symmetric = True)
+                                                           JS = True)
     #
     rule_names = [rule_nick_names[i] for i in xrange(n_rules)]
     #
@@ -86,7 +86,7 @@ def study_grammar(grammar_name, grammar_ex,
     plt.savefig('Internal_dist_%s_KL.png' % grammar_name)
     plt.close()
     #
-    plt.matshow(internal_distance_matrix_sym,
+    plt.matshow(internal_distance_matrix_JS,
                cmap = 'PuOr')
     plt.xticks(range(n_rules), rule_names)
     plt.yticks(range(n_rules), rule_names)

@@ -31,12 +31,18 @@ model_grammar.init_from_A_B(target_grammar.A,
                             target_grammar.B,
                             target_grammar.term_chars)
 
+model_grammar.write_signature_to_file(10000,
+                                      50,
+                                      'model_sign.png',
+                                      'Model signature')
+
+n_in_signature = 50
 n_samples = 1000
 n_trials = 100
 n_iterations = 40
 n_iteration_post_trimming = 40
 threshold = 0.01
-N_range = np.arange(8, 9)
+N_range = np.arange(9, 10)
 n_productions = 100
 
 samples = model_grammar.produce_sentences(n_samples)
@@ -51,7 +57,7 @@ M = len(sample_term_symbols)
 print "Sample term symbols:"
 print sample_term_symbols
 
-result_folder = 'word_grammar_8/'
+result_folder = 'word_grammar_9/'
 
 os.mkdir(result_folder)
 
@@ -100,6 +106,7 @@ for N in N_range:
     best_lks[N] = (arg_max_lk_N, max_lk_N)
     print ''
     
+all_lks = filter(lambda x : not np.isnan(x[-1]), all_lks)
 all_lks.sort(key = (lambda x : -x[-1]))
 
 pickle.dump(all_lks, open(result_folder + 'all_lks.pi', 'wb'))
@@ -139,7 +146,7 @@ for rank, (N, i_trial, avg_lks) in enumerate(all_lks[:20]):
     est_grammar.write_sentences_to_file(n_productions,
                                         result_folder + ('grammar_%d_%d_%d_lk_%.2f_prod.txt' 
                                         % (rank, N, i_trial, avg_lks)))
-    est_grammar.write_signature_to_file(n_productions, 20,
+    est_grammar.write_signature_to_file(n_productions, n_in_signature,
                                         result_folder + ('grammar_%d_%d_%d_lk_%.2f_sign.png' 
                                         % (rank, N, i_trial, avg_lks)),
                                         '%s est. grammar (%d symbols, trial %d) signature' 

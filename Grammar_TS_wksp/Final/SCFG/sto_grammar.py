@@ -262,7 +262,7 @@ class SCFG:
         plt.xticks(width*0.5 + np.arange(len(histogram)),
                    [x[0] for x in histogram],
                    rotation = 'vertical',
-                   fontsize = 4)
+                   fontsize = 3)
         plt.ylabel('Sentence likelihood')
         plt.title(title)
         plt.savefig(file_path, dpi = 600)

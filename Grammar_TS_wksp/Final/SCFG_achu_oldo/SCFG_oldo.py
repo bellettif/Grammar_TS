@@ -13,14 +13,12 @@ import copy
 
 from SCFG.sto_grammar import SCFG, normalize_slices
 
-N_PROCESSES = 4
-
 import load_data
 
 data = load_data.no_rep_oldo_file_contents
 file_names = load_data.oldo_file_names
 
-result_folder = '_oldo'
+result_folder = 'oldo'
 source_name = 'Oldo'
 
 for key, value in data.iteritems():
@@ -80,6 +78,7 @@ def do_test_with_N_symbols(N, folder_name):
             arg_max_lk_N = i_trial
         best_lks = (arg_max_lk_N, max_lk_N)
         print ''
+    all_lks = filter(lambda x : not np.isnan(x[-1]), all_lks)
     all_lks.sort(key = (lambda x : -x[-1]))
     pickle.dump(all_lks, open(folder_name + 'all_lks.pi', 'wb'))
     pickle.dump(best_lks, open(folder_name + 'best_lks.pi', 'wb'))

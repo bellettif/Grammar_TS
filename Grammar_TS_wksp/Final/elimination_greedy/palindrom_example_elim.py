@@ -9,26 +9,34 @@ import cPickle as pickle
 import os
 
 from SCFG.sto_grammar import SCFG, normalize_slices
-from grammar_examples.grammar_examples import produce_word_grammar
+from grammar_examples.grammar_examples import produce_palindrom_grammar
 from SCFG.grammar_distance import compute_distance_matrix
 
 from matplotlib import pyplot as plt
 
-probas = [0.5, 0.5, 0.5, 0.5]
+probas = [0.3, 0.3, 0.3, 0.2, 0.2, 0.2]
 probas = np.asarray(probas)
 probas /= np.sum(probas)
 
 
-target_grammar, rule_nick_names = produce_word_grammar(probas[0],
+target_grammar, rule_nick_names = produce_palindrom_grammar(probas[0],
                                            probas[1],
                                            probas[2],
-                                           probas[3])
+                                           probas[3],
+                                           probas[4],
+                                           probas[5])
 
 model_grammar = SCFG()
 model_grammar.init_from_A_B(target_grammar.A, 
                             target_grammar.B,
                             target_grammar.term_chars)
 
+model_grammar.write_signature_to_file(10000,
+                                      25,
+                                      'model_sign.png',
+                                      'Model signature')
+
+n_in_signature = 20
 n_samples = 1000
 n_trials = 100
 n_iterations = 20
@@ -52,7 +60,7 @@ M = len(sample_term_symbols)
 print "Sample term symbols:"
 print sample_term_symbols
 
-result_folder = 'results_word_grammar_7_symbols_elimination/'
+result_folder = 'results_palindrom_grammar_7_symbols_elimination/'
 
 os.mkdir(result_folder)
 
@@ -128,6 +136,7 @@ for N in N_range:
     best_lks[N] = (arg_max_lk_N, max_lk_N)
     print ''
     
+all_lks = filter(lambda x : not np.isnan(x[-1]), all_lks)
 all_lks.sort(key = (lambda x : -x[-1]))
 
 pickle.dump(all_lks, open(result_folder + 'all_lks.pi', 'wb'))
@@ -172,7 +181,7 @@ for rank, (N, i_trial, avg_lks) in enumerate(all_lks[:20]):
               % ('est. grammar %d symbol, %d trial' % (N, i_trial),
                  'model grammar'))
     plt.colorbar()
-    plt.savefig(result_folder + ('grammar_%d_%d_%d_lk_%.2f_inter_matrix.png' 
+    plt.savefig(result_folder + ('grammar_%d_%d_%d_lk_%.2f_cross_matrix.png' 
                               % (rank, N, i_trial, avg_lks)),
                 dpi = 600)
     plt.close()
@@ -185,7 +194,7 @@ for rank, (N, i_trial, avg_lks) in enumerate(all_lks[:20]):
     plt.title('KL internal dist matrix %s' 
               % ('est. grammar %d symbol, %d trial' % (N, i_trial)))
     plt.colorbar()
-    plt.savefig(result_folder + ('grammar_%d_%d_%d_lk_%.2f_cross_matrix.png' 
+    plt.savefig(result_folder + ('grammar_%d_%d_%d_lk_%.2f_inter_matrix.png' 
                               % (rank, N, i_trial, avg_lks)),
                 dpi = 600)
     plt.close()
@@ -193,7 +202,7 @@ for rank, (N, i_trial, avg_lks) in enumerate(all_lks[:20]):
     est_grammar.write_sentences_to_file(n_productions,
                                         result_folder + ('grammar_%d_%d_%d_lk_%.2f_prod.txt' 
                                         % (rank, N, i_trial, avg_lks)))
-    est_grammar.write_signature_to_file(n_productions, 20,
+    est_grammar.write_signature_to_file(n_productions, n_in_signature,
                                         result_folder + ('grammar_%d_%d_%d_lk_%.2f_sign.png' 
                                         % (rank, N, i_trial, avg_lks)),
                                         '%s est. grammar (%d symbols, trial %d) signature' 
